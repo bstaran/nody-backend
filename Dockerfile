@@ -1,0 +1,7 @@
+FROM eclipse-temurin:21.0.7_6-jdk-ubi9-minimal
+
+ARG JAR_FILE=build/libs/*.jar
+
+COPY ${JAR_FILE} app.jar
+
+ENTRYPOINT ["java","-jar","/app.jar"]
