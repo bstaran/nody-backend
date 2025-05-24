@@ -76,4 +76,22 @@ public class ExceptionTestController {
   public ResponseEntity<Void> getError() {
     throw new RuntimeException();
   }
+
+  /**
+   * Spring Security 인증 실패 테스트 (401 Unauthorized)
+   * 이 엔드포인트는 인증이 필요하므로 토큰 없이 접근하면 CustomAuthenticationEntryPoint가 호출됩니다.
+   */
+  @GetMapping("/security-auth-test")
+  public ResponseEntity<ApiResponse<?>> getSecurityAuthTest() {
+    return ResponseEntity.ok(ApiResponse.success("인증된 사용자만 볼 수 있는 데이터"));
+  }
+
+  /**
+   * Spring Security 권한 부족 테스트 (403 Forbidden)
+   * 이 엔드포인트는 ADMIN 권한이 필요하므로 일반 사용자가 접근하면 CustomAccessDeniedHandler가 호출됩니다.
+   */
+  @GetMapping("/security-access-test")
+  public ResponseEntity<ApiResponse<?>> getSecurityAccessTest() {
+    return ResponseEntity.ok(ApiResponse.success("ADMIN 권한이 있는 사용자만 볼 수 있는 데이터"));
+  }
 }
