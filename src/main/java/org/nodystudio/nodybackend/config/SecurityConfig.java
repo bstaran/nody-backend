@@ -2,6 +2,8 @@ package org.nodystudio.nodybackend.config;
 
 import java.util.List;
 import org.nodystudio.nodybackend.security.filter.JwtAuthenticationFilter;
+import org.nodystudio.nodybackend.security.handler.CustomAccessDeniedHandler;
+import org.nodystudio.nodybackend.security.handler.CustomAuthenticationEntryPoint;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
@@ -26,12 +28,18 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
+  private final CustomAccessDeniedHandler customAccessDeniedHandler;
+  private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
   @Value("${cors.allowed-origins}")
   private List<String> allowedOrigins;
 
-  public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+  public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
+      CustomAccessDeniedHandler customAccessDeniedHandler,
+      CustomAuthenticationEntryPoint customAuthenticationEntryPoint) {
     this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    this.customAccessDeniedHandler = customAccessDeniedHandler;
+    this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;
   }
 
   // --- 공통 빈 정의 ---
@@ -58,7 +66,15 @@ public class SecurityConfig {
             .requestMatchers("/api/auth/**", "/api/public/**").permitAll()
             .requestMatchers("/swagger-ui/**", "/api-docs/**").permitAll()
             .requestMatchers("/openapi.json").permitAll()
+            // .requestMatchers("/api/test/exceptions/ok", "/api/test/exceptions/not-found",
+            // "/api/test/exceptions/unauthorized", "/api/test/exceptions/forbidden",
+            // "/api/test/exceptions/validation", "/api/test/exceptions/error")
+            // .permitAll()
+            // .requestMatchers("/api/test/exceptions/security-access-test").hasRole("ADMIN")
             .anyRequest().authenticated())
+        .exceptionHandling(exceptions -> exceptions
+            .authenticationEntryPoint(customAuthenticationEntryPoint)
+            .accessDeniedHandler(customAccessDeniedHandler))
         .headers(headers -> headers
             .frameOptions(FrameOptionsConfig::sameOrigin))
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
@@ -83,7 +99,15 @@ public class SecurityConfig {
             .requestMatchers("/api/auth/**", "/api/public/**").permitAll()
             .requestMatchers("/api/admin/**").hasRole("ADMIN")
             .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+            .requestMatchers("/api/test/exceptions/ok", "/api/test/exceptions/not-found",
+                "/api/test/exceptions/unauthorized", "/api/test/exceptions/forbidden",
+                "/api/test/exceptions/validation", "/api/test/exceptions/error")
+            .permitAll()
+            .requestMatchers("/api/test/exceptions/security-access-test").hasRole("ADMIN")
             .anyRequest().authenticated())
+        .exceptionHandling(exceptions -> exceptions
+            .authenticationEntryPoint(customAuthenticationEntryPoint)
+            .accessDeniedHandler(customAccessDeniedHandler))
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
         // .requiresChannel(channel -> channel // HTTPS 강제 (프로덕션 환경에서 SSL 설정 후 활성화)
         // .anyRequest().requiresSecure()
