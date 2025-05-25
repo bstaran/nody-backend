@@ -1,6 +1,7 @@
 package org.nodystudio.nodybackend.config;
 
 import java.util.List;
+import jakarta.annotation.PostConstruct;
 import org.nodystudio.nodybackend.security.filter.JwtAuthenticationFilter;
 import org.nodystudio.nodybackend.security.handler.CustomAccessDeniedHandler;
 import org.nodystudio.nodybackend.security.handler.CustomAuthenticationEntryPoint;
@@ -42,6 +43,33 @@ public class SecurityConfig {
     this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;
   }
 
+  @PostConstruct
+  public void validateConfiguration() {
+    validateAllowedOrigins();
+  }
+
+  /**
+   * CORS allowed-origins 설정값을 검증합니다.
+   *
+   * @throws IllegalStateException allowedOrigins가 null이거나 비어있거나 유효하지 않은 경우
+   */
+  private void validateAllowedOrigins() {
+    if (allowedOrigins == null) {
+      throw new IllegalStateException(
+          "CORS allowed-origins 설정이 누락되었습니다. application.yaml에서 'cors.allowed-origins' 값을 설정해주세요.");
+    }
+
+    if (allowedOrigins.isEmpty()) {
+      throw new IllegalStateException("CORS allowed-origins 설정이 비어있습니다. 최소 하나 이상의 origin을 설정해주세요.");
+    }
+
+    for (String origin : allowedOrigins) {
+      if (origin == null || origin.trim().isEmpty()) {
+        throw new IllegalStateException("CORS allowed-origins에 유효하지 않은 값이 포함되어 있습니다. 빈 문자열이나 공백은 허용되지 않습니다.");
+      }
+    }
+  }
+
   // --- 공통 빈 정의 ---
   @Bean
   public PasswordEncoder passwordEncoder() {
@@ -66,11 +94,7 @@ public class SecurityConfig {
             .requestMatchers("/api/auth/**", "/api/public/**").permitAll()
             .requestMatchers("/swagger-ui/**", "/api-docs/**").permitAll()
             .requestMatchers("/openapi.json").permitAll()
-            // .requestMatchers("/api/test/exceptions/ok", "/api/test/exceptions/not-found",
-            // "/api/test/exceptions/unauthorized", "/api/test/exceptions/forbidden",
-            // "/api/test/exceptions/validation", "/api/test/exceptions/error")
-            // .permitAll()
-            // .requestMatchers("/api/test/exceptions/security-access-test").hasRole("ADMIN")
+            .requestMatchers("/api/test/exceptions/security-access-test").hasRole("ADMIN")
             .anyRequest().authenticated())
         .exceptionHandling(exceptions -> exceptions
             .authenticationEntryPoint(customAuthenticationEntryPoint)
@@ -99,11 +123,6 @@ public class SecurityConfig {
             .requestMatchers("/api/auth/**", "/api/public/**").permitAll()
             .requestMatchers("/api/admin/**").hasRole("ADMIN")
             .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-            .requestMatchers("/api/test/exceptions/ok", "/api/test/exceptions/not-found",
-                "/api/test/exceptions/unauthorized", "/api/test/exceptions/forbidden",
-                "/api/test/exceptions/validation", "/api/test/exceptions/error")
-            .permitAll()
-            .requestMatchers("/api/test/exceptions/security-access-test").hasRole("ADMIN")
             .anyRequest().authenticated())
         .exceptionHandling(exceptions -> exceptions
             .authenticationEntryPoint(customAuthenticationEntryPoint)
