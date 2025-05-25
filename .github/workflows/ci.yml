@@ -40,11 +40,13 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build with Gradle
+      - name: Build and Test with Gradle
+        env:
+          SPRING_PROFILES_ACTIVE: test
+          OAUTH_GOOGLE_CLIENT_ID: ${{ secrets.OAUTH_GOOGLE_CLIENT_ID }}
+          OAUTH_GOOGLE_CLIENT_SECRET: ${{ secrets.OAUTH_GOOGLE_CLIENT_SECRET }}
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
         run: ./gradlew build --no-daemon
-
-      - name: Run tests
-        run: ./gradlew test --no-daemon
 
       - name: Generate test report
         uses: dorny/test-reporter@v1
@@ -64,7 +66,7 @@ jobs:
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
-        if: success() && github.event_name == 'pull_request'
+        if: success() && (github.event_name == 'pull_request' || github.event_name == 'push')
         with:
           name: build-artifacts-pr-${{ github.event.pull_request.number }}
           path: build/libs/
@@ -98,10 +100,20 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run checkstyle
+        env:
+          SPRING_PROFILES_ACTIVE: test
+          OAUTH_GOOGLE_CLIENT_ID: ${{ secrets.OAUTH_GOOGLE_CLIENT_ID }}
+          OAUTH_GOOGLE_CLIENT_SECRET: ${{ secrets.OAUTH_GOOGLE_CLIENT_SECRET }}
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
         run: ./gradlew checkstyleMain checkstyleTest --no-daemon
         continue-on-error: true
 
       - name: Generate documentation
+        env:
+          SPRING_PROFILES_ACTIVE: test
+          OAUTH_GOOGLE_CLIENT_ID: ${{ secrets.OAUTH_GOOGLE_CLIENT_ID }}
+          OAUTH_GOOGLE_CLIENT_SECRET: ${{ secrets.OAUTH_GOOGLE_CLIENT_SECRET }}
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
         run: ./gradlew smartdoc --no-daemon
         continue-on-error: true
 
