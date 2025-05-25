@@ -1,9 +1,6 @@
 name: Deploy to AWS EBS
 
 on:
-  push:
-    branches:
-      - feature/*
   pull_request:
     types: [closed]
     branches:
@@ -14,12 +11,14 @@ env:
   AWS_REGION: ap-northeast-2
   ECR_REPOSITORY: namespace/nody
   EB_APPLICATION_NAME: nody
+  EB_ENVIRONMENT_NAME: Nody-env
 
 jobs:
   download_artifact_and_build_image:
     name: Download Artifact & Build/Push Docker Image
     runs-on: ubuntu-latest
     if: github.event.pull_request.merged == true && (github.base_ref == 'main' || github.base_ref == 'develop')
+
     steps:
       - name: Checkout PR head commit
         uses: actions/checkout@v4
@@ -31,12 +30,6 @@ jobs:
         with:
           name: build-artifacts-pr-${{ github.event.pull_request.number }}
           path: build/libs
-          # 만약 download-artifact@v4가 다른 워크플로우 실행의 아티팩트를 직접 가져오지 못하는 경우,
-          # (예: PR open/sync 시점의 CI 실행과 PR closed 시점의 배포 실행이 완전히 분리된 컨텍스트일 때)
-          # dawidd6/action-download-artifact@v6 와 같은 커뮤니티 액션 사용을 고려해야 합니다.
-          # pr: ${{ github.event.pull_request.number }}
-          # commit: ${{ github.event.pull_request.head.sha }}
-          # github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -100,7 +93,7 @@ jobs:
           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           application_name: ${{ env.EB_APPLICATION_NAME }}
-          environment_name: ${{ github.base_ref == 'main' && 'Nody-prod-env' || github.base_ref == 'develop' && 'Nody-dev-env' }}
+          environment_name: ${{ env.EB_ENVIRONMENT_NAME }}
           version_label: pr${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
           region: ${{ env.AWS_REGION }}
           deployment_package: Dockerrun.aws.json
