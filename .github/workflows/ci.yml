@@ -3,13 +3,13 @@ name: CI
 on:
   push:
     branches:
-      - feature/*
       - fix/*
       - refactor/*
   pull_request:
     branches:
       - main
       - develop
+      - feature/*
 
 jobs:
   build-and-test:
