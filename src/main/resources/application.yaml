@@ -2,4 +2,4 @@ spring:
   application:
     name: nody-backend
   profiles:
-    active: test
+    active: dev
