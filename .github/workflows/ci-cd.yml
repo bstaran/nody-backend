@@ -1,10 +1,6 @@
 name: CI/CD
 
 on:
-  push:
-    branches:
-      - fix/*
-      - refactor/*
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches:
