@@ -3,10 +3,6 @@ name: Deploy to AWS EBS
 on:
   pull_request:
     types: [closed]
-    branches:
-      - main
-      - develop
-      - feature/*
 
 env:
   AWS_REGION: ap-northeast-2
@@ -18,7 +14,7 @@ jobs:
   download_artifact_and_build_image:
     name: Download Artifact & Build/Push Docker Image
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true && (github.base_ref == 'main' || github.base_ref == 'develop' || github.base_ref == 'feature/*')
+    if: github.event.pull_request.merged == true && (github.base_ref == 'main' || github.base_ref == 'develop' || startsWith(github.base_ref, 'feature/'))
 
     steps:
       - name: Checkout PR head commit
@@ -31,6 +27,7 @@ jobs:
         with:
           name: build-artifacts-pr-${{ github.event.pull_request.number }}
           path: build/libs
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -55,7 +52,7 @@ jobs:
     name: Deploy to AWS Elastic Beanstalk
     runs-on: ubuntu-latest
     needs: download_artifact_and_build_image
-    if: github.event.pull_request.merged == true && (github.base_ref == 'main' || github.base_ref == 'develop' || github.base_ref == 'feature/*')
+    if: github.event.pull_request.merged == true && (github.base_ref == 'main' || github.base_ref == 'develop' || startsWith(github.base_ref, 'feature/'))
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
