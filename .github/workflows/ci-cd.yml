@@ -5,6 +5,7 @@ on:
     branches:
       - fix/*
       - refactor/*
+      - feature/*
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches:
@@ -16,13 +17,17 @@ env:
   ECR_REPOSITORY: namespace/nody
   EB_APPLICATION_NAME: nody
   EB_ENVIRONMENT_NAME: Nody-env
+  # Test environment defaults for fork PRs
+  TEST_OAUTH_GOOGLE_CLIENT_ID: test-client-id
+  TEST_OAUTH_GOOGLE_CLIENT_SECRET: test-client-secret
+  TEST_JWT_SECRET_KEY: dGVzdFNlY3JldEtleUZvclRlc3RpbmdPbmx5TWluaW11bTI1NkJpdHNMb25nU2VjcmV0S2V5Rm9ySlRUZXN0aW5nUHVycG9zZXNPbmx5
 
 jobs:
   build-and-test:
     name: Build and Test
     runs-on: ubuntu-latest
     if: |
-      (github.event_name == 'push' && (startsWith(github.ref_name, 'fix/') || startsWith(github.ref_name, 'refactor/'))) ||
+      (github.event_name == 'push' && (startsWith(github.ref_name, 'fix/') || startsWith(github.ref_name, 'refactor/') || startsWith(github.ref_name, 'feature/'))) ||
       (github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened')) ||
       (github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true && (github.base_ref == 'main' || github.base_ref == 'develop'))
     steps:
@@ -48,7 +53,14 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build and Test with Gradle
+      - name: Build and Test with Gradle (Fork)
+        if: github.repository != 'Nody-Studio/nody-backend'
+        env:
+          SPRING_PROFILES_ACTIVE: test
+        run: ./gradlew smartDocOpenAPI build --no-daemon
+
+      - name: Build and Test with Gradle (Upstream with Secrets)
+        if: github.repository == 'Nody-Studio/nody-backend'
         env:
           SPRING_PROFILES_ACTIVE: test
           OAUTH_GOOGLE_CLIENT_ID: ${{ secrets.OAUTH_GOOGLE_CLIENT_ID }}
