@@ -21,8 +21,8 @@ spring:
       client:
         registration:
           google:
-            client-id: ${OAUTH_GOOGLE_CLIENT_ID}
-            client-secret: ${OAUTH_GOOGLE_CLIENT_SECRET}
+            client-id: ${OAUTH_GOOGLE_CLIENT_ID:test-client-id}
+            client-secret: ${OAUTH_GOOGLE_CLIENT_SECRET:test-client-secret}
             scope:
               - profile
               - email
@@ -43,7 +43,7 @@ cors:
   allowed-origins: https://api.nodyy.com
 
 jwt:
-  secret-key: ${JWT_SECRET_KEY}
+  secret-key: ${JWT_SECRET_KEY:dGVzdFNlY3JldEtleUZvclRlc3RpbmdPbmx5TWluaW11bTI1NkJpdHNMb25nU2VjcmV0S2V5Rm9ySlRUZXN0aW5nUHVycG9zZXNPbmx5}
   access-token-expiration-minutes: 15
   refresh-token-expiration-days: 7
 

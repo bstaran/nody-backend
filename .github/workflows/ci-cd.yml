@@ -1,0 +1,216 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - fix/*
+      - refactor/*
+      - feature/*
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches:
+      - main
+      - develop
+
+env:
+  AWS_REGION: ap-northeast-2
+  ECR_REPOSITORY: namespace/nody
+  EB_APPLICATION_NAME: nody
+  EB_ENVIRONMENT_NAME: Nody-env
+  # Test environment defaults for fork PRs
+  TEST_OAUTH_GOOGLE_CLIENT_ID: test-client-id
+  TEST_OAUTH_GOOGLE_CLIENT_SECRET: test-client-secret
+  TEST_JWT_SECRET_KEY: dGVzdFNlY3JldEtleUZvclRlc3RpbmdPbmx5TWluaW11bTI1NkJpdHNMb25nU2VjcmV0S2V5Rm9ySlRUZXN0aW5nUHVycG9zZXNPbmx5
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'push' && (startsWith(github.ref_name, 'fix/') || startsWith(github.ref_name, 'refactor/') || startsWith(github.ref_name, 'feature/'))) ||
+      (github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened')) ||
+      (github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true && (github.base_ref == 'main' || github.base_ref == 'develop'))
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Set environment variables for original repository
+        if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+        run: |
+          echo "OAUTH_GOOGLE_CLIENT_ID=${{ secrets.OAUTH_GOOGLE_CLIENT_ID }}" >> $GITHUB_ENV
+          echo "OAUTH_GOOGLE_CLIENT_SECRET=${{ secrets.OAUTH_GOOGLE_CLIENT_SECRET }}" >> $GITHUB_ENV
+          echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" >> $GITHUB_ENV
+
+      - name: Set environment variables for fork repositories
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+        run: |
+          echo "OAUTH_GOOGLE_CLIENT_ID=${{ env.TEST_OAUTH_GOOGLE_CLIENT_ID }}" >> $GITHUB_ENV
+          echo "OAUTH_GOOGLE_CLIENT_SECRET=${{ env.TEST_OAUTH_GOOGLE_CLIENT_SECRET }}" >> $GITHUB_ENV
+          echo "JWT_SECRET_KEY=${{ env.TEST_JWT_SECRET_KEY }}" >> $GITHUB_ENV
+
+      - name: Build and Test with Gradle
+        env:
+          SPRING_PROFILES_ACTIVE: test
+        run: ./gradlew smartDocOpenAPI build --no-daemon
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: build/test-results/
+          retention-days: 7
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        if: success() && (github.event_name == 'pull_request')
+        with:
+          name: build-artifacts-pr-${{ github.event.pull_request.number }}
+          path: build/libs/
+          retention-days: 30
+
+      - name: Upload documentation
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: api-documentation
+          path: src/main/resources/static/
+          retention-days: 30
+
+  build-and-push-image:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true && (github.base_ref == 'main' || github.base_ref == 'develop') && github.event.pull_request.base.repo.full_name == 'Nody-Studio/nody-backend'
+
+    steps:
+      - name: Checkout PR head commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build with Gradle for deployment
+        env:
+          SPRING_PROFILES_ACTIVE: prod
+        run: ./gradlew smartDocOpenAPI build --no-daemon
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push the image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.event.pull_request.head.sha }}
+        run: |
+          docker build -t "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" .
+          docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+      - name: Scan image for vulnerabilities
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.event.pull_request.head.sha }}"
+          format: "table"
+          exit-code: "1"
+          ignore-unfixed: true
+          vuln-type: "os,library"
+          severity: "CRITICAL,HIGH"
+
+  deploy_to_ebs:
+    name: Deploy to AWS Elastic Beanstalk
+    runs-on: ubuntu-latest
+    needs: build-and-push-image
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true && (github.base_ref == 'main' || github.base_ref == 'develop') && github.event.pull_request.base.repo.full_name == 'Nody-Studio/nody-backend'
+    steps:
+      - name: Checkout PR head commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr-deploy
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Generate Dockerrun.aws.json and Create Zip Bundle
+        env:
+          ECR_REGISTRY_DEPLOY: ${{ steps.login-ecr-deploy.outputs.registry }}
+        run: |
+          cat <<EOF > Dockerrun.aws.json
+          {
+            "AWSEBDockerrunVersion": "1",
+            "Image": {
+              "Name": "${ECR_REGISTRY_DEPLOY}/${{ env.ECR_REPOSITORY }}:${{ github.event.pull_request.head.sha }}",
+              "Update": "true"
+            },
+            "Ports": [
+              {
+                "ContainerPort": 8080
+              }
+            ],
+            "Logging": "/var/log/nginx"
+          }
+          EOF
+          zip -r ebs-bundle.zip Dockerrun.aws.json .platform
+
+      - name: Create new Elastic Beanstalk Deployment
+        uses: einaregilsson/beanstalk-deploy@v21
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: ${{ env.EB_APPLICATION_NAME }}
+          environment_name: ${{ env.EB_ENVIRONMENT_NAME }}
+          version_label: pr${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
+          region: ${{ env.AWS_REGION }}
+          deployment_package: ebs-bundle.zip
+          wait_for_deployment: true
