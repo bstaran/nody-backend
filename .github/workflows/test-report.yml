@@ -14,29 +14,31 @@ jobs:
     permissions:
       checks: write
       pull-requests: write
+      actions: read
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
-          fetch-depth: 0
-
       - name: Download test results
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
+            console.log('Searching for test-results artifact...');
             let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
                owner: context.repo.owner,
                repo: context.repo.repo,
                run_id: context.payload.workflow_run.id,
             });
+
+            console.log(`Found ${allArtifacts.data.artifacts.length} artifacts`);
             let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
               return artifact.name == "test-results"
             })[0];
+
             if (!matchArtifact) {
+              console.log('Available artifacts:', allArtifacts.data.artifacts.map(a => a.name));
               core.setFailed('No test-results artifact found');
               return;
             }
+
+            console.log(`Downloading artifact: ${matchArtifact.name}`);
             let download = await github.rest.actions.downloadArtifact({
                owner: context.repo.owner,
                repo: context.repo.repo,
@@ -45,6 +47,7 @@ jobs:
             });
             let fs = require('fs');
             fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/test-results.zip`, Buffer.from(download.data));
+            console.log('Test results downloaded successfully');
       - name: Unzip test results
         run: |
           unzip test-results.zip
@@ -52,11 +55,77 @@ jobs:
           find . -name "*.xml" -type f
 
       - name: Generate test report
-        uses: dorny/test-reporter@v1
         if: always()
+        uses: actions/github-script@v7
         with:
-          name: Test Results
-          path: "**/TEST-*.xml"
-          reporter: java-junit
-          token: ${{ secrets.GITHUB_TOKEN }}
-          fail-on-error: false
+          script: |
+            const fs = require('fs');
+            const { execSync } = require('child_process');
+
+            // Find all test XML files
+            let xmlFiles;
+            try {
+              xmlFiles = execSync('find . -name "TEST-*.xml" -type f', { encoding: 'utf-8' }).trim().split('\n').filter(f => f);
+            } catch (error) {
+              console.log('No test files found');
+              return;
+            }
+
+            console.log(`Found ${xmlFiles.length} test files:`, xmlFiles);
+
+            let totalTests = 0;
+            let passedTests = 0;
+            let failedTests = 0;
+            let skippedTests = 0;
+            let results = [];
+
+            for (const xmlFile of xmlFiles) {
+              try {
+                const content = fs.readFileSync(xmlFile, 'utf-8');
+                
+                // Simple regex parsing for JUnit XML
+                const testsMatch = content.match(/tests="(\d+)"/);
+                const failuresMatch = content.match(/failures="(\d+)"/);
+                const errorsMatch = content.match(/errors="(\d+)"/);
+                const skippedMatch = content.match(/skipped="(\d+)"/);
+                const nameMatch = content.match(/name="([^"]+)"/);
+                
+                const tests = testsMatch ? parseInt(testsMatch[1]) : 0;
+                const failures = failuresMatch ? parseInt(failuresMatch[1]) : 0;
+                const errors = errorsMatch ? parseInt(errorsMatch[1]) : 0;
+                const skipped = skippedMatch ? parseInt(skippedMatch[1]) : 0;
+                const name = nameMatch ? nameMatch[1] : xmlFile;
+                
+                totalTests += tests;
+                failedTests += failures + errors;
+                skippedTests += skipped;
+                passedTests += tests - failures - errors - skipped;
+                
+                results.push({
+                  file: xmlFile,
+                  classname: name,
+                  tests,
+                  failures,
+                  errors,
+                  skipped
+                });
+              } catch (error) {
+                console.log(`Error parsing ${xmlFile}:`, error.message);
+              }
+            }
+
+            // Create check run
+            const checkRun = await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'Test Results',
+              head_sha: context.payload.workflow_run.head_sha,
+              status: 'completed',
+              conclusion: failedTests > 0 ? 'failure' : 'success',
+              output: {
+                title: `Test Results: ${passedTests} passed, ${failedTests} failed, ${skippedTests} skipped`,
+                summary: `## Test Summary\n\n- **Total Tests**: ${totalTests}\n- **Passed**: ${passedTests}\n- **Failed**: ${failedTests}\n- **Skipped**: ${skippedTests}\n\n${results.map(r => `### ${r.classname}\n- Tests: ${r.tests}, Failures: ${r.failures}, Errors: ${r.errors}, Skipped: ${r.skipped}`).join('\n\n')}`
+              }
+            });
+
+            console.log(`Check run created: ${checkRun.data.html_url}`);
