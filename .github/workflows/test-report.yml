@@ -10,6 +10,7 @@ jobs:
   report:
     name: Generate Test Report
     runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion != 'cancelled'
     permissions:
       checks: write
       pull-requests: write
@@ -32,6 +33,10 @@ jobs:
             let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
               return artifact.name == "test-results"
             })[0];
+            if (!matchArtifact) {
+              core.setFailed('No test-results artifact found');
+              return;
+            }
             let download = await github.rest.actions.downloadArtifact({
                owner: context.repo.owner,
                repo: context.repo.repo,
@@ -41,12 +46,17 @@ jobs:
             let fs = require('fs');
             fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/test-results.zip`, Buffer.from(download.data));
       - name: Unzip test results
-        run: unzip test-results.zip
+        run: |
+          unzip test-results.zip
+          ls -la
+          find . -name "*.xml" -type f
 
       - name: Generate test report
         uses: dorny/test-reporter@v1
+        if: always()
         with:
           name: Test Results
-          path: "test/TEST-*.xml"
+          path: "**/TEST-*.xml"
           reporter: java-junit
           token: ${{ secrets.GITHUB_TOKEN }}
+          fail-on-error: false
