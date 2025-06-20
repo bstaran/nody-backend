@@ -90,7 +90,6 @@ public class SecurityConfig {
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(authorize -> authorize
-            .requestMatchers(PathRequest.toH2Console()).permitAll()
             .requestMatchers("/api/auth/**", "/api/public/**").permitAll()
             .requestMatchers("/swagger-ui/**", "/api-docs/**").permitAll()
             .requestMatchers("/openapi.json").permitAll()
@@ -99,8 +98,6 @@ public class SecurityConfig {
         .exceptionHandling(exceptions -> exceptions
             .authenticationEntryPoint(customAuthenticationEntryPoint)
             .accessDeniedHandler(customAccessDeniedHandler))
-        .headers(headers -> headers
-            .frameOptions(FrameOptionsConfig::sameOrigin))
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
     return http.build();
