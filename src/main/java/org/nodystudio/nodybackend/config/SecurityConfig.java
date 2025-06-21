@@ -5,6 +5,8 @@ import jakarta.annotation.PostConstruct;
 import org.nodystudio.nodybackend.security.filter.JwtAuthenticationFilter;
 import org.nodystudio.nodybackend.security.handler.CustomAccessDeniedHandler;
 import org.nodystudio.nodybackend.security.handler.CustomAuthenticationEntryPoint;
+import org.nodystudio.nodybackend.security.handler.OAuth2LoginSuccessHandler;
+import org.nodystudio.nodybackend.service.auth.CustomOAuth2UserService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -30,16 +32,22 @@ public class SecurityConfig {
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
   private final CustomAccessDeniedHandler customAccessDeniedHandler;
   private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+  private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+  private final CustomOAuth2UserService customOAuth2UserService;
 
   @Value("${cors.allowed-origins}")
   private List<String> allowedOrigins;
 
   public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
       CustomAccessDeniedHandler customAccessDeniedHandler,
-      CustomAuthenticationEntryPoint customAuthenticationEntryPoint) {
+      CustomAuthenticationEntryPoint customAuthenticationEntryPoint,
+      OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler,
+      CustomOAuth2UserService customOAuth2UserService) {
     this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     this.customAccessDeniedHandler = customAccessDeniedHandler;
     this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;
+    this.oAuth2LoginSuccessHandler = oAuth2LoginSuccessHandler;
+    this.customOAuth2UserService = customOAuth2UserService;
   }
 
   @PostConstruct
@@ -88,8 +96,13 @@ public class SecurityConfig {
         .httpBasic(AbstractHttpConfigurer::disable)
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .oauth2Login(oauth2 -> oauth2
+            .userInfoEndpoint(
+                userInfo -> userInfo.userService(customOAuth2UserService))
+            .successHandler(oAuth2LoginSuccessHandler))
         .authorizeHttpRequests(authorize -> authorize
-            .requestMatchers("/api/auth/**", "/api/public/**").permitAll()
+            .requestMatchers("/api/auth/**", "/api/public/**", "/oauth2/**", "/login/oauth2/**")
+            .permitAll()
             .requestMatchers("/swagger-ui/**", "/api-docs/**").permitAll()
             .requestMatchers("/openapi.json", "/favicon.ico").permitAll()
             .requestMatchers("/actuator/**").permitAll()
@@ -116,8 +129,13 @@ public class SecurityConfig {
         .httpBasic(AbstractHttpConfigurer::disable)
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .oauth2Login(oauth2 -> oauth2
+            .userInfoEndpoint(
+                userInfo -> userInfo.userService(customOAuth2UserService))
+            .successHandler(oAuth2LoginSuccessHandler))
         .authorizeHttpRequests(authorize -> authorize
-            .requestMatchers("/api/auth/**", "/api/public/**").permitAll()
+            .requestMatchers("/api/auth/**", "/api/public/**", "/oauth2/**", "/login/oauth2/**")
+            .permitAll()
             .requestMatchers("/api/admin/**").hasRole("ADMIN")
             .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/favicon.ico").permitAll()
             .requestMatchers("/actuator/**").permitAll()
