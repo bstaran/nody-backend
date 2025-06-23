@@ -61,14 +61,13 @@ class OAuth2LoginSuccessHandlerTest {
   private final String accessToken = "test-access-token";
   private final String refreshToken = "test-refresh-token-jwt";
   private final LocalDateTime refreshTokenExpiry = LocalDateTime.now().plusDays(7);
-  private final String redirectUrl = "http://localhost:3000/oauth/callback";
+  private final String redirectUrl = "http://localhost:3000/login/oauth2/code/google";
 
   @BeforeEach
   void setUp() {
     request = new MockHttpServletRequest();
     response = new MockHttpServletResponse();
 
-    // 테스트용 사용자 설정
     testUser = User.builder()
         .id(1L)
         .provider("google")
@@ -77,7 +76,6 @@ class OAuth2LoginSuccessHandlerTest {
         .nickname("Test User")
         .build();
 
-    // Mock Authentication (OAuth2AuthenticationToken)
     Map<String, Object> attributes = new HashMap<>();
     attributes.put("sub", "google_12345");
     attributes.put("name", "Test User");
@@ -104,15 +102,10 @@ class OAuth2LoginSuccessHandlerTest {
     authentication = new OAuth2AuthenticationToken(oauth2User, Collections.emptyList(),
         clientRegistration.getRegistrationId());
 
-    // Inject redirectUrl using ReflectionTestUtils as @Value won't work in unit
-    // tests
     ReflectionTestUtils.setField(successHandler, "redirectUrl", redirectUrl);
-
-    // Inject allowedDomains
     ReflectionTestUtils.setField(successHandler, "allowedDomains",
         "http://localhost:3000,https://localhost:3000");
 
-    // Mock ClientRegistrationRepository 동작 설정
     given(clientRegistrationRepository.findByRegistrationId("google")).willReturn(
         clientRegistration);
   }
@@ -150,6 +143,19 @@ class OAuth2LoginSuccessHandlerTest {
     then(tokenProvider).should(times(1)).createAccessToken(testUser);
     then(tokenProvider).should(times(1)).createRefreshToken(testUser);
     then(tokenProvider).should(times(1)).getRefreshTokenExpiry();
+
+    // 4. 쿠키 검증
+    assertThat(response.getCookie("access_token")).isNotNull();
+    assertThat(response.getCookie("access_token").getValue()).isEqualTo(accessToken);
+    assertThat(response.getCookie("access_token").isHttpOnly()).isTrue();
+    assertThat(response.getCookie("access_token").getSecure()).isTrue();
+    assertThat(response.getCookie("access_token").getPath()).isEqualTo("/");
+
+    assertThat(response.getCookie("refresh_token")).isNotNull();
+    assertThat(response.getCookie("refresh_token").getValue()).isEqualTo(refreshToken);
+    assertThat(response.getCookie("refresh_token").isHttpOnly()).isTrue();
+    assertThat(response.getCookie("refresh_token").getSecure()).isTrue();
+    assertThat(response.getCookie("refresh_token").getPath()).isEqualTo("/");
   }
 
   @Test
@@ -197,6 +203,6 @@ class OAuth2LoginSuccessHandlerTest {
     // then: 에러 URL로 리다이렉션되었는지 검증
     String expectedErrorUrl = "/login?error=true&message=oauth_login_failed";
     assertThat(response.getRedirectedUrl()).isEqualTo(expectedErrorUrl);
-    assertThat(response.getStatus()).isEqualTo(HttpServletResponse.SC_FOUND); // 302 Found
+    assertThat(response.getStatus()).isEqualTo(HttpServletResponse.SC_FOUND);
   }
 }

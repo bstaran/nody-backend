@@ -46,3 +46,6 @@ out/
 .DS_Store
 .cursor/
 .clinerules/
+
+### Prompt files ###
+*.prompt.md
