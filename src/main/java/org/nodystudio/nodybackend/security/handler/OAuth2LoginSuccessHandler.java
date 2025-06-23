@@ -123,7 +123,6 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
       String targetUrl = UriComponentsBuilder
           .fromUriString(redirectUrl)
           .queryParam("authSuccess", "true")
-          .queryParam("userId", user.getId())
           .build()
           .toUriString();
 
@@ -162,7 +161,8 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
   }
 
   /**
-   * 리다이렉트 URL이 허용된 도메인인지 검증 도메인 경로('/path')가 포함된 URL도 허용하고, 서브도메인은 보호합니다. 프로토콜(http/https)은 비교에서
+   * 리다이렉트 URL이 허용된 도메인인지 검증 도메인 경로('/path')가 포함된 URL도 허용하고, 서브도메인은 보호합니다.
+   * 프로토콜(http/https)은 비교에서
    * 제외하여 환경 전환 시에도 인증이 유지됩니다.
    *
    * @param url 검증할 URL
@@ -207,7 +207,8 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
    *
    * @param redirectFullHost 리다이렉트 URL의 호스트:포트 또는 호스트 부분.
    * @param redirectHostOnly 리다이렉트 URL의 호스트 부분.
-   * @param rawAllowedDomain 원시 허용 도메인 문자열 (예: "https://example.com:8080", "sub.example.com").
+   * @param rawAllowedDomain 원시 허용 도메인 문자열 (예: "https://example.com:8080",
+   *                         "sub.example.com").
    * @return 리다이렉트 URL이 허용 도메인 패턴과 일치하면 true, 그렇지 않으면 false.
    */
   private boolean domainMatches(String redirectFullHost, String redirectHostOnly,

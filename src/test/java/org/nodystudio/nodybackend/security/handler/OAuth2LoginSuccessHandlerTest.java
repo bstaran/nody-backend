@@ -135,7 +135,7 @@ class OAuth2LoginSuccessHandlerTest {
     assertThat(savedUser.getRefreshTokenExpiry()).isEqualTo(refreshTokenExpiry);
 
     // 2. 리다이렉션 URL 검증
-    String expectedRedirectUrl = redirectUrl + "?authSuccess=true&userId=" + testUser.getId();
+    String expectedRedirectUrl = redirectUrl + "?authSuccess=true";
     assertThat(response.getRedirectedUrl()).isEqualTo(expectedRedirectUrl);
     assertThat(response.getStatus()).isEqualTo(HttpServletResponse.SC_FOUND);
 
