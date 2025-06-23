@@ -4,7 +4,6 @@ import static org.nodystudio.nodybackend.dto.code.ErrorCode.USER_NOT_AUTHENTICAT
 
 import java.util.ArrayList;
 import java.util.List;
-import lombok.extern.slf4j.Slf4j;
 import org.nodystudio.nodybackend.dto.ApiResponse;
 import org.nodystudio.nodybackend.dto.FieldErrorDto;
 import org.nodystudio.nodybackend.dto.code.SuccessCode;
@@ -12,18 +11,16 @@ import org.nodystudio.nodybackend.exception.custom.ForbiddenException;
 import org.nodystudio.nodybackend.exception.custom.ResourceNotFoundException;
 import org.nodystudio.nodybackend.exception.custom.UnauthorizedException;
 import org.nodystudio.nodybackend.exception.custom.ValidationException;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 예외 처리 테스트를 위한 컨트롤러 개발 환경에서만 사용하고, 프로덕션 환경에서는 비활성화하는 것이 좋습니다.
+ * 예외 처리 테스트를 위한 컨트롤러
+ * 테스트 환경에서만 사용되는 컨트롤러입니다.
  */
-@Slf4j
 @RestController
-@Profile({ "dev", "test" })
 @RequestMapping("/api/test/exceptions")
 public class ExceptionTestController {
 
