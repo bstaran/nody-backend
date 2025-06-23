@@ -106,7 +106,6 @@ public class SecurityConfig {
             .requestMatchers("/swagger-ui/**", "/api-docs/**").permitAll()
             .requestMatchers("/openapi.json", "/favicon.ico").permitAll()
             .requestMatchers("/actuator/**").permitAll()
-            .requestMatchers("/api/test/exceptions/security-access-test").hasRole("ADMIN")
             .anyRequest().authenticated())
         .exceptionHandling(exceptions -> exceptions
             .authenticationEntryPoint(customAuthenticationEntryPoint)
