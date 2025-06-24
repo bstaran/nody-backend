@@ -117,4 +117,70 @@ class UserServiceTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("닉네임은 공백일 수 없습니다.");
     }
+
+    @Test
+    @DisplayName("사용자 조회 - null userId")
+    void getCurrentUser_nullUserId() {
+        // when & then
+        assertThatThrownBy(() -> userService.getCurrentUser(null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("사용자 ID는 필수입니다.");
+    }
+
+    @Test
+    @DisplayName("사용자 조회 - 빈 userId")
+    void getCurrentUser_emptyUserId() {
+        // when & then
+        assertThatThrownBy(() -> userService.getCurrentUser(""))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("사용자 ID는 필수입니다.");
+    }
+
+    @Test
+    @DisplayName("사용자 조회 - 공백 userId")
+    void getCurrentUser_blankUserId() {
+        // when & then
+        assertThatThrownBy(() -> userService.getCurrentUser("   "))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("사용자 ID는 필수입니다.");
+    }
+
+    @Test
+    @DisplayName("사용자 조회 - 숫자가 아닌 userId")
+    void getCurrentUser_invalidUserId() {
+        // when & then
+        assertThatThrownBy(() -> userService.getCurrentUser("abc"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("유효하지 않은 사용자 ID 형식입니다: abc");
+    }
+
+    @Test
+    @DisplayName("사용자 조회 - 음수 userId")
+    void getCurrentUser_negativeUserId() {
+        // when & then
+        assertThatThrownBy(() -> userService.getCurrentUser("-1"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("사용자 ID는 양수여야 합니다: -1");
+    }
+
+    @Test
+    @DisplayName("사용자 조회 - 0인 userId")
+    void getCurrentUser_zeroUserId() {
+        // when & then
+        assertThatThrownBy(() -> userService.getCurrentUser("0"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("사용자 ID는 양수여야 합니다: 0");
+    }
+
+    @Test
+    @DisplayName("닉네임 변경 - 유효하지 않은 userId")
+    void updateNickname_invalidUserId() {
+        // given
+        UpdateNicknameRequestDto requestDto = new UpdateNicknameRequestDto("새닉네임");
+
+        // when & then
+        assertThatThrownBy(() -> userService.updateNickname("invalid", requestDto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("유효하지 않은 사용자 ID 형식입니다: invalid");
+    }
 }
