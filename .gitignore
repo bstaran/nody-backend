@@ -1,11 +1,15 @@
-HELP.md
+# Gradle
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### STS ###
+# Spring Boot
+HELP.md
+
+### IDE ###
+# Eclipse
 .apt_generated
 .classpath
 .factorypath
@@ -17,7 +21,7 @@ bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
 
-### IntelliJ IDEA ###
+# IntelliJ IDEA
 .idea
 *.iws
 *.iml
@@ -26,26 +30,56 @@ out/
 !**/src/main/**/out/
 !**/src/test/**/out/
 
-### NetBeans ###
+# NetBeans
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
 
-### VS Code ###
+# VS Code
 .vscode/
 
-### etc ###
+### Application Config ###
+# Sensitive configuration files
 /src/main/resources/application-dev.yaml
 /src/main/resources/application-prod.yaml
-/.roo/
-/.junie/
-/docs/
 
+### Logs ###
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dev-debug.log
+
+### Dependencies ###
+node_modules/
+
+### Environment ###
+.env
+
+### OS Specific ###
 .DS_Store
+
+### Development Tools ###
 .cursor/
 .clinerules/
+/.roo/
+/.junie/
 
-### Prompt files ###
+### Documentation ###
+/docs/
 *.prompt.md
+CLAUDE.md
+
+### Task Management ###
+# tasks.json
+# tasks/
+
+### Editor Files ###
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw? 
