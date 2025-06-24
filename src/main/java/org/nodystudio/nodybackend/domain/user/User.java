@@ -74,6 +74,13 @@ public class User extends BaseTimeEntity {
     this.refreshTokenExpiry = null;
   }
 
+  public void updateNickname(String nickname) {
+    if (nickname == null || nickname.isBlank()) {
+      throw new IllegalArgumentException("닉네임은 공백일 수 없습니다.");
+    }
+    this.nickname = nickname;
+  }
+
   /**
    * 사용자의 역할을 Spring Security {@link GrantedAuthority} 목록으로 반환합니다.
    * 현재 시스템에서는 사용자가 단일 역할만 가지지만, Spring Security 호환성을 위해 목록 형태로 반환합니다.
