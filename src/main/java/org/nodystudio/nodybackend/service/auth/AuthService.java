@@ -18,10 +18,16 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AuthService {
 
+  private static final String BEARER_TYPE = "Bearer";
+  private static final String REFRESH_TOKEN_NOT_FOUND_ERROR = "리프레시 토큰를 찾을 수 없습니다.";
+  private static final String INVALID_REFRESH_TOKEN_ERROR = "제공된 리프레시 토큰이 유효하지 않습니다.";
+  private static final String TOKEN_PROCESSING_ERROR = "리프레시 토큰 처리 중 오류가 발생했습니다.";
+  private static final String USER_NOT_FOUND_ERROR = "리프레시 토큰과 연결된 사용자가 존재하지 않습니다.";
+  private static final String TOKEN_MISMATCH_ERROR = "제공된 리프레시 토큰이 저장된 토큰과 일치하지 않습니다.";
+  private static final String TOKEN_EXPIRED_ERROR = "리프레시 토큰이 만료되었습니다.";
+
   private final UserRepository userRepository;
   private final TokenProvider tokenProvider;
-
-  private static final String BEARER_TYPE = "Bearer";
 
   /**
    * Refresh Token을 사용하여 새로운 Access Token과 Refresh Token을 발급합니다. (Rotation 적용)
@@ -35,7 +41,7 @@ public class AuthService {
     String providedRefreshToken = requestDto.getRefreshToken();
 
     if (providedRefreshToken == null || providedRefreshToken.isBlank()) {
-      throw new InvalidRefreshTokenException("리프레시 토큰를 찾을 수 없습니다.");
+      throw new InvalidRefreshTokenException(REFRESH_TOKEN_NOT_FOUND_ERROR);
     }
     log.debug("토큰 리프레시 요청 처리 시작");
 
@@ -45,6 +51,18 @@ public class AuthService {
     log.info("사용자 ID: {}의 토큰 리프레시 완료", user.getId());
 
     return response;
+  }
+
+  /**
+   * 토큰 응답 DTO를 생성합니다.
+   */
+  private TokenResponseDto buildTokenResponse(TokenPair tokens) {
+    return TokenResponseDto.builder()
+        .grantType(BEARER_TYPE)
+        .accessToken(tokens.accessToken())
+        .refreshToken(tokens.refreshToken())
+        .accessTokenExpiresIn(tokenProvider.getAccessTokenExpirationMillis())
+        .build();
   }
 
   /**
@@ -73,11 +91,11 @@ public class AuthService {
       tokenProvider.validateToken(token);
       return tokenProvider.getUserIdFromToken(token);
     } catch (InvalidTokenException e) {
-      log.warn("리프레시 토큰 유효성 검증 실패 (InvalidTokenException): {}", e.getMessage());
-      throw new InvalidRefreshTokenException("제공된 리프레시 토큰이 유효하지 않습니다.", e);
+      log.warn("리프레시 토큰 유효성 검증 실패: {}", e.getMessage());
+      throw new InvalidRefreshTokenException(INVALID_REFRESH_TOKEN_ERROR, e);
     } catch (Exception e) {
-      log.warn("토큰 검증 또는 사용자 ID 추출 중 예기치 않은 오류 발생: {}", e.getMessage());
-      throw new InvalidRefreshTokenException("리프레시 토큰 처리 중 오류가 발생했습니다.", e);
+      log.error("토큰 검증 중 예기치 않은 오류 발생: {}", e.getMessage(), e);
+      throw new InvalidRefreshTokenException(TOKEN_PROCESSING_ERROR, e);
     }
   }
 
@@ -88,7 +106,7 @@ public class AuthService {
     return userRepository.findById(userId)
         .orElseThrow(() -> {
           log.warn("리프레시 토큰에서 추출한 사용자 ID가 존재하지 않음: {}", userId);
-          return new InvalidRefreshTokenException("리프레시 토큰과 연결된 사용자가 존재하지 않습니다.");
+          return new InvalidRefreshTokenException(USER_NOT_FOUND_ERROR);
         });
   }
 
@@ -99,7 +117,7 @@ public class AuthService {
     if (user.getRefreshToken() == null || !providedToken.equals(user.getRefreshToken())) {
       log.warn("제공된 리프레시 토큰이 DB에 저장된 토큰과 일치하지 않음. 사용자 ID: {}", user.getId());
       invalidateUserToken(user);
-      throw new InvalidRefreshTokenException("제공된 리프레시 토큰이 저장된 토큰과 일치하지 않습니다.");
+      throw new InvalidRefreshTokenException(TOKEN_MISMATCH_ERROR);
     }
   }
 
@@ -111,7 +129,7 @@ public class AuthService {
         user.getRefreshTokenExpiry().isBefore(LocalDateTime.now())) {
       log.warn("리프레시 토큰 만료됨. 사용자 ID: {}", user.getId());
       invalidateUserToken(user);
-      throw new InvalidRefreshTokenException("리프레시 토큰이 만료되었습니다.");
+      throw new InvalidRefreshTokenException(TOKEN_EXPIRED_ERROR);
     }
   }
 
@@ -139,22 +157,4 @@ public class AuthService {
     return new TokenPair(newAccessToken, newRefreshToken);
   }
 
-  /**
-   * 토큰 응답 DTO를 생성합니다.
-   */
-  private TokenResponseDto buildTokenResponse(TokenPair tokens) {
-    return TokenResponseDto.builder()
-        .grantType(BEARER_TYPE)
-        .accessToken(tokens.accessToken)
-        .refreshToken(tokens.refreshToken)
-        .accessTokenExpiresIn(tokenProvider.getAccessTokenExpirationMillis())
-        .build();
-  }
-
-  /**
-   * Access Token과 Refresh Token 쌍을 담는 내부 클래스
-   */
-  private record TokenPair(String accessToken, String refreshToken) {
-
-  }
 }
