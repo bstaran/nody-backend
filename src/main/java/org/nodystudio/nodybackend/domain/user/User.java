@@ -18,8 +18,9 @@ import java.util.List;
 @Builder
 @Entity
 @Table(name = "users", uniqueConstraints = {
-    @UniqueConstraint(columnNames = { "provider", "social_id" }),
-    @UniqueConstraint(columnNames = "email")
+    @UniqueConstraint(columnNames = { "provider", "social_id" })
+    // 이메일 unique constraint는 DB 레벨에서 부분 인덱스로 처리
+    // CREATE UNIQUE INDEX idx_users_email_active ON users (email) WHERE is_active = true AND deleted_at IS NULL;
 })
 public class User extends BaseTimeEntity {
 
@@ -57,6 +58,9 @@ public class User extends BaseTimeEntity {
   @Builder.Default
   private RoleType role = RoleType.USER;
 
+  @Column(name = "deleted_at")
+  private LocalDateTime deletedAt;
+
   public void updateRefreshToken(String refreshToken, LocalDateTime refreshTokenExpiry) {
     this.refreshToken = refreshToken;
     this.refreshTokenExpiry = refreshTokenExpiry;
@@ -79,6 +83,69 @@ public class User extends BaseTimeEntity {
       throw new IllegalArgumentException("닉네임은 공백일 수 없습니다.");
     }
     this.nickname = nickname;
+  }
+
+  /**
+   * 계정을 비활성화합니다 (회원탈퇴)
+   * - isActive를 false로 설정
+   * - deletedAt을 현재 시간으로 설정
+   * - 리프레시 토큰 무효화
+   */
+  public void deactivateAccount() {
+    this.isActive = false;
+    this.deletedAt = LocalDateTime.now();
+    this.clearRefreshToken();
+  }
+
+  /**
+   * 탈퇴한 계정을 재활성화합니다. (30일 유예기간 내 완전 복구)
+   * 기존 사용자 정보를 그대로 유지하며 계정만 활성화합니다.
+   *
+   * @throws IllegalStateException 이미 활성 상태인 계정인 경우
+   */
+  public void reactivateAccount() {
+    if (this.isActive) {
+      throw new IllegalStateException("이미 활성 상태인 계정입니다.");
+    }
+    
+    this.isActive = true;
+    this.deletedAt = null;
+    
+    // 재활성화 시 기존 refresh token 제거 (새로 로그인하도록)
+    this.refreshToken = null;
+    this.refreshTokenExpiry = null;
+  }
+
+  /**
+   * 탈퇴한 계정을 재활성화합니다.
+   * 계정을 활성 상태로 되돌리고 관련 정보를 업데이트합니다.
+   *
+   * @param nickname 새로운 닉네임
+   * @param email 새로운 이메일 (선택적)
+   * @throws IllegalStateException 이미 활성 상태인 계정인 경우
+   * @deprecated 30일 유예기간 재활성화는 파라미터 없는 reactivateAccount() 사용 권장
+   */
+  @Deprecated
+  public void reactivateAccount(String nickname, String email) {
+    if (this.isActive) {
+      throw new IllegalStateException("이미 활성 상태인 계정입니다.");
+    }
+    
+    if (nickname == null || nickname.trim().isEmpty()) {
+      throw new IllegalArgumentException("닉네임은 필수입니다.");
+    }
+    
+    this.isActive = true;
+    this.deletedAt = null;
+    this.nickname = nickname.trim();
+    
+    if (email != null && !email.trim().isEmpty()) {
+      this.email = email.trim();
+    }
+    
+    // 재활성화 시 기존 refresh token 제거 (새로 로그인하도록)
+    this.refreshToken = null;
+    this.refreshTokenExpiry = null;
   }
 
   /**

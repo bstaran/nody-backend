@@ -3,6 +3,8 @@ package org.nodystudio.nodybackend.repository;
 import org.nodystudio.nodybackend.domain.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
@@ -33,4 +35,54 @@ public interface UserRepository extends JpaRepository<User, Long> {
    * @return Optional<User>
    */
   Optional<User> findByEmail(String email);
+
+  /**
+   * 활성 사용자만 ID로 조회합니다.
+   *
+   * @param id 사용자 ID
+   * @return Optional<User>
+   */
+  Optional<User> findByIdAndIsActiveTrue(Long id);
+
+  /**
+   * 활성 사용자만 이메일로 조회합니다.
+   *
+   * @param email 사용자 이메일
+   * @return Optional<User>
+   */
+  Optional<User> findByEmailAndIsActiveTrue(String email);
+
+  /**
+   * 활성 사용자만 소셜 정보로 조회합니다.
+   *
+   * @param provider 소셜 로그인 제공자
+   * @param socialId 소셜 ID
+   * @return Optional<User>
+   */
+  Optional<User> findByProviderAndSocialIdAndIsActiveTrue(String provider, String socialId);
+
+  /**
+   * 특정 시점 이전에 탈퇴한 비활성 사용자들을 조회합니다. (배치 삭제용)
+   *
+   * @param cutoffTime 기준 시점
+   * @return List<User>
+   */
+  List<User> findByIsActiveFalseAndDeletedAtBefore(LocalDateTime cutoffTime);
+
+  /**
+   * 특정 시점 이후에 탈퇴한 사용자를 이메일로 조회합니다. (재가입 검증용)
+   *
+   * @param email 이메일
+   * @param cutoffTime 기준 시점
+   * @return Optional<User>
+   */
+  Optional<User> findByEmailAndDeletedAtAfter(String email, LocalDateTime cutoffTime);
+
+  /**
+   * 특정 시점 이전에 탈퇴한 비활성 사용자 수를 조회합니다. (배치 모니터링용)
+   *
+   * @param cutoffTime 기준 시점
+   * @return 해당 조건에 맞는 사용자 수
+   */
+  long countByIsActiveFalseAndDeletedAtBefore(LocalDateTime cutoffTime);
 }
