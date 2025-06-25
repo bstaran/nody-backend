@@ -83,13 +83,6 @@ CLAUDE.md
 *.sln
 *.sw? 
 
-# Logs
-# Dependency directories
-# Environment variables
-# Editor directories and files
-.vscode
-# OS specific
-
 # Task files
 tasks.json
 tasks/ 
