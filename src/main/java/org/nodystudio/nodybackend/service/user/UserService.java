@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.dto.user.UpdateNicknameRequestDto;
 import org.nodystudio.nodybackend.dto.user.UserDetailResponseDto;
+import org.nodystudio.nodybackend.exception.custom.AccountAlreadyDeactivatedException;
 import org.nodystudio.nodybackend.exception.custom.UserNotFoundException;
 import org.nodystudio.nodybackend.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -40,14 +41,14 @@ public class UserService {
      * 
      * @param userId 탈퇴할 사용자 ID
      * @throws UserNotFoundException 사용자를 찾을 수 없는 경우
-     * @throws IllegalStateException 이미 탈퇴한 계정인 경우
+     * @throws AccountAlreadyDeactivatedException 이미 탈퇴한 계정인 경우
      */
     @Transactional
     public void deactivateAccount(String userId) {
-        User user = findUserById(userId);
+        User user = findUserByIdIncludingInactive(userId);
 
         if (!user.getIsActive()) {
-            throw new IllegalStateException("이미 탈퇴한 계정입니다.");
+            throw new AccountAlreadyDeactivatedException("이미 탈퇴한 계정입니다.");
         }
 
         log.info("사용자 계정 탈퇴 처리: userId={}, email={}, nickname={}", 
@@ -137,6 +138,34 @@ public class UserService {
         }
 
         return userRepository.findByIdAndIsActiveTrue(userIdLong)
+                .orElseThrow(() -> UserNotFoundException.byUserId(userId));
+    }
+
+    /**
+     * 사용자 ID로 사용자를 조회합니다 (비활성 사용자 포함).
+     * 
+     * @param userId 사용자 ID (문자열)
+     * @return 조회된 사용자 엔티티
+     * @throws UserNotFoundException 사용자를 찾을 수 없는 경우
+     * @throws IllegalArgumentException 사용자 ID가 유효하지 않은 경우
+     */
+    private User findUserByIdIncludingInactive(String userId) {
+        if (userId == null || userId.trim().isEmpty()) {
+            throw new IllegalArgumentException("사용자 ID는 필수입니다.");
+        }
+
+        Long userIdLong;
+        try {
+            userIdLong = Long.parseLong(userId.trim());
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("유효하지 않은 사용자 ID 형식입니다: " + userId);
+        }
+
+        if (userIdLong <= 0) {
+            throw new IllegalArgumentException("사용자 ID는 양수여야 합니다: " + userId);
+        }
+
+        return userRepository.findById(userIdLong)
                 .orElseThrow(() -> UserNotFoundException.byUserId(userId));
     }
 }
