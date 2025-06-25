@@ -11,6 +11,7 @@ import org.nodystudio.nodybackend.domain.user.RoleType;
 import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.dto.user.UpdateNicknameRequestDto;
 import org.nodystudio.nodybackend.dto.user.UserDetailResponseDto;
+import org.nodystudio.nodybackend.exception.custom.AccountAlreadyDeactivatedException;
 import org.nodystudio.nodybackend.exception.custom.UserNotFoundException;
 import org.nodystudio.nodybackend.repository.UserRepository;
 
@@ -188,7 +189,7 @@ class UserServiceTest {
     @DisplayName("계정 탈퇴 - 성공")
     void deactivateAccount_success() {
         // given
-        given(userRepository.findByIdAndIsActiveTrue(TEST_USER_ID)).willReturn(Optional.of(testUser));
+        given(userRepository.findById(TEST_USER_ID)).willReturn(Optional.of(testUser));
 
         // when
         userService.deactivateAccount(TEST_USER_ID_STRING);
@@ -198,14 +199,14 @@ class UserServiceTest {
         assertThat(testUser.getDeletedAt()).isNotNull();
         assertThat(testUser.getRefreshToken()).isNull();
         assertThat(testUser.getRefreshTokenExpiry()).isNull();
-        verify(userRepository).findByIdAndIsActiveTrue(TEST_USER_ID);
+        verify(userRepository).findById(TEST_USER_ID);
     }
 
     @Test
     @DisplayName("계정 탈퇴 - 사용자 없음")
     void deactivateAccount_userNotFound() {
         // given
-        given(userRepository.findByIdAndIsActiveTrue(TEST_USER_ID)).willReturn(Optional.empty());
+        given(userRepository.findById(TEST_USER_ID)).willReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> userService.deactivateAccount(TEST_USER_ID_STRING))
@@ -217,12 +218,21 @@ class UserServiceTest {
     @DisplayName("계정 탈퇴 - 이미 탈퇴한 계정")
     void deactivateAccount_alreadyDeactivated() {
         // given
-        given(userRepository.findByIdAndIsActiveTrue(TEST_USER_ID)).willReturn(Optional.empty());
-
+        User deactivatedUser = User.builder()
+                .id(TEST_USER_ID)
+                .provider("google")
+                .socialId("123456789")
+                .email("test@example.com")
+                .nickname("테스트사용자")
+                .role(RoleType.USER)
+                .build();
+        deactivatedUser.deactivateAccount(); // 명시적으로 탈퇴 처리
+        
+        given(userRepository.findById(TEST_USER_ID)).willReturn(Optional.of(deactivatedUser));
+        
         // when & then
         assertThatThrownBy(() -> userService.deactivateAccount(TEST_USER_ID_STRING))
-                .isInstanceOf(UserNotFoundException.class)
-                .hasMessageContaining("사용자 ID '1'로 사용자를 찾을 수 없습니다.");
+                .isInstanceOf(AccountAlreadyDeactivatedException.class);
     }
 
     @Test

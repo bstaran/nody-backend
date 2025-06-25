@@ -176,7 +176,7 @@ class UserApiIntegrationTest extends BaseIntegrationTest {
         .with(authentication(authentication))
         .contentType(MediaType.APPLICATION_JSON))
         .andDo(print())
-        .andExpect(status().isNotFound())
-        .andExpect(jsonPath("$.code").value("R001"));
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.code").value("U005"));
   }
 }
