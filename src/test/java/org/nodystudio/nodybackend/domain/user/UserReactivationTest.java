@@ -3,6 +3,7 @@ package org.nodystudio.nodybackend.domain.user;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.nodystudio.nodybackend.exception.custom.AccountAlreadyActivatedException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -67,7 +68,7 @@ class UserReactivationTest {
 
     // when & then
     assertThatThrownBy(() -> activeUser.reactivateAccount())
-        .isInstanceOf(IllegalStateException.class)
+        .isInstanceOf(AccountAlreadyActivatedException.class)
         .hasMessage("이미 활성 상태인 계정입니다.");
   }
 
