@@ -33,6 +33,7 @@ public enum ErrorCode {
   INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "U004", "비밀번호가 일치하지 않습니다."),
   ACCOUNT_ALREADY_DEACTIVATED(HttpStatus.CONFLICT, "U005", "이미 탈퇴한 계정입니다."),
   REREGISTRATION_RESTRICTED(HttpStatus.FORBIDDEN, "U006", "재가입이 제한된 계정입니다."),
+  ACCOUNT_ALREADY_ACTIVATED(HttpStatus.CONFLICT, "U007", "이미 활성화된 계정입니다."),
 
   // Resource Errors
   RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "R001", "리소스를 찾을 수 없습니다."),
