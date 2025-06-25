@@ -1,5 +1,6 @@
 package org.nodystudio.nodybackend.service.auth;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
@@ -89,27 +90,71 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
    *
    * @param attributes OAuth 사용자 정보
    * @return 저장되거나 업데이트된 User 엔티티
+   * @throws OAuth2AuthenticationException 재가입 제한 위반 시
    */
   User saveOrUpdate(OAuthAttributes attributes) {
     log.debug("Attempting to find user by provider [{}] and socialId [{}]",
         attributes.getProvider(),
         attributes.getProviderId());
-    Optional<User> userOptional = userRepository.findByProviderAndSocialId(attributes.getProvider(),
-        attributes.getProviderId());
+
+    // 1. 활성 사용자 먼저 확인 (기존 로직)
+    Optional<User> activeUserOptional = userRepository.findByProviderAndSocialIdAndIsActiveTrue(
+        attributes.getProvider(), attributes.getProviderId());
 
     User user;
-    if (userOptional.isPresent()) {
-      user = userOptional.get();
+    if (activeUserOptional.isPresent()) {
+      // 기존 활성 사용자 업데이트
+      user = activeUserOptional.get();
       user.updateOAuthInfo(attributes.getName(), attributes.getEmail());
-      log.info("Existing user found and updated: provider={}, socialId={}",
-          attributes.getProvider(),
-          attributes.getProviderId());
+      log.info("Existing active user found and updated: provider={}, socialId={}",
+          attributes.getProvider(), attributes.getProviderId());
     } else {
-      user = attributes.toEntity();
-      user = userRepository.saveAndFlush(user);
-      log.info("New user registered: provider={}, socialId={}", attributes.getProvider(),
-          attributes.getProviderId());
+      // 2. 새 사용자 등록 전 재가입 제한 검증
+      validateReRegistration(attributes.getEmail());
+
+      // 3. 탈퇴한 사용자가 있는지 확인 (소셜 ID 기준)
+      Optional<User> deactivatedUserOptional = userRepository.findByProviderAndSocialId(
+          attributes.getProvider(), attributes.getProviderId());
+
+      if (deactivatedUserOptional.isPresent()) {
+        // 탈퇴한 사용자 계정 재활성화
+        user = deactivatedUserOptional.get();
+        log.info("탈퇴한 계정 재활성화: provider={}, socialId={}, userId={}, 기존닉네임={}", 
+                attributes.getProvider(), attributes.getProviderId(), user.getId(), user.getNickname());
+        user.reactivateAccount();
+      } else {
+        // 완전히 새로운 사용자 등록
+        user = attributes.toEntity();
+        user = userRepository.saveAndFlush(user);
+        log.info("New user registered: provider={}, socialId={}",
+            attributes.getProvider(), attributes.getProviderId());
+      }
     }
     return user;
+  }
+
+  /**
+   * 재가입 제한을 검증합니다.
+   * 30일 이내에 탈퇴한 이메일로는 재가입할 수 없습니다.
+   *
+   * @param email 검증할 이메일
+   * @throws OAuth2AuthenticationException 재가입 제한 위반 시
+   */
+  private void validateReRegistration(String email) {
+    if (email == null || email.trim().isEmpty()) {
+      return;
+    }
+
+    LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
+    Optional<User> recentlyDeactivatedUser = userRepository.findByEmailAndDeletedAtAfter(email, thirtyDaysAgo);
+
+    if (recentlyDeactivatedUser.isPresent()) {
+      log.warn("재가입 제한 위반: 30일 이내 탈퇴한 이메일로 가입 시도. email={}", email);
+      OAuth2Error oauth2Error = new OAuth2Error("reregistration_restricted",
+          "해당 이메일로는 탈퇴 후 30일 동안 재가입할 수 없습니다. " +
+              "30일 후에 다시 시도해주세요.",
+          null);
+      throw new OAuth2AuthenticationException(oauth2Error);
+    }
   }
 }

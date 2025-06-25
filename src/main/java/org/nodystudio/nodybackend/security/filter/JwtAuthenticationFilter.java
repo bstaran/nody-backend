@@ -138,18 +138,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   private Authentication getAuthentication(String jwt) throws AuthenticationException {
     try {
       Long userId = tokenProvider.getUserIdFromToken(jwt);
-      User user = userRepository.findById(userId)
-          .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + userId));
-
-      if (!user.getIsActive()) {
-        throw new DisabledException("비활성화된 사용자 계정입니다: " + userId);
-      }
+      User user = userRepository.findByIdAndIsActiveTrue(userId)
+          .orElseThrow(() -> new DisabledException("비활성화되었거나 존재하지 않는 사용자 계정입니다: " + userId));
 
       List<GrantedAuthority> authorities = user.getRoles();
 
       return new UsernamePasswordAuthenticationToken(user, null, authorities);
-    } catch (UsernameNotFoundException e) {
-      throw e;
     } catch (DisabledException e) {
       throw e;
     } catch (Exception e) {
