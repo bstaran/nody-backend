@@ -11,6 +11,7 @@ import org.nodystudio.nodybackend.domain.user.RoleType;
 import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.repository.UserRepository;
 
+import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
@@ -37,7 +38,7 @@ class UserCleanupBatchServiceTest {
     private User expiredUser2;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         
         // 31일 전에 탈퇴한 사용자
         expiredUser1 = User.builder()
@@ -50,8 +51,12 @@ class UserCleanupBatchServiceTest {
                 .isActive(false)
                 .build();
         expiredUser1.deactivateAccount();
+        // 리플렉션으로 deletedAt을 31일 전으로 설정
+        Field deletedAtField = User.class.getDeclaredField("deletedAt");
+        deletedAtField.setAccessible(true);
+        deletedAtField.set(expiredUser1, LocalDateTime.now().minusDays(31));
         
-        // 32일 전에 탈퇴한 사용자 (강제로 deletedAt 설정)
+        // 32일 전에 탈퇴한 사용자
         expiredUser2 = User.builder()
                 .id(2L)
                 .provider("google")
@@ -62,6 +67,8 @@ class UserCleanupBatchServiceTest {
                 .isActive(false)
                 .build();
         expiredUser2.deactivateAccount();
+        // 리플렉션으로 deletedAt을 32일 전으로 설정
+        deletedAtField.set(expiredUser2, LocalDateTime.now().minusDays(32));
     }
 
     @Test
