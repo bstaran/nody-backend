@@ -71,4 +71,29 @@ public class UserController {
         .status(SuccessCode.OK.getStatus())
         .body(ApiResponse.success(SuccessCode.OK, updatedUser));
   }
+
+  /**
+   * 사용자 계정을 탈퇴합니다
+   * - 즉시 계정 비활성화 및 사용자 데이터 삭제
+   * - 30일 후 완전 삭제 (배치 처리)
+   *
+   * @param user 인증된 사용자 정보 (@ignore)
+   * @return 탈퇴 처리 결과
+   */
+  @DeleteMapping(value = "/me")
+  public ResponseEntity<ApiResponse<Void>> deactivateAccount(
+      @AuthenticationPrincipal User user) {
+
+    if (user == null) {
+      return ResponseEntity
+          .status(ErrorCode.USER_NOT_AUTHENTICATED.getStatus())
+          .body(ApiResponse.error(ErrorCode.USER_NOT_AUTHENTICATED));
+    }
+
+    userService.deactivateAccount(user.getId().toString());
+
+    return ResponseEntity
+        .status(SuccessCode.OK.getStatus())
+        .body(ApiResponse.success(SuccessCode.OK, null));
+  }
 }

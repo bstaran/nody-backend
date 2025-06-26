@@ -116,10 +116,9 @@ class JwtAuthenticationFilterTest {
     request.addHeader("Authorization", "Bearer " + validToken);
     given(tokenProvider.validateToken(validToken)).willReturn(true);
     given(tokenProvider.getUserIdFromToken(validToken)).willReturn(userId);
-    given(userRepository.findById(userId)).willReturn(Optional.of(mockUser));
+    given(userRepository.findByIdAndIsActiveTrue(userId)).willReturn(Optional.of(mockUser));
     given(mockUser.getRoles())
         .willReturn(Collections.singletonList(new SimpleGrantedAuthority(RoleType.USER.getKey())));
-    given(mockUser.getIsActive()).willReturn(true);
 
     // when
     jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
@@ -136,7 +135,7 @@ class JwtAuthenticationFilterTest {
     then(filterChain).should(times(1)).doFilter(request, response);
     then(tokenProvider).should(times(1)).validateToken(validToken);
     then(tokenProvider).should(times(1)).getUserIdFromToken(validToken);
-    then(userRepository).should(times(1)).findById(userId);
+    then(userRepository).should(times(1)).findByIdAndIsActiveTrue(userId);
   }
 
   @Test
@@ -190,7 +189,7 @@ class JwtAuthenticationFilterTest {
     request.addHeader("Authorization", "Bearer " + validToken);
     given(tokenProvider.validateToken(validToken)).willReturn(true);
     given(tokenProvider.getUserIdFromToken(validToken)).willReturn(userId);
-    given(userRepository.findById(userId)).willReturn(Optional.empty());
+    given(userRepository.findByIdAndIsActiveTrue(userId)).willReturn(Optional.empty());
 
     // when
     jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
@@ -203,7 +202,31 @@ class JwtAuthenticationFilterTest {
     then(filterChain).should(times(1)).doFilter(request, response);
     then(tokenProvider).should(times(1)).validateToken(validToken);
     then(tokenProvider).should(times(1)).getUserIdFromToken(validToken);
-    then(userRepository).should(times(1)).findById(userId);
+    then(userRepository).should(times(1)).findByIdAndIsActiveTrue(userId);
+  }
+
+  @Test
+  @DisplayName("비활성 사용자(탈퇴한 계정)의 경우 Authentication 설정 안 함")
+  void doFilterInternal_shouldNotSetAuthentication_whenUserIsDeactivated()
+      throws ServletException, IOException {
+    // given
+    request.addHeader("Authorization", "Bearer " + validToken);
+    given(tokenProvider.validateToken(validToken)).willReturn(true);
+    given(tokenProvider.getUserIdFromToken(validToken)).willReturn(userId);
+    given(userRepository.findByIdAndIsActiveTrue(userId)).willReturn(Optional.empty()); // 비활성 사용자
+
+    // when
+    jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
+
+    // then
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    assertThat(authentication).isNull();
+
+    // verify
+    then(filterChain).should(times(1)).doFilter(request, response);
+    then(tokenProvider).should(times(1)).validateToken(validToken);
+    then(tokenProvider).should(times(1)).getUserIdFromToken(validToken);
+    then(userRepository).should(times(1)).findByIdAndIsActiveTrue(userId);
   }
 
   @Test

@@ -12,6 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.nodystudio.nodybackend.dto.ApiResponse;
 import org.nodystudio.nodybackend.dto.FieldErrorDto;
 import org.nodystudio.nodybackend.dto.code.ErrorCode;
+import org.nodystudio.nodybackend.exception.custom.AccountAlreadyActivatedException;
+import org.nodystudio.nodybackend.exception.custom.AccountAlreadyDeactivatedException;
 import org.nodystudio.nodybackend.exception.custom.BusinessException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -106,6 +108,24 @@ public class GlobalExceptionHandler {
     String logMessage = String.format("Details: ErrorCode=%s, HttpStatus=%s", errorCode.getCode(),
         errorCode.getStatus());
     return handleException(ex, errorCode, LogLevel.WARN, logMessage);
+  }
+
+  /**
+   * {@link AccountAlreadyDeactivatedException} 처리
+   */
+  @ExceptionHandler(AccountAlreadyDeactivatedException.class)
+  public ResponseEntity<ApiResponse<Object>> handleAccountAlreadyDeactivatedException(
+      AccountAlreadyDeactivatedException ex) {
+    return handleException(ex, ErrorCode.ACCOUNT_ALREADY_DEACTIVATED, LogLevel.WARN);
+  }
+
+  /**
+   * {@link AccountAlreadyActivatedException} 처리
+   */
+  @ExceptionHandler(AccountAlreadyActivatedException.class)
+  public ResponseEntity<ApiResponse<Object>> handleAccountAlreadyActivatedException(
+      AccountAlreadyActivatedException ex) {
+    return handleException(ex, ErrorCode.ACCOUNT_ALREADY_ACTIVATED, LogLevel.WARN);
   }
 
   /**

@@ -1,14 +1,17 @@
 package org.nodystudio.nodybackend.service.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -103,6 +106,10 @@ class CustomOAuth2UserServiceTest {
     given(delegateUserService.loadUser(userRequest)).willReturn(mockOAuth2User);
     given(mockOAuth2User.getAttributes()).willReturn(googleAttributes);
 
+    given(userRepository.findByProviderAndSocialIdAndIsActiveTrue("google", "google_12345")).willReturn(
+        Optional.empty());
+    given(userRepository.findByEmailAndDeletedAtAfter(anyString(), any(LocalDateTime.class))).willReturn(
+        Optional.empty());
     given(userRepository.findByProviderAndSocialId("google", "google_12345")).willReturn(
         Optional.empty());
     given(userRepository.saveAndFlush(any(User.class))).willAnswer(invocation -> {
@@ -123,7 +130,7 @@ class CustomOAuth2UserServiceTest {
 
     // then
     then(delegateUserService).should(times(1)).loadUser(userRequest);
-    then(userRepository).should(times(1)).findByProviderAndSocialId(registrationId, socialId);
+    then(userRepository).should(times(1)).findByProviderAndSocialIdAndIsActiveTrue(registrationId, socialId);
     then(userRepository).should(times(1)).saveAndFlush(any(User.class));
     then(userRepository).should(never()).save(any(User.class));
 
@@ -145,7 +152,7 @@ class CustomOAuth2UserServiceTest {
     given(userInfoEndpoint.getUserNameAttributeName()).willReturn(userNameAttributeName);
     given(delegateUserService.loadUser(userRequest)).willReturn(mockOAuth2User);
     given(mockOAuth2User.getAttributes()).willReturn(googleAttributes);
-    given(userRepository.findByProviderAndSocialId("google", "google_12345"))
+    given(userRepository.findByProviderAndSocialIdAndIsActiveTrue("google", "google_12345"))
         .willReturn(Optional.of(existingUser));
 
     // when
@@ -153,7 +160,7 @@ class CustomOAuth2UserServiceTest {
 
     // then
     then(delegateUserService).should(times(1)).loadUser(userRequest);
-    then(userRepository).should(times(1)).findByProviderAndSocialId(registrationId, socialId);
+    then(userRepository).should(times(1)).findByProviderAndSocialIdAndIsActiveTrue(registrationId, socialId);
     then(userRepository).should(never()).save(any(User.class));
     then(userRepository).should(never()).saveAndFlush(any(User.class));
 
@@ -203,7 +210,97 @@ class CustomOAuth2UserServiceTest {
 
     assertThat(actualException.getError().getErrorCode()).isEqualTo("user_loading_failed");
     assertThat(actualException.getCause()).isSameAs(expectedCause);
-    then(userRepository).should(never()).findByProviderAndSocialId(anyString(), anyString());
+    then(userRepository).should(never()).findByProviderAndSocialIdAndIsActiveTrue(anyString(), anyString());
     then(userRepository).should(never()).saveAndFlush(any(User.class));
+  }
+
+  @Test
+  @DisplayName("30일 이내 탈퇴한 이메일로 재가입 시도 시 OAuth2AuthenticationException 발생")
+  void loadUser_shouldThrowOAuth2Exception_whenReRegistrationRestricted() {
+    // given
+    given(clientRegistration.getProviderDetails()).willReturn(providerDetails);
+    given(providerDetails.getUserInfoEndpoint()).willReturn(userInfoEndpoint);
+    given(userInfoEndpoint.getUserNameAttributeName()).willReturn(userNameAttributeName);
+    given(delegateUserService.loadUser(userRequest)).willReturn(mockOAuth2User);
+    given(mockOAuth2User.getAttributes()).willReturn(googleAttributes);
+
+    // 활성 사용자 없음
+    given(userRepository.findByProviderAndSocialIdAndIsActiveTrue("google", "google_12345"))
+        .willReturn(Optional.empty());
+    
+    // 30일 이내 탈퇴한 사용자 존재
+    User recentlyDeactivatedUser = User.builder()
+        .id(3L)
+        .provider("google")
+        .socialId("different_social_id")
+        .email("test@example.com")
+        .nickname("Deactivated User")
+        .isActive(false)
+        .build();
+    recentlyDeactivatedUser.deactivateAccount();
+    
+    given(userRepository.findByEmailAndDeletedAtAfter(eq("test@example.com"), any(LocalDateTime.class)))
+        .willReturn(Optional.of(recentlyDeactivatedUser));
+
+    // when & then
+    assertThatThrownBy(() -> customOAuth2UserService.loadUser(userRequest))
+        .isInstanceOf(OAuth2AuthenticationException.class)
+        .hasMessageContaining("해당 이메일로는 탈퇴 후 30일 동안 재가입할 수 없습니다");
+
+    then(userRepository).should(times(1)).findByProviderAndSocialIdAndIsActiveTrue("google", "google_12345");
+    then(userRepository).should(times(1)).findByEmailAndDeletedAtAfter(eq("test@example.com"), any(LocalDateTime.class));
+    then(userRepository).should(never()).saveAndFlush(any(User.class));
+  }
+
+  @Test
+  @DisplayName("탈퇴한 사용자가 30일 후 재가입 시도 시 계정 재활성화")
+  void loadUser_shouldReactivateAccount_whenDeactivatedUserReturns() {
+    // given
+    given(clientRegistration.getProviderDetails()).willReturn(providerDetails);
+    given(providerDetails.getUserInfoEndpoint()).willReturn(userInfoEndpoint);
+    given(userInfoEndpoint.getUserNameAttributeName()).willReturn(userNameAttributeName);
+    given(delegateUserService.loadUser(userRequest)).willReturn(mockOAuth2User);
+    given(mockOAuth2User.getAttributes()).willReturn(googleAttributes);
+
+    // 활성 사용자 없음
+    given(userRepository.findByProviderAndSocialIdAndIsActiveTrue("google", "google_12345"))
+        .willReturn(Optional.empty());
+    
+    // 재가입 제한 없음 (30일 지남)
+    given(userRepository.findByEmailAndDeletedAtAfter(eq("test@example.com"), any(LocalDateTime.class)))
+        .willReturn(Optional.empty());
+    
+    // 탈퇴한 사용자 존재
+    User deactivatedUser = User.builder()
+        .id(4L)
+        .provider("google")
+        .socialId("google_12345")
+        .email("old@example.com")
+        .nickname("Old Name")
+        .isActive(false)
+        .build();
+    deactivatedUser.deactivateAccount();
+    
+    given(userRepository.findByProviderAndSocialId("google", "google_12345"))
+        .willReturn(Optional.of(deactivatedUser));
+
+    // when
+    OAuth2User resultUser = customOAuth2UserService.loadUser(userRequest);
+
+    // then
+    then(userRepository).should(times(1)).findByProviderAndSocialIdAndIsActiveTrue("google", "google_12345");
+    then(userRepository).should(times(1)).findByEmailAndDeletedAtAfter(eq("test@example.com"), any(LocalDateTime.class));
+    then(userRepository).should(times(1)).findByProviderAndSocialId("google", "google_12345");
+    then(userRepository).should(never()).saveAndFlush(any(User.class));
+
+    // 계정이 재활성화되었는지 확인 (30일 유예기간 완전 복구)
+    assertThat(deactivatedUser.getIsActive()).isTrue();
+    assertThat(deactivatedUser.getDeletedAt()).isNull();
+    assertThat(deactivatedUser.getNickname()).isEqualTo("Old Name"); // 기존 닉네임 유지
+    assertThat(deactivatedUser.getEmail()).isEqualTo("old@example.com"); // 기존 이메일 유지
+    
+    assertThat(resultUser).isNotNull();
+    assertThat(resultUser.getAuthorities()).extracting(GrantedAuthority::getAuthority)
+        .containsExactly("ROLE_USER");
   }
 }

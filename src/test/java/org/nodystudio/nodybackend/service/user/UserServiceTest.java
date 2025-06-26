@@ -11,6 +11,7 @@ import org.nodystudio.nodybackend.domain.user.RoleType;
 import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.dto.user.UpdateNicknameRequestDto;
 import org.nodystudio.nodybackend.dto.user.UserDetailResponseDto;
+import org.nodystudio.nodybackend.exception.custom.AccountAlreadyDeactivatedException;
 import org.nodystudio.nodybackend.exception.custom.UserNotFoundException;
 import org.nodystudio.nodybackend.repository.UserRepository;
 
@@ -52,7 +53,7 @@ class UserServiceTest {
     @DisplayName("사용자 정보 조회 - 성공")
     void getCurrentUser_success() {
         // given
-        given(userRepository.findById(TEST_USER_ID)).willReturn(Optional.of(testUser));
+        given(userRepository.findByIdAndIsActiveTrue(TEST_USER_ID)).willReturn(Optional.of(testUser));
 
         // when
         UserDetailResponseDto result = userService.getCurrentUser(TEST_USER_ID_STRING);
@@ -60,14 +61,14 @@ class UserServiceTest {
         // then
         assertThat(result.getEmail()).isEqualTo(testUser.getEmail());
         assertThat(result.getNickname()).isEqualTo(testUser.getNickname());
-        verify(userRepository).findById(TEST_USER_ID);
+        verify(userRepository).findByIdAndIsActiveTrue(TEST_USER_ID);
     }
 
     @Test
     @DisplayName("사용자 정보 조회 - 사용자 없음")
     void getCurrentUser_userNotFound() {
         // given
-        given(userRepository.findById(TEST_USER_ID)).willReturn(Optional.empty());
+        given(userRepository.findByIdAndIsActiveTrue(TEST_USER_ID)).willReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> userService.getCurrentUser(TEST_USER_ID_STRING))
@@ -81,7 +82,7 @@ class UserServiceTest {
         // given
         String newNickname = "새로운닉네임";
         UpdateNicknameRequestDto requestDto = new UpdateNicknameRequestDto(newNickname);
-        given(userRepository.findById(TEST_USER_ID)).willReturn(Optional.of(testUser));
+        given(userRepository.findByIdAndIsActiveTrue(TEST_USER_ID)).willReturn(Optional.of(testUser));
 
         // when
         UserDetailResponseDto result = userService.updateNickname(TEST_USER_ID_STRING, requestDto);
@@ -89,7 +90,7 @@ class UserServiceTest {
         // then
         assertThat(result.getNickname()).isEqualTo(newNickname);
         assertThat(testUser.getNickname()).isEqualTo(newNickname);
-        verify(userRepository).findById(TEST_USER_ID);
+        verify(userRepository).findByIdAndIsActiveTrue(TEST_USER_ID);
     }
 
     @Test
@@ -97,7 +98,7 @@ class UserServiceTest {
     void updateNickname_userNotFound() {
         // given
         UpdateNicknameRequestDto requestDto = new UpdateNicknameRequestDto("새로운닉네임");
-        given(userRepository.findById(TEST_USER_ID)).willReturn(Optional.empty());
+        given(userRepository.findByIdAndIsActiveTrue(TEST_USER_ID)).willReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> userService.updateNickname(TEST_USER_ID_STRING, requestDto))
@@ -110,7 +111,7 @@ class UserServiceTest {
     void updateNickname_blankNickname() {
         // given
         UpdateNicknameRequestDto requestDto = new UpdateNicknameRequestDto("");
-        given(userRepository.findById(TEST_USER_ID)).willReturn(Optional.of(testUser));
+        given(userRepository.findByIdAndIsActiveTrue(TEST_USER_ID)).willReturn(Optional.of(testUser));
 
         // when & then
         assertThatThrownBy(() -> userService.updateNickname(TEST_USER_ID_STRING, requestDto))
@@ -182,5 +183,73 @@ class UserServiceTest {
         assertThatThrownBy(() -> userService.updateNickname("invalid", requestDto))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("유효하지 않은 사용자 ID 형식입니다: invalid");
+    }
+
+    @Test
+    @DisplayName("계정 탈퇴 - 성공")
+    void deactivateAccount_success() {
+        // given
+        given(userRepository.findById(TEST_USER_ID)).willReturn(Optional.of(testUser));
+
+        // when
+        userService.deactivateAccount(TEST_USER_ID_STRING);
+
+        // then
+        assertThat(testUser.getIsActive()).isFalse();
+        assertThat(testUser.getDeletedAt()).isNotNull();
+        assertThat(testUser.getRefreshToken()).isNull();
+        assertThat(testUser.getRefreshTokenExpiry()).isNull();
+        verify(userRepository).findById(TEST_USER_ID);
+    }
+
+    @Test
+    @DisplayName("계정 탈퇴 - 사용자 없음")
+    void deactivateAccount_userNotFound() {
+        // given
+        given(userRepository.findById(TEST_USER_ID)).willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> userService.deactivateAccount(TEST_USER_ID_STRING))
+                .isInstanceOf(UserNotFoundException.class)
+                .hasMessageContaining("사용자 ID '1'로 사용자를 찾을 수 없습니다.");
+    }
+
+    @Test
+    @DisplayName("계정 탈퇴 - 이미 탈퇴한 계정")
+    void deactivateAccount_alreadyDeactivated() {
+        // given
+        User deactivatedUser = User.builder()
+                .id(TEST_USER_ID)
+                .provider("google")
+                .socialId("123456789")
+                .email("test@example.com")
+                .nickname("테스트사용자")
+                .role(RoleType.USER)
+                .build();
+        deactivatedUser.deactivateAccount(); // 명시적으로 탈퇴 처리
+        
+        given(userRepository.findById(TEST_USER_ID)).willReturn(Optional.of(deactivatedUser));
+        
+        // when & then
+        assertThatThrownBy(() -> userService.deactivateAccount(TEST_USER_ID_STRING))
+                .isInstanceOf(AccountAlreadyDeactivatedException.class);
+    }
+
+    @Test
+    @DisplayName("계정 탈퇴 - 유효하지 않은 userId")
+    void deactivateAccount_invalidUserId() {
+        // when & then
+        assertThatThrownBy(() -> userService.deactivateAccount("invalid"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("유효하지 않은 사용자 ID 형식입니다: invalid");
+    }
+
+    @Test
+    @DisplayName("계정 탈퇴 - null userId")
+    void deactivateAccount_nullUserId() {
+        // when & then
+        assertThatThrownBy(() -> userService.deactivateAccount(null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("사용자 ID는 필수입니다.");
     }
 }
