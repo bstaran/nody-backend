@@ -1,8 +1,8 @@
 package org.nodystudio.nodybackend.security.handler;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.ResponseCookie;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -43,6 +43,12 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
 
   @Value("${oauth2.redirect.allowed-domains}")
   private String allowedDomains;
+
+  @Value("${oauth2.cookie.domain:}")
+  private String cookieDomain;
+
+  @Value("${oauth2.cookie.same-site:Strict}")
+  private String cookieSameSite;
 
   /**
    * OAuth2 로그인 성공 시 호출되는 메서드
@@ -95,25 +101,44 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
       log.info("Updated refresh token for user: {}", user.getId());
 
       String accessToken = tokenProvider.createAccessToken(user);
-      Cookie accessTokenCookie = new Cookie("access_token", accessToken);
-      accessTokenCookie.setHttpOnly(true);
-      accessTokenCookie.setSecure(true);
-      accessTokenCookie.setPath("/");
       long accessTokenMaxAgeSeconds = tokenProvider.getAccessTokenExpirationMillis() / 1000;
-      accessTokenCookie.setMaxAge((int) accessTokenMaxAgeSeconds);
-      response.addCookie(accessTokenCookie);
-      log.debug("Access token cookie set. Max-Age: {} seconds", accessTokenMaxAgeSeconds);
 
-      Cookie refreshTokenCookie = new Cookie("refresh_token", refreshToken);
-      refreshTokenCookie.setHttpOnly(true);
-      refreshTokenCookie.setSecure(true);
-      refreshTokenCookie.setPath("/");
+      ResponseCookie.ResponseCookieBuilder accessTokenBuilder = ResponseCookie.from("access_token", accessToken)
+          .httpOnly(true)
+          .secure(true)
+          .path("/")
+          .maxAge(accessTokenMaxAgeSeconds)
+          .sameSite(cookieSameSite);
+
+      if (!cookieDomain.isEmpty()) {
+        accessTokenBuilder.domain(cookieDomain);
+      }
+
+      ResponseCookie accessTokenCookie = accessTokenBuilder.build();
+
+      response.addHeader("Set-Cookie", accessTokenCookie.toString());
+      log.debug("Access token cookie set with SameSite={}. Max-Age: {} seconds", cookieSameSite,
+          accessTokenMaxAgeSeconds);
+
       Duration duration = Duration.between(LocalDateTime.now(), refreshTokenExpiry);
       long refreshTokenMaxAgeSeconds = Math.max(0, duration.getSeconds());
-      refreshTokenCookie.setMaxAge((int) Math.min(refreshTokenMaxAgeSeconds, Integer.MAX_VALUE));
-      response.addCookie(refreshTokenCookie);
-      log.debug("Refresh token cookie set (HttpOnly). Max-Age: {} seconds",
-          refreshTokenMaxAgeSeconds);
+
+      ResponseCookie.ResponseCookieBuilder refreshTokenBuilder = ResponseCookie.from("refresh_token", refreshToken)
+          .httpOnly(true)
+          .secure(true)
+          .path("/")
+          .maxAge(refreshTokenMaxAgeSeconds)
+          .sameSite(cookieSameSite);
+
+      if (!cookieDomain.isEmpty()) {
+        refreshTokenBuilder.domain(cookieDomain);
+      }
+
+      ResponseCookie refreshTokenCookie = refreshTokenBuilder.build();
+
+      response.addHeader("Set-Cookie", refreshTokenCookie.toString());
+      log.debug("Refresh token cookie set (HttpOnly) with SameSite={}. Max-Age: {} seconds",
+          cookieSameSite, refreshTokenMaxAgeSeconds);
 
       if (!isValidRedirectUrl(redirectUrl)) {
         log.error("Invalid redirect URL: {}", redirectUrl);
@@ -133,15 +158,22 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
     } catch (Exception e) {
       log.error("Error occurred during OAuth2 success handling: {}", e.getMessage(), e);
 
-      Cookie removeAccessTokenCookie = new Cookie("access_token", null);
-      removeAccessTokenCookie.setMaxAge(0);
-      removeAccessTokenCookie.setPath("/");
+      ResponseCookie removeAccessTokenCookie = ResponseCookie.from("access_token", "")
+          .maxAge(0)
+          .path("/")
+          .sameSite(cookieSameSite)
+          .secure(true)
+          .build();
 
-      Cookie removeRefreshTokenCookie = new Cookie("refresh_token", null);
-      removeRefreshTokenCookie.setMaxAge(0);
-      removeRefreshTokenCookie.setPath("/");
-      response.addCookie(removeAccessTokenCookie);
-      response.addCookie(removeRefreshTokenCookie);
+      ResponseCookie removeRefreshTokenCookie = ResponseCookie.from("refresh_token", "")
+          .maxAge(0)
+          .path("/")
+          .sameSite(cookieSameSite)
+          .secure(true)
+          .build();
+
+      response.addHeader("Set-Cookie", removeAccessTokenCookie.toString());
+      response.addHeader("Set-Cookie", removeRefreshTokenCookie.toString());
 
       String errorRedirectUrl = UriComponentsBuilder.fromUriString("/login")
           .queryParam("error", "true")

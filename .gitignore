@@ -67,14 +67,44 @@ node_modules/
 .clinerules/
 /.roo/
 /.junie/
+.trae/
+.github/instructions/
 
 ### Documentation ###
 /docs/
 *.prompt.md
-CLAUDE.md
 
-### Task Management ###
+### AI & Task Management ###
+# Claude Code files
+CLAUDE.md
+AGENTS.md
+GEMINI.md
+.claude/
+.mcp.json
+
+# Task Master AI files
 .taskmaster/
+tasks.json
+task-*.md
+task-*.txt
+*.prd.txt
+*.prd.md
+
+# AI API keys and configuration
+.env.ai
+.env.local
+.env.claude
+.env.taskmaster
+.env.example
+
+# AI usage tracking
+usage_tracking*.json
+ai_usage*.json
+
+# AI generated reports
+*-complexity-report.json
+*-analysis-report.json
+task-report*.json
 
 ### Editor Files ###
 *.suo
@@ -83,6 +113,13 @@ CLAUDE.md
 *.sln
 *.sw? 
 
+# Logs
+# Dependency directories
+# Environment variables
+# Editor directories and files
+.vscode
+# OS specific
+
 # Task files
-tasks.json
-tasks/ 
+# tasks.json
+# tasks/ 
