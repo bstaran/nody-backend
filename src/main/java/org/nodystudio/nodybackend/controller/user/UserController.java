@@ -4,7 +4,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.dto.ApiResponse;
-import org.nodystudio.nodybackend.dto.code.ErrorCode;
 import org.nodystudio.nodybackend.dto.code.SuccessCode;
 import org.nodystudio.nodybackend.dto.user.UpdateNicknameRequestDto;
 import org.nodystudio.nodybackend.dto.user.UserDetailResponseDto;
@@ -12,7 +11,6 @@ import org.nodystudio.nodybackend.service.user.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
 
 /**
  * 사용자 관련 API
@@ -26,20 +24,19 @@ public class UserController {
 
   /**
    * 인증된 사용자의 기본 정보를 조회
+   * 
+   * <p>
+   * 이 엔드포인트는 Spring Security에 의해 관리되며, 인증된 사용자만 접근할 수 있습니다.
+   * {@code @AuthenticationPrincipal}을 통해 주입되는 user 객체는 Spring Security가
+   * 이미 검증했으므로 별도의 null 체크가 불필요합니다.
+   * </p>
    *
-   * @param user 인증된 사용자 정보 (@ignore)
+   * @param user 인증된 사용자 정보 (Spring Security에 의해 보장됨)
    * @return UserDetailResponseDto 사용자 정보
    */
   @GetMapping(value = "/me")
   public ResponseEntity<ApiResponse<UserDetailResponseDto>> getCurrentUser(
       @AuthenticationPrincipal User user) {
-
-    if (user == null) {
-      return ResponseEntity
-          .status(ErrorCode.USER_NOT_AUTHENTICATED.getStatus())
-          .body(ApiResponse.error(ErrorCode.USER_NOT_AUTHENTICATED));
-    }
-
     UserDetailResponseDto userDetail = userService.getCurrentUser(user.getId().toString());
 
     return ResponseEntity
@@ -58,13 +55,6 @@ public class UserController {
   public ResponseEntity<ApiResponse<UserDetailResponseDto>> updateNickname(
       @AuthenticationPrincipal User user,
       @Valid @RequestBody UpdateNicknameRequestDto requestDto) {
-
-    if (user == null) {
-      return ResponseEntity
-          .status(ErrorCode.USER_NOT_AUTHENTICATED.getStatus())
-          .body(ApiResponse.error(ErrorCode.USER_NOT_AUTHENTICATED));
-    }
-
     UserDetailResponseDto updatedUser = userService.updateNickname(user.getId().toString(), requestDto);
 
     return ResponseEntity
@@ -83,13 +73,6 @@ public class UserController {
   @DeleteMapping(value = "/me")
   public ResponseEntity<ApiResponse<Void>> deactivateAccount(
       @AuthenticationPrincipal User user) {
-
-    if (user == null) {
-      return ResponseEntity
-          .status(ErrorCode.USER_NOT_AUTHENTICATED.getStatus())
-          .body(ApiResponse.error(ErrorCode.USER_NOT_AUTHENTICATED));
-    }
-
     userService.deactivateAccount(user.getId().toString());
 
     return ResponseEntity
