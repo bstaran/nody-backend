@@ -8,6 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -105,6 +106,8 @@ class OAuth2LoginSuccessHandlerTest {
     ReflectionTestUtils.setField(successHandler, "redirectUrl", redirectUrl);
     ReflectionTestUtils.setField(successHandler, "allowedDomains",
         "http://localhost:3000,https://localhost:3000");
+    ReflectionTestUtils.setField(successHandler, "cookieDomain", "localhost");
+    ReflectionTestUtils.setField(successHandler, "cookieSameSite", "Strict");
 
     given(clientRegistrationRepository.findByRegistrationId("google")).willReturn(
         clientRegistration);
@@ -144,18 +147,29 @@ class OAuth2LoginSuccessHandlerTest {
     then(tokenProvider).should(times(1)).createRefreshToken(testUser);
     then(tokenProvider).should(times(1)).getRefreshTokenExpiry();
 
-    // 4. 쿠키 검증
-    assertThat(response.getCookie("access_token")).isNotNull();
-    assertThat(response.getCookie("access_token").getValue()).isEqualTo(accessToken);
-    assertThat(response.getCookie("access_token").isHttpOnly()).isTrue();
-    assertThat(response.getCookie("access_token").getSecure()).isTrue();
-    assertThat(response.getCookie("access_token").getPath()).isEqualTo("/");
+    // 4. ResponseCookie 헤더 검증 (Set-Cookie 헤더로 설정됨)
+    String setCookieHeader = response.getHeader("Set-Cookie");
+    assertThat(setCookieHeader)
+        .as("Set-Cookie 헤더가 설정되어야 함")
+        .isNotNull()
+        .contains("access_token=" + accessToken)
+        .contains("HttpOnly")
+        .contains("Secure")
+        .contains("Path=/")
+        .contains("SameSite=Strict")
+        .contains("Domain=localhost");
 
-    assertThat(response.getCookie("refresh_token")).isNotNull();
-    assertThat(response.getCookie("refresh_token").getValue()).isEqualTo(refreshToken);
-    assertThat(response.getCookie("refresh_token").isHttpOnly()).isTrue();
-    assertThat(response.getCookie("refresh_token").getSecure()).isTrue();
-    assertThat(response.getCookie("refresh_token").getPath()).isEqualTo("/");
+    // refresh_token 쿠키는 추가적인 Set-Cookie 헤더로 설정됨
+    // 모든 Set-Cookie 헤더 값들을 확인
+    String allCookieHeaders = String.join("; ", response.getHeaders("Set-Cookie"));
+    assertThat(allCookieHeaders)
+        .as("리프레시 토큰 쿠키가 Set-Cookie 헤더에 포함되어야 함")
+        .contains("refresh_token=" + refreshToken)
+        .contains("HttpOnly")
+        .contains("Secure")
+        .contains("Path=/")
+        .contains("SameSite=Strict")
+        .contains("Domain=localhost");
   }
 
   @Test
