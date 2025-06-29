@@ -101,7 +101,7 @@ public class SecurityConfig {
                 userInfo -> userInfo.userService(customOAuth2UserService))
             .successHandler(oAuth2LoginSuccessHandler))
         .authorizeHttpRequests(authorize -> authorize
-            .requestMatchers("/api/auth/**", "/api/public/**", "/oauth2/**", "/login/oauth2/**")
+            .requestMatchers("/api/auth/**", "/api/public/**", "/oauth2/**", "/login/**")
             .permitAll()
             .requestMatchers("/swagger-ui/**", "/api-docs/**").permitAll()
             .requestMatchers("/openapi.json", "/favicon.ico").permitAll()
@@ -133,7 +133,7 @@ public class SecurityConfig {
                 userInfo -> userInfo.userService(customOAuth2UserService))
             .successHandler(oAuth2LoginSuccessHandler))
         .authorizeHttpRequests(authorize -> authorize
-            .requestMatchers("/api/auth/**", "/api/public/**", "/oauth2/**", "/login/oauth2/**")
+            .requestMatchers("/api/auth/**", "/api/public/**", "/oauth2/**", "/login/**")
             .permitAll()
             .requestMatchers("/api/admin/**").hasRole("ADMIN")
             .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/favicon.ico").permitAll()
