@@ -104,6 +104,8 @@ public class LocationUtils {
      * 
      * @param address 변환할 주소
      * @return 위도/경도 좌표 객체
+     * @throws GeocodingException 주소 변환 실패 시
+     * @throws IllegalArgumentException 주소가 null이거나 비어있을 때
      */
     Coordinates addressToCoordinates(String address);
 
@@ -113,6 +115,8 @@ public class LocationUtils {
      * @param latitude  위도
      * @param longitude 경도
      * @return 주소 문자열
+     * @throws GeocodingException 좌표 변환 실패 시
+     * @throws IllegalArgumentException 좌표가 유효하지 않을 때
      */
     String coordinatesToAddress(BigDecimal latitude, BigDecimal longitude);
   }
