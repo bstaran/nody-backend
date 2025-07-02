@@ -53,7 +53,13 @@ public class LogService {
 
     User user = findUserByEmail(userEmail);
 
-    if (request.getLatitude() != null && request.getLongitude() != null) {
+    if (request.getLatitude() != null || request.getLongitude() != null) {
+      if (request.getLatitude() == null) {
+        throw new IllegalArgumentException("경도가 제공된 경우 위도도 함께 제공되어야 합니다.");
+      }
+      if (request.getLongitude() == null) {
+        throw new IllegalArgumentException("위도가 제공된 경우 경도도 함께 제공되어야 합니다.");
+      }
       LocationUtils.validateCoordinates(request.getLatitude(), request.getLongitude());
     }
 
@@ -276,10 +282,16 @@ public class LogService {
   }
 
   /**
-   * 수정 요청에 위치 정보가 있는 경우 유효성을 검증합니다.
+   * 수정 요청에 위치 정보가 있는 경우 유효성을 검증합니다. 위도와 경도는 쌍으로 제공되어야 합니다.
    */
   private void validateLocationIfPresent(LogUpdateRequest request) {
-    if (request.getLatitude() != null && request.getLongitude() != null) {
+    if (request.getLatitude() != null || request.getLongitude() != null) {
+      if (request.getLatitude() == null) {
+        throw new IllegalArgumentException("경도가 제공된 경우 위도도 함께 제공되어야 합니다.");
+      }
+      if (request.getLongitude() == null) {
+        throw new IllegalArgumentException("위도가 제공된 경우 경도도 함께 제공되어야 합니다.");
+      }
       LocationUtils.validateCoordinates(request.getLatitude(), request.getLongitude());
     }
   }
