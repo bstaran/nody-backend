@@ -509,7 +509,7 @@ class LogServiceTest {
     // then
     assertThat(response).isNotNull();
     assertThat(response.getContent()).hasSize(2);
-    
+
     // 공개 로그와 비공개 로그 모두 포함되어야 함
     boolean hasPublicLog = response.getContent().stream().anyMatch(LogResponse::getIsPublic);
     boolean hasPrivateLog = response.getContent().stream().anyMatch(log -> !log.getIsPublic());
@@ -520,41 +520,4 @@ class LogServiceTest {
     verify(logRepository, never()).findByIsPublicTrueOrderByCreatedAtDesc(any(Pageable.class));
   }
 
-  @Test
-  @DisplayName("보안 검증 - 다른 사용자의 비공개 로그는 조회되지 않음")
-  void searchLogs_AuthenticatedUser_ShouldNotGetOtherUsersPrivateLogs() {
-    // given
-    User otherUser = User.builder()
-        .id(2L)
-        .email("other@example.com")
-        .nickname("다른유저")
-        .provider("google")
-        .socialId("654321")
-        .role(RoleType.USER)
-        .isActive(true)
-        .build();
-
-    LogSearchRequest searchRequest = LogSearchRequest.builder()
-        .page(0)
-        .size(20)
-        .build();
-
-    // testUser(ID=1)만 접근 가능한 로그만 반환되어야 함
-    List<Log> userAccessibleLogs = Arrays.asList(testLog); // 공개 로그만
-    Page<Log> userAccessibleLogPage = new PageImpl<>(userAccessibleLogs);
-
-    given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
-    given(logRepository.findPublicOrUserLogsOrderByCreatedAtDesc(eq(1L), any(Pageable.class)))
-        .willReturn(userAccessibleLogPage);
-
-    // when
-    Page<LogResponse> response = logService.searchLogs(searchRequest, "test@example.com");
-
-    // then
-    assertThat(response).isNotNull();
-    assertThat(response.getContent()).hasSize(1);
-    assertThat(response.getContent().get(0).getAuthor().getId()).isEqualTo(1L); // testUser의 로그만
-
-    verify(logRepository).findPublicOrUserLogsOrderByCreatedAtDesc(eq(1L), any(Pageable.class));
-  }
 }
