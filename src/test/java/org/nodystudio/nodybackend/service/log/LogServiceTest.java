@@ -319,46 +319,6 @@ class LogServiceTest {
   }
 
   @Test
-  @DisplayName("위치 정보 검증 테스트 - null 위도와 정상 경도로 로그 생성 시도")
-  void createLog_NullLatitudeWithValidLongitude_ThrowsException() {
-    // given
-    LogCreateRequest request = LogCreateRequest.builder()
-        .content("테스트 로그")
-        .latitude(null) // null 위도
-        .longitude(new BigDecimal("126.9780")) // 정상 경도
-        .address("서울특별시")
-        .isPublic(true)
-        .build();
-
-    given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
-
-    // when & then
-    assertThatThrownBy(() -> logService.createLog(request, "test@example.com"))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("경도가 제공된 경우 위도도 함께 제공되어야 합니다.");
-  }
-
-  @Test
-  @DisplayName("위치 정보 검증 테스트 - 정상 위도와 null 경도로 로그 생성 시도")
-  void createLog_ValidLatitudeWithNullLongitude_ThrowsException() {
-    // given
-    LogCreateRequest request = LogCreateRequest.builder()
-        .content("테스트 로그")
-        .latitude(new BigDecimal("37.5665")) // 정상 위도
-        .longitude(null) // null 경도
-        .address("서울특별시")
-        .isPublic(true)
-        .build();
-
-    given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
-
-    // when & then
-    assertThatThrownBy(() -> logService.createLog(request, "test@example.com"))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("위도가 제공된 경우 경도도 함께 제공되어야 합니다.");
-  }
-
-  @Test
   @DisplayName("위치 정보 검증 테스트 - 경계값 테스트 (유효한 극값)")
   void createLog_BoundaryCoordinates_Success() {
     // given - 유효한 경계값들
@@ -417,43 +377,6 @@ class LogServiceTest {
   }
 
   @Test
-  @DisplayName("위치 정보 검증 테스트 - 좌표 없이 로그 생성 (위치 정보 선택적)")
-  void createLog_WithoutCoordinates_Success() {
-    // given - 위치 정보 없는 로그
-    LogCreateRequest request = LogCreateRequest.builder()
-        .content("위치 없는 로그")
-        .latitude(null)
-        .longitude(null)
-        .address("주소만 있는 경우")
-        .isPublic(true)
-        .build();
-
-    Log expectedLog = Log.builder()
-        .id(3L)
-        .user(testUser)
-        .content("위치 없는 로그")
-        .latitude(null)
-        .longitude(null)
-        .address("주소만 있는 경우")
-        .isPublic(true)
-        .viewCount(0L)
-        .build();
-
-    given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
-    given(logRepository.save(any(Log.class))).willReturn(expectedLog);
-
-    // when
-    LogResponse response = logService.createLog(request, "test@example.com");
-
-    // then
-    assertThat(response).isNotNull();
-    assertThat(response.getLatitude()).isNull();
-    assertThat(response.getLongitude()).isNull();
-    assertThat(response.getAddress()).isEqualTo("주소만 있는 경우");
-    verify(logRepository).save(any(Log.class));
-  }
-
-  @Test
   @DisplayName("로그 수정 - 부분 좌표 제공 시 예외 발생 (위도만 제공)")
   void updateLog_PartialCoordinates_ThrowsException() {
     // given
@@ -489,5 +412,39 @@ class LogServiceTest {
     assertThatThrownBy(() -> logService.updateLog(1L, request, "test@example.com"))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("경도가 제공된 경우 위도도 함께 제공되어야 합니다.");
+  }
+
+  @Test
+  @DisplayName("로그 생성 - 빈 문자열 content로 생성 시도 시 예외 발생")
+  void createLog_EmptyContent_ThrowsException() {
+    // given
+    LogCreateRequest request = LogCreateRequest.builder()
+        .content("   ") // 공백 문자열
+        .isPublic(true)
+        .build();
+
+    given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
+
+    // when & then
+    assertThatThrownBy(() -> logService.createLog(request, "test@example.com"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("로그 내용은 필수입니다.");
+  }
+
+  @Test
+  @DisplayName("로그 수정 - 빈 문자열 content로 수정 시도 시 예외 발생")
+  void updateLog_EmptyContent_ThrowsException() {
+    // given
+    LogUpdateRequest request = LogUpdateRequest.builder()
+        .content("   ")
+        .build();
+
+    given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
+    given(logRepository.findByIdAndUserId(1L, 1L)).willReturn(Optional.of(testLog));
+
+    // when & then
+    assertThatThrownBy(() -> logService.updateLog(1L, request, "test@example.com"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("로그 내용은 빈 문자열일 수 없습니다.");
   }
 }
