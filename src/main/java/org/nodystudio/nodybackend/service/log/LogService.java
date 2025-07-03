@@ -131,7 +131,7 @@ public class LogService {
 
     Page<Log> logs = hasLocationInfo(searchRequest)
         ? searchByLocation(searchRequest, viewer, pageable)
-        : searchAllLogs(pageable);
+        : searchAllLogs(viewer, pageable);
 
     log.info("로그 검색 완료 - 총 {}건", logs.getTotalElements());
     return logs.map(LogResponse::from);
@@ -267,10 +267,16 @@ public class LogService {
   }
 
   /**
-   * 전체 로그 검색을 수행합니다.
+   * 전체 로그 검색을 수행합니다. 사용자 권한에 따라 조회 범위를 제한합니다.
    */
-  private Page<Log> searchAllLogs(Pageable pageable) {
-    return logRepository.findAll(pageable);
+  private Page<Log> searchAllLogs(User viewer, Pageable pageable) {
+    if (viewer != null) {
+      // 로그인 사용자: 공개 로그 + 본인 비공개 로그
+      return logRepository.findPublicOrUserLogsOrderByCreatedAtDesc(viewer.getId(), pageable);
+    } else {
+      // 비로그인 사용자: 공개 로그만
+      return logRepository.findByIsPublicTrueOrderByCreatedAtDesc(pageable);
+    }
   }
 
   /**
