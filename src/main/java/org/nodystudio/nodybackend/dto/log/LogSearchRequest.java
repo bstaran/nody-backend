@@ -75,6 +75,7 @@ public class LogSearchRequest {
    * 기본값: createdAt
    * </p>
    */
+  @Pattern(regexp = "^(createdAt|viewCount|distance)$", message = "정렬 기준은 createdAt, viewCount, distance 중 하나여야 합니다.")
   @Builder.Default
   private String sortBy = "createdAt";
 
@@ -87,6 +88,7 @@ public class LogSearchRequest {
    * 기본값: desc
    * </p>
    */
+  @Pattern(regexp = "^(asc|desc)$", message = "정렬 방향은 asc 또는 desc여야 합니다.")
   @Builder.Default
   private String sortDirection = "desc";
 }
