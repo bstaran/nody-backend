@@ -53,15 +53,15 @@ public class LogService {
 
     User user = findUserByEmail(userEmail);
 
-    if (request.getLatitude() != null || request.getLongitude() != null) {
-      if (request.getLatitude() == null) {
-        throw new IllegalArgumentException("경도가 제공된 경우 위도도 함께 제공되어야 합니다.");
-      }
-      if (request.getLongitude() == null) {
-        throw new IllegalArgumentException("위도가 제공된 경우 경도도 함께 제공되어야 합니다.");
-      }
-      LocationUtils.validateCoordinates(request.getLatitude(), request.getLongitude());
+    if (user == null) {
+      throw new UserNotFoundException("사용자를 찾을 수 없습니다.");
     }
+
+    if (request.getContent() != null && request.getContent().trim().isEmpty()) {
+      throw new IllegalArgumentException("로그 내용은 필수입니다.");
+    }
+
+    LocationUtils.validateCoordinates(request.getLatitude(), request.getLongitude());
 
     Log logEntity = Log.builder()
         .user(user)
@@ -301,6 +301,9 @@ public class LogService {
    */
   private void updateLogFields(Log logEntity, LogUpdateRequest request) {
     if (request.getContent() != null) {
+      if (request.getContent().trim().isEmpty()) {
+        throw new IllegalArgumentException("로그 내용은 빈 문자열일 수 없습니다.");
+      }
       logEntity.updateContent(request.getContent());
     }
 
