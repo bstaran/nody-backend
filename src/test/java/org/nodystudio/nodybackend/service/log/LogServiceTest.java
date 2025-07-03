@@ -89,16 +89,31 @@ class LogServiceTest {
         .build();
 
     given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
-    given(logRepository.save(any(Log.class))).willReturn(testLog);
+    given(logRepository.save(any(Log.class))).willAnswer(invocation -> {
+      Log log = invocation.getArgument(0);
+      return Log.builder()
+          .id(1L)
+          .user(log.getUser())
+          .content(log.getContent())
+          .latitude(log.getLatitude())
+          .longitude(log.getLongitude())
+          .address(log.getAddress())
+          .mediaUrls(log.getMediaUrls())
+          .isPublic(log.getIsPublic())
+          .viewCount(0L)
+          .build();
+    });
 
     // when
     LogResponse response = logService.createLog(request, "test@example.com");
 
     // then
     assertThat(response).isNotNull();
-    assertThat(response.getContent()).isEqualTo("테스트 로그 내용");
+    assertThat(response.getContent()).isEqualTo("새로운 로그");
     assertThat(response.getLatitude()).isEqualTo(new BigDecimal("37.5665"));
     assertThat(response.getLongitude()).isEqualTo(new BigDecimal("126.9780"));
+    assertThat(response.getAddress()).isEqualTo("서울특별시 중구");
+    assertThat(response.getIsPublic()).isTrue();
 
     verify(logRepository).save(any(Log.class));
   }
