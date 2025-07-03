@@ -143,4 +143,15 @@ public interface LogRepository extends JpaRepository<Log, Long> {
    * 공개 로그만 조회
    */
   Optional<Log> findByIdAndIsPublicTrue(Long id);
+
+  /**
+   * 공개 로그만 전체 조회 (비로그인 사용자용)
+   */
+  Page<Log> findByIsPublicTrueOrderByCreatedAtDesc(Pageable pageable);
+
+  /**
+   * 공개 로그 + 특정 사용자의 비공개 로그 조회 (로그인 사용자용)
+   */
+  @Query("SELECT l FROM Log l WHERE l.isPublic = true OR l.user.id = :userId ORDER BY l.createdAt DESC")
+  Page<Log> findPublicOrUserLogsOrderByCreatedAtDesc(@Param("userId") Long userId, Pageable pageable);
 }
