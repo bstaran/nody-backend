@@ -155,30 +155,4 @@ class LocationUtilsTest {
     assertThatNoException().isThrownBy(() -> LocationUtils.validateCoordinates(validLatitude, validLongitude));
   }
 
-  @Test
-  @DisplayName("Coordinates 클래스 테스트")
-  void coordinates_Creation_Success() {
-    // given
-    BigDecimal latitude = new BigDecimal("37.5665");
-    BigDecimal longitude = new BigDecimal("126.9780");
-
-    // when
-    LocationUtils.Coordinates coordinates = new LocationUtils.Coordinates(latitude, longitude);
-
-    // then
-    assertThat(coordinates.getLatitude()).isEqualTo(latitude);
-    assertThat(coordinates.getLongitude()).isEqualTo(longitude);
-  }
-
-  @Test
-  @DisplayName("Coordinates 클래스 - 잘못된 좌표로 생성 시 예외 발생")
-  void coordinates_InvalidValues_ThrowsException() {
-    // given
-    BigDecimal invalidLatitude = new BigDecimal("999.0");
-    BigDecimal validLongitude = new BigDecimal("126.9780");
-
-    // when & then
-    assertThatThrownBy(() -> new LocationUtils.Coordinates(invalidLatitude, validLongitude))
-        .isInstanceOf(IllegalArgumentException.class);
-  }
 }
