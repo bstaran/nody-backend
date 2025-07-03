@@ -447,4 +447,114 @@ class LogServiceTest {
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("로그 내용은 빈 문자열일 수 없습니다.");
   }
+
+  @Test
+  @DisplayName("권한 기반 전체 로그 조회 - 비로그인 사용자는 공개 로그만 조회")
+  void searchLogs_AnonymousUser_ShouldGetPublicLogsOnly() {
+    // given
+    LogSearchRequest searchRequest = LogSearchRequest.builder()
+        .page(0)
+        .size(20)
+        .build(); // 위치 정보 없이 전체 로그 조회
+
+    List<Log> publicLogs = Arrays.asList(testLog);
+    Page<Log> publicLogPage = new PageImpl<>(publicLogs);
+
+    given(logRepository.findByIsPublicTrueOrderByCreatedAtDesc(any(Pageable.class)))
+        .willReturn(publicLogPage);
+
+    // when
+    Page<LogResponse> response = logService.searchLogs(searchRequest, null);
+
+    // then
+    assertThat(response).isNotNull();
+    assertThat(response.getContent()).hasSize(1);
+    assertThat(response.getContent().get(0).getIsPublic()).isTrue();
+
+    verify(logRepository).findByIsPublicTrueOrderByCreatedAtDesc(any(Pageable.class));
+    verify(logRepository, never()).findPublicOrUserLogsOrderByCreatedAtDesc(anyLong(), any(Pageable.class));
+  }
+
+  @Test
+  @DisplayName("권한 기반 전체 로그 조회 - 로그인 사용자는 공개 로그 + 본인 비공개 로그 조회")
+  void searchLogs_AuthenticatedUser_ShouldGetPublicAndOwnPrivateLogs() {
+    // given
+    LogSearchRequest searchRequest = LogSearchRequest.builder()
+        .page(0)
+        .size(20)
+        .build(); // 위치 정보 없이 전체 로그 조회
+
+    // 비공개 로그 추가
+    Log privateLog = Log.builder()
+        .id(2L)
+        .user(testUser)
+        .content("비공개 로그")
+        .latitude(new BigDecimal("37.5665"))
+        .longitude(new BigDecimal("126.9780"))
+        .address("서울특별시 중구")
+        .isPublic(false)
+        .viewCount(0L)
+        .build();
+
+    List<Log> userAccessibleLogs = Arrays.asList(testLog, privateLog);
+    Page<Log> userAccessibleLogPage = new PageImpl<>(userAccessibleLogs);
+
+    given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
+    given(logRepository.findPublicOrUserLogsOrderByCreatedAtDesc(eq(1L), any(Pageable.class)))
+        .willReturn(userAccessibleLogPage);
+
+    // when
+    Page<LogResponse> response = logService.searchLogs(searchRequest, "test@example.com");
+
+    // then
+    assertThat(response).isNotNull();
+    assertThat(response.getContent()).hasSize(2);
+    
+    // 공개 로그와 비공개 로그 모두 포함되어야 함
+    boolean hasPublicLog = response.getContent().stream().anyMatch(LogResponse::getIsPublic);
+    boolean hasPrivateLog = response.getContent().stream().anyMatch(log -> !log.getIsPublic());
+    assertThat(hasPublicLog).isTrue();
+    assertThat(hasPrivateLog).isTrue();
+
+    verify(logRepository).findPublicOrUserLogsOrderByCreatedAtDesc(eq(1L), any(Pageable.class));
+    verify(logRepository, never()).findByIsPublicTrueOrderByCreatedAtDesc(any(Pageable.class));
+  }
+
+  @Test
+  @DisplayName("보안 검증 - 다른 사용자의 비공개 로그는 조회되지 않음")
+  void searchLogs_AuthenticatedUser_ShouldNotGetOtherUsersPrivateLogs() {
+    // given
+    User otherUser = User.builder()
+        .id(2L)
+        .email("other@example.com")
+        .nickname("다른유저")
+        .provider("google")
+        .socialId("654321")
+        .role(RoleType.USER)
+        .isActive(true)
+        .build();
+
+    LogSearchRequest searchRequest = LogSearchRequest.builder()
+        .page(0)
+        .size(20)
+        .build();
+
+    // testUser(ID=1)만 접근 가능한 로그만 반환되어야 함
+    List<Log> userAccessibleLogs = Arrays.asList(testLog); // 공개 로그만
+    Page<Log> userAccessibleLogPage = new PageImpl<>(userAccessibleLogs);
+
+    given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
+    given(logRepository.findPublicOrUserLogsOrderByCreatedAtDesc(eq(1L), any(Pageable.class)))
+        .willReturn(userAccessibleLogPage);
+
+    // when
+    Page<LogResponse> response = logService.searchLogs(searchRequest, "test@example.com");
+
+    // then
+    assertThat(response).isNotNull();
+    assertThat(response.getContent()).hasSize(1);
+    assertThat(response.getContent().get(0).getAuthor().getId()).isEqualTo(1L); // testUser의 로그만
+
+    verify(logRepository).findPublicOrUserLogsOrderByCreatedAtDesc(eq(1L), any(Pageable.class));
+  }
 }
