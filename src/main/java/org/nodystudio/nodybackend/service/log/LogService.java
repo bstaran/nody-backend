@@ -199,7 +199,7 @@ public class LogService {
   /**
    * 정렬 기준과 방향에 따라 Sort 객체를 생성합니다.
    * 
-   * @param sortBy 정렬 기준 (createdAt, viewCount, distance)
+   * @param sortBy        정렬 기준 (createdAt, viewCount, distance)
    * @param sortDirection 정렬 방향 (asc, desc)
    * @return Sort 객체 (distance의 경우 Repository 쿼리에서 거리 정렬이 이미 처리됨)
    */
@@ -212,9 +212,9 @@ public class LogService {
       case "createdAt" -> Sort.by(direction, "createdAt");
       case "viewCount" -> Sort.by(direction, "viewCount");
       case "distance" -> {
-        // 거리 정렬은 Repository의 네이티브 쿼리에서 처리됨 (distance ASC, created_at DESC)
-        // 현재는 가까운 거리 우선 정렬만 지원
-        log.info("거리 정렬 요청됨 - Repository 쿼리에서 distance ASC로 처리됩니다.");
+        // 거리 정렬은 Repository의 네이티브 쿼리에서 처리됨
+        // sortDirection은 searchByLocation 메서드에서 전달됨
+        log.info("거리 정렬 요청됨 - Repository 쿼리에서 distance {}로 처리됩니다.", sortDirection.toUpperCase());
         yield Sort.unsorted();
       }
       default -> Sort.by(Sort.Direction.DESC, "createdAt");
@@ -259,18 +259,25 @@ public class LogService {
   private Page<Log> searchByLocation(LogSearchRequest searchRequest, User viewer, Pageable pageable) {
     LocationUtils.validateCoordinates(searchRequest.getLatitude(), searchRequest.getLongitude());
 
+    // 거리 정렬 시 정렬 방향 결정
+    String distanceSortDirection = "distance".equals(searchRequest.getSortBy())
+        ? searchRequest.getSortDirection().toUpperCase()
+        : "ASC";
+
     if (viewer != null) {
       return logRepository.findLogsByLocationNearWithUser(
           searchRequest.getLatitude(),
           searchRequest.getLongitude(),
           searchRequest.getRadiusKm(),
           viewer.getId(),
+          distanceSortDirection,
           pageable);
     } else {
       return logRepository.findPublicLogsByLocationNear(
           searchRequest.getLatitude(),
           searchRequest.getLongitude(),
           searchRequest.getRadiusKm(),
+          distanceSortDirection,
           pageable);
     }
   }
