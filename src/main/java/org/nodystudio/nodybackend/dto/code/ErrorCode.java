@@ -39,7 +39,10 @@ public enum ErrorCode {
   RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "R001", "리소스를 찾을 수 없습니다."),
 
   // Validation Errors
-  VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "V001", "입력 값 유효성 검사에 실패했습니다.");
+  VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "V001", "입력 값 유효성 검사에 실패했습니다."),
+
+  // Location Errors
+  INVALID_COORDINATE(HttpStatus.BAD_REQUEST, "L001", "유효하지 않은 좌표 값입니다.");
 
   private final HttpStatus status;
   private final String code;
