@@ -615,6 +615,49 @@ class LogServiceTest {
   }
 
   @Test
+  @DisplayName("거리 정렬 방향 테스트 - sortDirection이 null인 경우 기본값 ASC 사용")
+  void searchLogs_DistanceSortNullDirection_DefaultsToAsc() {
+    // given
+    LogSearchRequest searchRequest = new LogSearchRequest(
+        new BigDecimal("37.5665"),
+        new BigDecimal("126.9780"),
+        new BigDecimal("10.0"),
+        null, // isPublic
+        0, // page
+        20, // size
+        "distance", // sortBy
+        null // sortDirection을 명시적으로 null로 설정
+    );
+
+    List<Log> logs = Arrays.asList(testLog);
+    Page<Log> logPage = new PageImpl<>(logs);
+
+    given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
+    given(logRepository.findLogsByLocationNearWithUser(
+        eq(new BigDecimal("37.5665")),
+        eq(new BigDecimal("126.9780")),
+        eq(new BigDecimal("10.0")),
+        eq(1L),
+        eq("ASC"), // null인 경우 기본값 ASC 사용
+        any(Pageable.class))).willReturn(logPage);
+
+    // when
+    Page<LogResponse> response = logService.searchLogs(searchRequest, "test@example.com");
+
+    // then
+    assertThat(response).isNotNull();
+    assertThat(response.getContent()).hasSize(1);
+
+    verify(logRepository).findLogsByLocationNearWithUser(
+        eq(new BigDecimal("37.5665")),
+        eq(new BigDecimal("126.9780")),
+        eq(new BigDecimal("10.0")),
+        eq(1L),
+        eq("ASC"),
+        any(Pageable.class));
+  }
+
+  @Test
   @DisplayName("권한 기반 전체 로그 조회 - 로그인 사용자는 공개 로그 + 본인 비공개 로그 조회")
   void searchLogs_AuthenticatedUser_ShouldGetPublicAndOwnPrivateLogs() {
     // given

@@ -213,8 +213,7 @@ public class LogService {
       case "viewCount" -> Sort.by(direction, "viewCount");
       case "distance" -> {
         // 거리 정렬은 Repository의 네이티브 쿼리에서 처리됨
-        // sortDirection은 searchByLocation 메서드에서 전달됨
-        log.info("거리 정렬 요청됨 - Repository 쿼리에서 distance {}로 처리됩니다.", sortDirection.toUpperCase());
+        log.info("거리 정렬 요청됨 - Repository 쿼리에서 처리됩니다.");
         yield Sort.unsorted();
       }
       default -> Sort.by(Sort.Direction.DESC, "createdAt");
@@ -254,15 +253,23 @@ public class LogService {
   }
 
   /**
+   * 거리 정렬 방향을 결정합니다.
+   */
+  private String getDistanceSortDirection(LogSearchRequest searchRequest) {
+    if ("distance".equals(searchRequest.getSortBy()) && searchRequest.getSortDirection() != null) {
+      return searchRequest.getSortDirection().toUpperCase();
+    }
+    return "ASC"; // 기본값
+  }
+
+  /**
    * 위치 기반 로그 검색을 수행합니다.
    */
   private Page<Log> searchByLocation(LogSearchRequest searchRequest, User viewer, Pageable pageable) {
     LocationUtils.validateCoordinates(searchRequest.getLatitude(), searchRequest.getLongitude());
 
-    // 거리 정렬 시 정렬 방향 결정
-    String distanceSortDirection = "distance".equals(searchRequest.getSortBy())
-        ? searchRequest.getSortDirection().toUpperCase()
-        : "ASC";
+    // 거리 정렬 방향 결정
+    String distanceSortDirection = getDistanceSortDirection(searchRequest);
 
     if (viewer != null) {
       return logRepository.findLogsByLocationNearWithUser(
