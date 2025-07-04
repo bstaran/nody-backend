@@ -80,7 +80,10 @@ public interface LogRepository extends JpaRepository<Log, Long> {
         AND (6371 * acos(cos(radians(:latitude)) * cos(radians(l.latitude)) *
              cos(radians(l.longitude) - radians(:longitude)) +
              sin(radians(:latitude)) * sin(radians(l.latitude)))) <= :radiusKm
-      ORDER BY distance ASC, l.created_at DESC
+      ORDER BY 
+        CASE WHEN :sortDirection = 'ASC' THEN distance END ASC,
+        CASE WHEN :sortDirection = 'DESC' THEN distance END DESC,
+        l.created_at DESC
       """, countQuery = """
       SELECT COUNT(*)
       FROM logs l
@@ -94,6 +97,7 @@ public interface LogRepository extends JpaRepository<Log, Long> {
   Page<Log> findPublicLogsByLocationNear(@Param("latitude") BigDecimal latitude,
       @Param("longitude") BigDecimal longitude,
       @Param("radiusKm") BigDecimal radiusKm,
+      @Param("sortDirection") String sortDirection,
       Pageable pageable);
 
   /**
@@ -111,7 +115,10 @@ public interface LogRepository extends JpaRepository<Log, Long> {
         AND (6371 * acos(cos(radians(:latitude)) * cos(radians(l.latitude)) *
              cos(radians(l.longitude) - radians(:longitude)) +
              sin(radians(:latitude)) * sin(radians(l.latitude)))) <= :radiusKm
-      ORDER BY distance ASC, l.created_at DESC
+      ORDER BY 
+        CASE WHEN :sortDirection = 'ASC' THEN distance END ASC,
+        CASE WHEN :sortDirection = 'DESC' THEN distance END DESC,
+        l.created_at DESC
       """, countQuery = """
       SELECT COUNT(*)
       FROM logs l
@@ -126,6 +133,7 @@ public interface LogRepository extends JpaRepository<Log, Long> {
       @Param("longitude") BigDecimal longitude,
       @Param("radiusKm") BigDecimal radiusKm,
       @Param("userId") Long userId,
+      @Param("sortDirection") String sortDirection,
       Pageable pageable);
 
   /**
