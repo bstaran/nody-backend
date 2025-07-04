@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
@@ -137,7 +138,7 @@ class LogServiceTest {
     // then
     assertThat(response).isNotNull();
     assertThat(response.getId()).isEqualTo(1L);
-    assertThat(testLog.getViewCount()).isEqualTo(1L); // 조회수 증가 확인
+    assertThat(testLog.getViewCount()).isEqualTo(1L);
   }
 
   @Test
@@ -178,6 +179,7 @@ class LogServiceTest {
         eq(new BigDecimal("126.9780")),
         eq(new BigDecimal("10.0")),
         eq(1L),
+        eq("ASC"),
         any(Pageable.class))).willReturn(logPage);
 
     // when
@@ -193,6 +195,7 @@ class LogServiceTest {
         eq(new BigDecimal("126.9780")),
         eq(new BigDecimal("10.0")),
         eq(1L),
+        eq("ASC"),
         any(Pageable.class));
   }
 
@@ -215,6 +218,7 @@ class LogServiceTest {
         any(BigDecimal.class),
         any(BigDecimal.class),
         any(BigDecimal.class),
+        anyString(),
         any(Pageable.class))).willReturn(logPage);
 
     // when
@@ -228,6 +232,7 @@ class LogServiceTest {
         eq(new BigDecimal("37.5665")),
         eq(new BigDecimal("126.9780")),
         eq(new BigDecimal("10.0")),
+        eq("ASC"),
         any(Pageable.class));
   }
 
@@ -484,6 +489,129 @@ class LogServiceTest {
 
     verify(logRepository).findByIsPublicTrueOrderByCreatedAtDesc(any(Pageable.class));
     verify(logRepository, never()).findPublicOrUserLogsOrderByCreatedAtDesc(anyLong(), any(Pageable.class));
+  }
+
+  @Test
+  @DisplayName("거리 정렬 방향 테스트 - ASC (가까운 거리 우선)")
+  void searchLogs_DistanceSortAsc_Success() {
+    // given
+    LogSearchRequest searchRequest = LogSearchRequest.builder()
+        .latitude(new BigDecimal("37.5665"))
+        .longitude(new BigDecimal("126.9780"))
+        .radiusKm(new BigDecimal("10.0"))
+        .sortBy("distance")
+        .sortDirection("asc")
+        .page(0)
+        .size(20)
+        .build();
+
+    List<Log> logs = Arrays.asList(testLog);
+    Page<Log> logPage = new PageImpl<>(logs);
+
+    given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
+    given(logRepository.findLogsByLocationNearWithUser(
+        eq(new BigDecimal("37.5665")),
+        eq(new BigDecimal("126.9780")),
+        eq(new BigDecimal("10.0")),
+        eq(1L),
+        eq("ASC"),
+        any(Pageable.class))).willReturn(logPage);
+
+    // when
+    Page<LogResponse> response = logService.searchLogs(searchRequest, "test@example.com");
+
+    // then
+    assertThat(response).isNotNull();
+    assertThat(response.getContent()).hasSize(1);
+
+    verify(logRepository).findLogsByLocationNearWithUser(
+        eq(new BigDecimal("37.5665")),
+        eq(new BigDecimal("126.9780")),
+        eq(new BigDecimal("10.0")),
+        eq(1L),
+        eq("ASC"),
+        any(Pageable.class));
+  }
+
+  @Test
+  @DisplayName("거리 정렬 방향 테스트 - DESC (먼 거리 우선)")
+  void searchLogs_DistanceSortDesc_Success() {
+    // given
+    LogSearchRequest searchRequest = LogSearchRequest.builder()
+        .latitude(new BigDecimal("37.5665"))
+        .longitude(new BigDecimal("126.9780"))
+        .radiusKm(new BigDecimal("10.0"))
+        .sortBy("distance")
+        .sortDirection("desc")
+        .page(0)
+        .size(20)
+        .build();
+
+    List<Log> logs = Arrays.asList(testLog);
+    Page<Log> logPage = new PageImpl<>(logs);
+
+    given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
+    given(logRepository.findLogsByLocationNearWithUser(
+        eq(new BigDecimal("37.5665")),
+        eq(new BigDecimal("126.9780")),
+        eq(new BigDecimal("10.0")),
+        eq(1L),
+        eq("DESC"),
+        any(Pageable.class))).willReturn(logPage);
+
+    // when
+    Page<LogResponse> response = logService.searchLogs(searchRequest, "test@example.com");
+
+    // then
+    assertThat(response).isNotNull();
+    assertThat(response.getContent()).hasSize(1);
+
+    verify(logRepository).findLogsByLocationNearWithUser(
+        eq(new BigDecimal("37.5665")),
+        eq(new BigDecimal("126.9780")),
+        eq(new BigDecimal("10.0")),
+        eq(1L),
+        eq("DESC"),
+        any(Pageable.class));
+  }
+
+  @Test
+  @DisplayName("거리 정렬 방향 테스트 - 비로그인 사용자 DESC")
+  void searchLogs_DistanceSortDesc_AnonymousUser_Success() {
+    // given
+    LogSearchRequest searchRequest = LogSearchRequest.builder()
+        .latitude(new BigDecimal("37.5665"))
+        .longitude(new BigDecimal("126.9780"))
+        .radiusKm(new BigDecimal("10.0"))
+        .sortBy("distance")
+        .sortDirection("desc")
+        .page(0)
+        .size(20)
+        .build();
+
+    List<Log> logs = Arrays.asList(testLog);
+    Page<Log> logPage = new PageImpl<>(logs);
+
+    given(logRepository.findPublicLogsByLocationNear(
+        eq(new BigDecimal("37.5665")),
+        eq(new BigDecimal("126.9780")),
+        eq(new BigDecimal("10.0")),
+        eq("DESC"),
+        any(Pageable.class))).willReturn(logPage);
+
+    // when
+    Page<LogResponse> response = logService.searchLogs(searchRequest, null);
+
+    // then
+    assertThat(response).isNotNull();
+    assertThat(response.getContent()).hasSize(1);
+
+    verify(logRepository).findPublicLogsByLocationNear(
+        eq(new BigDecimal("37.5665")),
+        eq(new BigDecimal("126.9780")),
+        eq(new BigDecimal("10.0")),
+        eq("DESC"),
+        any(Pageable.class));
   }
 
   @Test
