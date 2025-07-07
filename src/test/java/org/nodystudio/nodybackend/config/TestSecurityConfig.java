@@ -1,6 +1,7 @@
 package org.nodystudio.nodybackend.config;
 
 import java.util.List;
+
 import org.nodystudio.nodybackend.security.filter.JwtAuthenticationFilter;
 import org.nodystudio.nodybackend.security.handler.CustomAccessDeniedHandler;
 import org.nodystudio.nodybackend.security.handler.CustomAuthenticationEntryPoint;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -79,6 +81,7 @@ public class TestSecurityConfig {
             .requestMatchers("/api/test/exceptions/**").permitAll()
             .requestMatchers("/api/test/exceptions/security-access-test").hasRole("ADMIN")
             .requestMatchers("/api/test/exceptions/security-auth-test").authenticated()
+            .requestMatchers(HttpMethod.GET, "/api/threads/*").permitAll()
             .anyRequest().authenticated())
         .exceptionHandling(exceptions -> exceptions
             .authenticationEntryPoint(customAuthenticationEntryPoint)
