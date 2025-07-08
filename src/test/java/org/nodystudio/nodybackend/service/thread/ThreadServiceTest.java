@@ -500,4 +500,63 @@ class ThreadServiceTest {
     // 조회수 증가가 실패해도 스레드 조회는 성공해야 함
     verify(threadRepository).incrementViewCount(1L);
   }
+
+  @Test
+  @DisplayName("스레드 생성 시 content trim 처리 테스트")
+  void createThread_ContentTrimming() {
+    // given
+    ThreadCreateRequest request = ThreadCreateRequest.builder()
+        .content("  앞뒤 공백이 있는 내용  ")
+        .isPublic(true)
+        .build();
+
+    given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
+    given(threadRepository.save(any(Thread.class))).willAnswer(invocation -> {
+      Thread savedThread = invocation.getArgument(0);
+      return Thread.builder()
+          .id(1L)
+          .user(savedThread.getUser())
+          .log(savedThread.getLog())
+          .content(savedThread.getContent())
+          .isPublic(savedThread.getIsPublic())
+          .viewCount(savedThread.getViewCount())
+          .build();
+    });
+
+    // when
+    ThreadResponse response = threadService.createThread(request, "test@example.com");
+
+    // then
+    assertThat(response.getContent()).isEqualTo("앞뒤 공백이 있는 내용");
+    
+    // Thread.builder에 전달되는 content가 trim되었는지 확인
+    ArgumentCaptor<Thread> threadCaptor = ArgumentCaptor.forClass(Thread.class);
+    verify(threadRepository).save(threadCaptor.capture());
+    Thread capturedThread = threadCaptor.getValue();
+    assertThat(capturedThread.getContent()).isEqualTo("앞뒤 공백이 있는 내용");
+  }
+
+  @Test
+  @DisplayName("스레드 수정 시 content trim 처리 테스트")
+  void updateThread_ContentTrimming() {
+    // given
+    ThreadUpdateRequest request = ThreadUpdateRequest.builder()
+        .content("  수정된 내용  ")
+        .isPublic(false)
+        .build();
+
+    given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
+    given(threadRepository.findByIdAndUserId(1L, 1L)).willReturn(Optional.of(testThread));
+
+    // when
+    ThreadResponse response = threadService.updateThread(1L, request, "test@example.com");
+
+    // then
+    assertThat(response.getId()).isEqualTo(1L);
+    
+    // 실제 엔티티의 content가 trim되었는지 확인
+    assertThat(testThread.getContent()).isEqualTo("수정된 내용");
+    
+    verify(threadRepository).findByIdAndUserId(1L, 1L);
+  }
 }

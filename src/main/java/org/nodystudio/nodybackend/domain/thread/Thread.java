@@ -72,7 +72,7 @@ public class Thread extends BaseTimeEntity {
     if (content == null || content.trim().isEmpty()) {
       throw new IllegalArgumentException("내용은 공백일 수 없습니다.");
     }
-    this.content = content;
+    this.content = content.trim();
   }
 
   /**

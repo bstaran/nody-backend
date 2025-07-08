@@ -67,7 +67,7 @@ public class ThreadService {
     Thread thread = Thread.builder()
         .user(user)
         .log(linkedLog)
-        .content(request.getContent())
+        .content(request.getContent() != null ? request.getContent().trim() : null)
         .isPublic(request.getIsPublic() != null ? request.getIsPublic() : true)
         .build();
 
