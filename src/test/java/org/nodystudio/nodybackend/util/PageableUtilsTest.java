@@ -1,0 +1,170 @@
+package org.nodystudio.nodybackend.util;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.test.context.ActiveProfiles;
+
+@ActiveProfiles("test")
+@DisplayName("PageableUtils 테스트")
+class PageableUtilsTest {
+
+  @Test
+  @DisplayName("기본 페이지네이션 객체 생성 - ASC 정렬")
+  void createPageable_AscSort_Success() {
+    // when
+    Pageable pageable = PageableUtils.createPageable(0, 10, "name", "asc");
+
+    // then
+    assertThat(pageable.getPageNumber()).isEqualTo(0);
+    assertThat(pageable.getPageSize()).isEqualTo(10);
+    Sort.Order order = pageable.getSort().getOrderFor("name");
+    assertThat(order).isNotNull();
+    assertThat(order.getDirection()).isEqualTo(Sort.Direction.ASC);
+  }
+
+  @Test
+  @DisplayName("기본 페이지네이션 객체 생성 - DESC 정렬")
+  void createPageable_DescSort_Success() {
+    // when
+    Pageable pageable = PageableUtils.createPageable(1, 20, "createdAt", "desc");
+
+    // then
+    assertThat(pageable.getPageNumber()).isEqualTo(1);
+    assertThat(pageable.getPageSize()).isEqualTo(20);
+    Sort.Order order = pageable.getSort().getOrderFor("createdAt");
+    assertThat(order).isNotNull();
+    assertThat(order.getDirection()).isEqualTo(Sort.Direction.DESC);
+  }
+
+  @Test
+  @DisplayName("Thread 페이지네이션 객체 생성 - 유효한 필드")
+  void createThreadPageable_ValidFields_Success() {
+    // when
+    Pageable pageable = PageableUtils.createThreadPageable(0, 10, "viewCount", "asc");
+
+    // then
+    assertThat(pageable.getPageNumber()).isEqualTo(0);
+    assertThat(pageable.getPageSize()).isEqualTo(10);
+    Sort.Order order = pageable.getSort().getOrderFor("viewCount");
+    assertThat(order).isNotNull();
+    assertThat(order.getDirection()).isEqualTo(Sort.Direction.ASC);
+  }
+
+  @Test
+  @DisplayName("Thread 페이지네이션 객체 생성 - 유효하지 않은 필드는 기본값 사용")
+  void createThreadPageable_InvalidField_UseDefault() {
+    // when
+    Pageable pageable = PageableUtils.createThreadPageable(0, 10, "invalidField", "asc");
+
+    // then
+    assertThat(pageable.getPageNumber()).isEqualTo(0);
+    assertThat(pageable.getPageSize()).isEqualTo(10);
+    Sort.Order order = pageable.getSort().getOrderFor("createdAt");
+    assertThat(order).isNotNull();
+    assertThat(order.getDirection()).isEqualTo(Sort.Direction.DESC);
+  }
+
+  @Test
+  @DisplayName("정렬 방향 변환 - asc")
+  void getSortDirection_Asc_Success() {
+    // when
+    Sort.Direction direction = PageableUtils.getSortDirection("asc");
+
+    // then
+    assertThat(direction).isEqualTo(Sort.Direction.ASC);
+  }
+
+  @Test
+  @DisplayName("정렬 방향 변환 - ASC (대문자)")
+  void getSortDirection_AscUpperCase_Success() {
+    // when
+    Sort.Direction direction = PageableUtils.getSortDirection("ASC");
+
+    // then
+    assertThat(direction).isEqualTo(Sort.Direction.ASC);
+  }
+
+  @Test
+  @DisplayName("정렬 방향 변환 - desc")
+  void getSortDirection_Desc_Success() {
+    // when
+    Sort.Direction direction = PageableUtils.getSortDirection("desc");
+
+    // then
+    assertThat(direction).isEqualTo(Sort.Direction.DESC);
+  }
+
+  @Test
+  @DisplayName("정렬 방향 변환 - 기본값은 DESC")
+  void getSortDirection_InvalidValue_DefaultDesc() {
+    // when
+    Sort.Direction direction = PageableUtils.getSortDirection("invalid");
+
+    // then
+    assertThat(direction).isEqualTo(Sort.Direction.DESC);
+  }
+
+  @Test
+  @DisplayName("Thread 정렬 객체 생성 - createdAt")
+  void createThreadSort_CreatedAt_Success() {
+    // when
+    Sort sort = PageableUtils.createThreadSort("createdAt", "asc");
+
+    // then
+    Sort.Order order = sort.getOrderFor("createdAt");
+    assertThat(order).isNotNull();
+    assertThat(order.getDirection()).isEqualTo(Sort.Direction.ASC);
+  }
+
+  @Test
+  @DisplayName("Thread 정렬 객체 생성 - updatedAt")
+  void createThreadSort_UpdatedAt_Success() {
+    // when
+    Sort sort = PageableUtils.createThreadSort("updatedAt", "desc");
+
+    // then
+    Sort.Order order = sort.getOrderFor("updatedAt");
+    assertThat(order).isNotNull();
+    assertThat(order.getDirection()).isEqualTo(Sort.Direction.DESC);
+  }
+
+  @Test
+  @DisplayName("Thread 정렬 객체 생성 - viewCount")
+  void createThreadSort_ViewCount_Success() {
+    // when
+    Sort sort = PageableUtils.createThreadSort("viewCount", "asc");
+
+    // then
+    Sort.Order order = sort.getOrderFor("viewCount");
+    assertThat(order).isNotNull();
+    assertThat(order.getDirection()).isEqualTo(Sort.Direction.ASC);
+  }
+
+  @Test
+  @DisplayName("Thread 정렬 객체 생성 - 유효하지 않은 필드는 기본값 사용")
+  void createThreadSort_InvalidField_UseDefault() {
+    // when
+    Sort sort = PageableUtils.createThreadSort("invalidField", "asc");
+
+    // then
+    Sort.Order order = sort.getOrderFor("createdAt");
+    assertThat(order).isNotNull();
+    assertThat(order.getDirection()).isEqualTo(Sort.Direction.DESC);
+  }
+
+  @Test
+  @DisplayName("기본 정렬 객체 생성")
+  void createSort_Basic_Success() {
+    // when
+    Sort sort = PageableUtils.createSort("name", "asc");
+
+    // then
+    Sort.Order order = sort.getOrderFor("name");
+    assertThat(order).isNotNull();
+    assertThat(order.getDirection()).isEqualTo(Sort.Direction.ASC);
+  }
+}

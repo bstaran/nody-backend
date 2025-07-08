@@ -15,10 +15,9 @@ import org.nodystudio.nodybackend.exception.custom.UserNotFoundException;
 import org.nodystudio.nodybackend.repository.LogRepository;
 import org.nodystudio.nodybackend.repository.ThreadRepository;
 import org.nodystudio.nodybackend.repository.UserRepository;
+import org.nodystudio.nodybackend.util.PageableUtils;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -112,7 +111,11 @@ public class ThreadService {
         searchRequest.getLogId(), userEmail);
 
     User viewer = userEmail != null ? findUserByEmail(userEmail) : null;
-    Pageable pageable = createPageable(searchRequest);
+    Pageable pageable = PageableUtils.createThreadPageable(
+        searchRequest.getPage(), 
+        searchRequest.getSize(), 
+        searchRequest.getSortBy(), 
+        searchRequest.getSortDirection());
 
     Page<Thread> threads = performSearch(searchRequest, viewer, pageable);
 
@@ -226,22 +229,6 @@ public class ThreadService {
     return log;
   }
 
-  private Pageable createPageable(ThreadSearchRequest searchRequest) {
-    Sort sort = createSort(searchRequest.getSortBy(), searchRequest.getSortDirection());
-    return PageRequest.of(searchRequest.getPage(), searchRequest.getSize(), sort);
-  }
-
-  private Sort createSort(String sortBy, String sortDirection) {
-    Sort.Direction direction = "asc".equalsIgnoreCase(sortDirection)
-        ? Sort.Direction.ASC
-        : Sort.Direction.DESC;
-
-    return switch (sortBy) {
-      case "createdAt" -> Sort.by(direction, "createdAt");
-      case "viewCount" -> Sort.by(direction, "viewCount");
-      default -> Sort.by(Sort.Direction.DESC, "createdAt");
-    };
-  }
 
   private Page<Thread> performSearch(ThreadSearchRequest searchRequest, User viewer, Pageable pageable) {
     // 키워드 검색이 있는 경우

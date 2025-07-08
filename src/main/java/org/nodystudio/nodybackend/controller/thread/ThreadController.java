@@ -7,10 +7,9 @@ import org.nodystudio.nodybackend.dto.thread.ThreadResponse;
 import org.nodystudio.nodybackend.dto.thread.ThreadSearchRequest;
 import org.nodystudio.nodybackend.dto.thread.ThreadUpdateRequest;
 import org.nodystudio.nodybackend.service.thread.ThreadService;
+import org.nodystudio.nodybackend.util.PageableUtils;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -47,32 +46,8 @@ public class ThreadController {
     return user != null ? user.getEmail() : "익명";
   }
 
-  /**
-   * 페이지네이션 객체를 생성합니다.
-   */
-  private Pageable createPageable(int page, int size, String sortBy, String sortDirection) {
-    Sort.Direction direction = "asc".equalsIgnoreCase(sortDirection)
-        ? Sort.Direction.ASC
-        : Sort.Direction.DESC;
-    Sort sort = Sort.by(direction, sortBy);
-    return PageRequest.of(page, size, sort);
-  }
 
 
-  /**
-   * ThreadSearchRequest를 빌드합니다.
-   */
-  private ThreadSearchRequest buildSearchRequest(int page, int size, String sortBy, 
-                                                String sortDirection, String keyword, String threadType) {
-    return ThreadSearchRequest.builder()
-        .page(page)
-        .size(size)
-        .sortBy(sortBy)
-        .sortDirection(sortDirection)
-        .keyword(keyword)
-        .threadType(threadType)
-        .build();
-  }
 
   /**
    * 스레드 생성
@@ -180,7 +155,7 @@ public class ThreadController {
     log.info("로그 스레드 목록 조회 - 로그ID: {}, 사용자: {}",
         logId, getUserEmailSafely(user));
 
-    Pageable pageable = createPageable(page, size, sortBy, sortDirection);
+    Pageable pageable = PageableUtils.createThreadPageable(page, size, sortBy, sortDirection);
 
     Page<ThreadResponse> response = threadService.getThreadsByLog(logId,
         user != null ? user.getEmail() : null, pageable);
@@ -204,8 +179,14 @@ public class ThreadController {
     log.info("독립 스레드 목록 조회 - 키워드: {}, 사용자: {}", keyword,
         getUserEmailSafely(user));
 
-    ThreadSearchRequest searchRequest = buildSearchRequest(
-        page, size, sortBy, sortDirection, keyword, "independent");
+    ThreadSearchRequest searchRequest = ThreadSearchRequest.builder()
+        .page(page)
+        .size(size)
+        .sortBy(sortBy)
+        .sortDirection(sortDirection)
+        .keyword(keyword)
+        .threadType("independent")
+        .build();
 
     Page<ThreadResponse> response = threadService.searchThreads(searchRequest,
         user != null ? user.getEmail() : null);
@@ -229,8 +210,14 @@ public class ThreadController {
     log.info("로그 연결 스레드 목록 조회 - 키워드: {}, 사용자: {}", keyword,
         getUserEmailSafely(user));
 
-    ThreadSearchRequest searchRequest = buildSearchRequest(
-        page, size, sortBy, sortDirection, keyword, "linked");
+    ThreadSearchRequest searchRequest = ThreadSearchRequest.builder()
+        .page(page)
+        .size(size)
+        .sortBy(sortBy)
+        .sortDirection(sortDirection)
+        .keyword(keyword)
+        .threadType("linked")
+        .build();
 
     Page<ThreadResponse> response = threadService.searchThreads(searchRequest,
         user != null ? user.getEmail() : null);
