@@ -83,10 +83,17 @@ public class Thread extends BaseTimeEntity {
   }
 
   /**
-   * 로그 연결을 업데이트합니다.
+   * 로그에 연결합니다.
    */
-  public void updateLog(Log log) {
+  public void connectToLog(Log log) {
     this.log = log;
+  }
+
+  /**
+   * 로그 연결을 해제합니다.
+   */
+  public void disconnectFromLog() {
+    this.log = null;
   }
 
   /**

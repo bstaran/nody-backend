@@ -281,12 +281,14 @@ public class ThreadService {
       thread.updatePublicSetting(request.getIsPublic());
     }
 
-    // 로그 연결 변경
-    if (request.getLogId() != null) {
+    // 로그 연결 처리
+    if (Boolean.TRUE.equals(request.getDisconnectLog())) {
+      // 로그 연결 해제 - 독립 스레드로 변경
+      thread.disconnectFromLog();
+    } else if (request.getLogId() != null) {
       // 새로운 로그로 연결
       Log newLog = validateAndGetLinkedLog(request.getLogId(), user);
-      thread.updateLog(newLog);
+      thread.connectToLog(newLog);
     }
-    // 로그 연결 해제는 별도 처리 (logId가 명시적으로 null로 설정된 경우)
   }
 }

@@ -254,4 +254,84 @@ class ThreadUpdateRequestTest {
     assertThat(minViolations).isEmpty();
     assertThat(maxViolations).isEmpty();
   }
+
+  @Test
+  @DisplayName("로그 연결 해제 - 유효한 요청")
+  void validate_DisconnectLog_Success() {
+    // given
+    ThreadUpdateRequest request = ThreadUpdateRequest.builder()
+        .disconnectLog(true)
+        .build();
+
+    // when
+    Set<ConstraintViolation<ThreadUpdateRequest>> violations = validator.validate(request);
+
+    // then
+    assertThat(violations).isEmpty();
+  }
+
+  @Test
+  @DisplayName("로그 연결과 해제 동시 요청 - 유효성 검증 실패")
+  void validate_LogIdAndDisconnectLogBoth_ValidationFails() {
+    // given
+    ThreadUpdateRequest request = ThreadUpdateRequest.builder()
+        .logId(1L)
+        .disconnectLog(true)
+        .build();
+
+    // when
+    Set<ConstraintViolation<ThreadUpdateRequest>> violations = validator.validate(request);
+
+    // then
+    assertThat(violations).hasSize(1);
+    assertThat(violations.iterator().next().getMessage())
+        .isEqualTo("로그 연결과 연결 해제는 동시에 요청할 수 없습니다.");
+  }
+
+  @Test
+  @DisplayName("로그 연결 변경 - 유효한 요청")
+  void validate_ChangeLogId_Success() {
+    // given
+    ThreadUpdateRequest request = ThreadUpdateRequest.builder()
+        .logId(2L)
+        .build();
+
+    // when
+    Set<ConstraintViolation<ThreadUpdateRequest>> violations = validator.validate(request);
+
+    // then
+    assertThat(violations).isEmpty();
+  }
+
+  @Test
+  @DisplayName("disconnectLog가 false인 경우와 logId 동시 요청 - 유효한 요청")
+  void validate_DisconnectLogFalseWithLogId_Success() {
+    // given
+    ThreadUpdateRequest request = ThreadUpdateRequest.builder()
+        .logId(1L)
+        .disconnectLog(false)
+        .build();
+
+    // when
+    Set<ConstraintViolation<ThreadUpdateRequest>> violations = validator.validate(request);
+
+    // then
+    assertThat(violations).isEmpty();
+  }
+
+  @Test
+  @DisplayName("disconnectLog가 null인 경우와 logId 동시 요청 - 유효한 요청")
+  void validate_DisconnectLogNullWithLogId_Success() {
+    // given
+    ThreadUpdateRequest request = ThreadUpdateRequest.builder()
+        .logId(1L)
+        .disconnectLog(null)
+        .build();
+
+    // when
+    Set<ConstraintViolation<ThreadUpdateRequest>> violations = validator.validate(request);
+
+    // then
+    assertThat(violations).isEmpty();
+  }
 }

@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import org.nodystudio.nodybackend.validation.NotBlankIfPresent;
+import jakarta.validation.constraints.AssertTrue;
 
 @Getter
 @NoArgsConstructor
@@ -19,5 +20,15 @@ public class ThreadUpdateRequest {
 
   private Boolean isPublic;
 
-  private Long logId; // 로그 연결 변경 (null로 설정하면 독립 스레드로 변경)
+  private Long logId; // 로그 연결 변경
+
+  private Boolean disconnectLog; // 로그 연결 해제 (true로 설정하면 독립 스레드로 변경)
+
+  /**
+   * logId와 disconnectLog는 동시에 설정될 수 없습니다.
+   */
+  @AssertTrue(message = "로그 연결과 연결 해제는 동시에 요청할 수 없습니다.")
+  public boolean isLogRequestValid() {
+    return !(logId != null && Boolean.TRUE.equals(disconnectLog));
+  }
 }

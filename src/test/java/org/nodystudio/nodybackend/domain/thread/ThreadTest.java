@@ -122,8 +122,8 @@ class ThreadTest {
     }
 
     @Test
-    @DisplayName("로그 연결 업데이트 성공")
-    void updateLog_Success() {
+    @DisplayName("로그 연결 성공")
+    void connectToLog_Success() {
         // given
         Log newLog = Log.builder()
                 .id(3L)
@@ -132,7 +132,7 @@ class ThreadTest {
                 .build();
 
         // when
-        thread.updateLog(newLog);
+        thread.connectToLog(newLog);
 
         // then
         assertThat(thread.getLog()).isEqualTo(newLog);
@@ -140,9 +140,9 @@ class ThreadTest {
 
     @Test
     @DisplayName("로그 연결 해제 성공")
-    void updateLog_DetachLog_Success() {
+    void disconnectFromLog_Success() {
         // when
-        thread.updateLog(null);
+        thread.disconnectFromLog();
 
         // then
         assertThat(thread.getLog()).isNull();
@@ -273,7 +273,7 @@ class ThreadTest {
     @DisplayName("로그 연결 여부 확인 - 연결되지 않은 경우")
     void isLinkedToLog_WithoutLog_ReturnsFalse() {
         // given
-        thread.updateLog(null);
+        thread.disconnectFromLog();
 
         // when & then
         assertThat(thread.isLinkedToLog()).isFalse();
@@ -283,7 +283,7 @@ class ThreadTest {
     @DisplayName("독립 스레드 여부 확인 - 독립 스레드인 경우")
     void isIndependent_IndependentThread_ReturnsTrue() {
         // given
-        thread.updateLog(null);
+        thread.disconnectFromLog();
 
         // when & then
         assertThat(thread.isIndependent()).isTrue();
@@ -307,7 +307,7 @@ class ThreadTest {
     @DisplayName("로그 소유자와 스레드 소유자 일치 확인 - 일치하지 않는 경우")
     void isLogOwnerMatchesThreadOwner_NonMatchingOwners_ReturnsFalse() {
         // given
-        thread.updateLog(otherUserLog);
+        thread.connectToLog(otherUserLog);
 
         // when & then
         assertThat(thread.isLogOwnerMatchesThreadOwner()).isFalse();
@@ -317,7 +317,7 @@ class ThreadTest {
     @DisplayName("로그 소유자와 스레드 소유자 일치 확인 - 독립 스레드인 경우")
     void isLogOwnerMatchesThreadOwner_IndependentThread_ReturnsTrue() {
         // given
-        thread.updateLog(null);
+        thread.disconnectFromLog();
 
         // when & then
         assertThat(thread.isLogOwnerMatchesThreadOwner()).isTrue();

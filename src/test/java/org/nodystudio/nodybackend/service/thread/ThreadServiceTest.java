@@ -559,4 +559,73 @@ class ThreadServiceTest {
     
     verify(threadRepository).findByIdAndUserId(1L, 1L);
   }
+
+  @Test
+  @DisplayName("스레드 로그 연결 해제 테스트")
+  void updateThread_DisconnectLog_Success() {
+    // given
+    ThreadUpdateRequest request = ThreadUpdateRequest.builder()
+        .disconnectLog(true)
+        .build();
+
+    // 로그가 연결된 스레드 생성
+    Thread linkedThread = Thread.builder()
+        .id(1L)
+        .user(testUser)
+        .log(testLog)
+        .content("로그 연결된 스레드")
+        .isPublic(true)
+        .viewCount(0L)
+        .build();
+
+    given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
+    given(threadRepository.findByIdAndUserId(1L, 1L)).willReturn(Optional.of(linkedThread));
+
+    // when
+    ThreadResponse response = threadService.updateThread(1L, request, "test@example.com");
+
+    // then
+    assertThat(response.getId()).isEqualTo(1L);
+    
+    // 로그 연결이 해제되었는지 확인
+    assertThat(linkedThread.getLog()).isNull();
+    assertThat(linkedThread.isIndependent()).isTrue();
+    assertThat(linkedThread.isLinkedToLog()).isFalse();
+    
+    verify(threadRepository).findByIdAndUserId(1L, 1L);
+  }
+
+  @Test
+  @DisplayName("스레드 로그 연결 변경 테스트")
+  void updateThread_ChangeLog_Success() {
+    // given
+    Log newLog = Log.builder()
+        .id(2L)
+        .user(testUser)
+        .content("새로운 로그")
+        .isPublic(true)
+        .build();
+
+    ThreadUpdateRequest request = ThreadUpdateRequest.builder()
+        .logId(2L)
+        .build();
+
+    given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
+    given(threadRepository.findByIdAndUserId(1L, 1L)).willReturn(Optional.of(testThread));
+    given(logRepository.findById(2L)).willReturn(Optional.of(newLog));
+
+    // when
+    ThreadResponse response = threadService.updateThread(1L, request, "test@example.com");
+
+    // then
+    assertThat(response.getId()).isEqualTo(1L);
+    
+    // 새로운 로그로 연결되었는지 확인
+    assertThat(testThread.getLog()).isEqualTo(newLog);
+    assertThat(testThread.isLinkedToLog()).isTrue();
+    assertThat(testThread.isIndependent()).isFalse();
+    
+    verify(threadRepository).findByIdAndUserId(1L, 1L);
+    verify(logRepository).findById(2L);
+  }
 }

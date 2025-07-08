@@ -103,8 +103,24 @@ class ThreadControllerTest {
         .isPublic(true)
         .build();
 
+    ThreadResponse createResponse = ThreadResponse.builder()
+        .id(1L)
+        .content("새 스레드 내용")
+        .isPublic(true)
+        .viewCount(0L)
+        .user(UserSummaryResponse.builder()
+            .id(1L)
+            .nickname("testuser")
+            .build())
+        .log(null)
+        .createdAt(LocalDateTime.now())
+        .updatedAt(LocalDateTime.now())
+        .isLinkedToLog(false)
+        .isIndependent(true)
+        .build();
+
     given(threadService.createThread(any(ThreadCreateRequest.class), eq("test@example.com")))
-        .willReturn(threadResponse);
+        .willReturn(createResponse);
 
     // when
     ResponseEntity<ApiResponse<ThreadResponse>> response = threadController.createThread(request, mockUser);
@@ -115,7 +131,7 @@ class ThreadControllerTest {
     ApiResponse<ThreadResponse> body = Objects.requireNonNull(response.getBody());
     assertEquals(200, body.getStatus());
     assertEquals(1L, body.getData().getId());
-    assertEquals("테스트 스레드 내용", body.getData().getContent());
+    assertEquals("새 스레드 내용", body.getData().getContent());
     assertEquals("스레드가 성공적으로 생성되었습니다.", body.getMessage());
 
     verify(threadService).createThread(any(ThreadCreateRequest.class), eq("test@example.com"));
