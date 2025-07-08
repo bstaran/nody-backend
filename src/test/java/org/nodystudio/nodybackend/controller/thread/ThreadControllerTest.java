@@ -1,6 +1,7 @@
 package org.nodystudio.nodybackend.controller.thread;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -10,9 +11,14 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.Mockito.verify;
 
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
 import java.time.LocalDateTime;
 import java.util.Objects;
-
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,11 +29,20 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.nodystudio.nodybackend.domain.user.RoleType;
 import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.dto.ApiResponse;
+import org.nodystudio.nodybackend.dto.code.ErrorCode;
 import org.nodystudio.nodybackend.dto.thread.ThreadCreateRequest;
 import org.nodystudio.nodybackend.dto.thread.ThreadResponse;
+import org.nodystudio.nodybackend.dto.thread.ThreadSearchRequest;
 import org.nodystudio.nodybackend.dto.user.UserSummaryResponse;
 import org.nodystudio.nodybackend.service.thread.ThreadService;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @ExtendWith(MockitoExtension.class)
 class ThreadControllerTest {
@@ -40,9 +55,15 @@ class ThreadControllerTest {
 
   private ThreadResponse threadResponse;
   private User mockUser;
+  private Validator validator;
 
   @BeforeEach
   void setUp() {
+    // Validator 설정
+    try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
+      validator = factory.getValidator();
+    }
+    
     // Mock User 생성
     mockUser = User.builder()
         .id(1L)
@@ -158,5 +179,73 @@ class ThreadControllerTest {
     assertEquals("스레드가 성공적으로 삭제되었습니다.", body.getMessage());
 
     verify(threadService).deleteThread(1L, "test@example.com");
+  }
+
+  @Test
+  @DisplayName("ThreadSearchRequest - 페이지 크기 최대값 초과 검증 테스트")
+  void threadSearchRequest_PageSizeExceedsMax_ValidationError() {
+    // given
+    ThreadSearchRequest request = ThreadSearchRequest.builder()
+        .page(0)
+        .size(101)
+        .build();
+
+    // when
+    Set<ConstraintViolation<ThreadSearchRequest>> violations = validator.validate(request);
+
+    // then
+    assertFalse(violations.isEmpty());
+    assertTrue(violations.stream()
+        .anyMatch(v -> v.getMessage().contains("100 이하여야 합니다")));
+  }
+
+  @Test
+  @DisplayName("ThreadSearchRequest - 페이지 크기 최소값 미만 검증 테스트")
+  void threadSearchRequest_PageSizeBelowMin_ValidationError() {
+    // given
+    ThreadSearchRequest request = ThreadSearchRequest.builder()
+        .page(0)
+        .size(0)
+        .build();
+
+    // when
+    Set<ConstraintViolation<ThreadSearchRequest>> violations = validator.validate(request);
+
+    // then
+    assertFalse(violations.isEmpty());
+    assertTrue(violations.stream()
+        .anyMatch(v -> v.getMessage().contains("1 이상이어야 합니다")));
+  }
+
+  @Test
+  @DisplayName("ThreadSearchRequest - 페이지 크기 정상 범위 검증 테스트")
+  void threadSearchRequest_PageSizeValid_NoViolation() {
+    // given
+    ThreadSearchRequest request = ThreadSearchRequest.builder()
+        .page(0)
+        .size(100)
+        .build();
+
+    // when
+    Set<ConstraintViolation<ThreadSearchRequest>> violations = validator.validate(request);
+
+    // then
+    assertTrue(violations.isEmpty());
+  }
+
+  @RestControllerAdvice
+  static class TestValidationExceptionHandler {
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<Object>> handleValidationException(
+        MethodArgumentNotValidException ex) {
+      String errorMessage = ex.getBindingResult().getFieldErrors().stream()
+          .map(DefaultMessageSourceResolvable::getDefaultMessage)
+          .collect(Collectors.joining(", "));
+
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+          .body(org.nodystudio.nodybackend.dto.ApiResponse.error(ErrorCode.VALIDATION_ERROR,
+              errorMessage));
+    }
   }
 }
