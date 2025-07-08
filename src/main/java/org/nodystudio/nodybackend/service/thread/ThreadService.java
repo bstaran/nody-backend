@@ -93,9 +93,9 @@ public class ThreadService {
     User viewer = userEmail != null ? findUserByEmail(userEmail) : null;
     Thread thread = findViewableThread(threadId, viewer);
 
-    thread.incrementViewCount();
+    threadRepository.incrementViewCount(threadId);
 
-    log.info("스레드 조회 완료 - ID: {}, 조회수: {}", thread.getId(), thread.getViewCount());
+    log.info("스레드 조회 완료 - ID: {}, 조회수 증가됨", thread.getId());
     return ThreadResponse.from(thread);
   }
 
@@ -217,7 +217,7 @@ public class ThreadService {
     if (log.getIsPublic()) {
       return log;
     }
-    
+
     // 비공개 로그인 경우: 로그 작성자만 스레드 생성 가능
     if (!log.isOwnedBy(user)) {
       throw new UnauthorizedException("비공개 로그에는 작성자만 스레드를 생성할 수 있습니다.");

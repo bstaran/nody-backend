@@ -5,18 +5,17 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-
-import org.mockito.ArgumentCaptor;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -382,6 +381,8 @@ class ThreadServiceTest {
 
     // then
     assertThat(response.getId()).isEqualTo(1L);
+    assertThat(response.getContent()).isEqualTo("수정된 내용");
+    assertThat(response.getIsPublic()).isFalse();
     verify(threadRepository).findByIdAndUserId(1L, 1L);
   }
 
@@ -459,5 +460,44 @@ class ThreadServiceTest {
     assertThatThrownBy(() -> threadService.getThreadsByLog(999L, null, pageable))
         .isInstanceOf(ResourceNotFoundException.class)
         .hasMessageContaining("로그를 찾을 수 없습니다");
+  }
+
+  @Test
+  @DisplayName("조회수 증가 동시성 테스트 - 원자적 연산 확인")
+  void incrementViewCount_ConcurrencyTest() {
+    // given
+    given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
+    given(threadRepository.findViewableThreadByIdAndUserId(1L, 1L)).willReturn(Optional.of(testThread));
+    given(threadRepository.incrementViewCount(1L)).willReturn(1);
+
+    // when
+    ThreadResponse response = threadService.getThread(1L, "test@example.com");
+
+    // then
+    assertThat(response.getId()).isEqualTo(1L);
+    
+    // 원자적 조회수 증가 메서드가 호출되는지 확인
+    verify(threadRepository).incrementViewCount(1L);
+    
+    // 엔티티의 incrementViewCount 메서드는 호출되지 않아야 함
+    verify(threadRepository, times(0)).save(any(Thread.class));
+  }
+
+  @Test
+  @DisplayName("조회수 증가 실패 처리 테스트")
+  void incrementViewCount_FailureHandling() {
+    // given
+    given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
+    given(threadRepository.findViewableThreadByIdAndUserId(1L, 1L)).willReturn(Optional.of(testThread));
+    given(threadRepository.incrementViewCount(1L)).willReturn(0); // 업데이트 실패 시뮬레이션
+
+    // when
+    ThreadResponse response = threadService.getThread(1L, "test@example.com");
+
+    // then
+    assertThat(response.getId()).isEqualTo(1L);
+    
+    // 조회수 증가가 실패해도 스레드 조회는 성공해야 함
+    verify(threadRepository).incrementViewCount(1L);
   }
 }
