@@ -201,6 +201,8 @@ class ThreadRepositorySearchTest {
   @DisplayName("대소문자 구분 없는 검색 - 영문 대소문자 혼용")
   void searchPublicThreadsByContent_WhenMixedCaseKeyword_ShouldReturnMatchingThreadsIgnoringCase() {
     // given
+    LocalDateTime baseTime = LocalDateTime.of(2024, 1, 1, 10, 0, 0);
+    
     // 영문 대소문자 혼용 스레드 추가
     Thread mixedCaseThread1 = Thread.builder()
         .user(user1)
@@ -208,6 +210,7 @@ class ThreadRepositorySearchTest {
         .isPublic(true)
         .build();
     entityManager.persistAndFlush(mixedCaseThread1);
+    updateThreadCreatedAt(mixedCaseThread1.getId(), baseTime.plusMinutes(40));
     
     Thread mixedCaseThread2 = Thread.builder()
         .user(user2)
@@ -215,6 +218,9 @@ class ThreadRepositorySearchTest {
         .isPublic(true)
         .build();
     entityManager.persistAndFlush(mixedCaseThread2);
+    updateThreadCreatedAt(mixedCaseThread2.getId(), baseTime.plusMinutes(50));
+    
+    entityManager.clear(); // 엔티티 캐시 클리어
     
     Pageable pageable = PageRequest.of(0, 10);
 

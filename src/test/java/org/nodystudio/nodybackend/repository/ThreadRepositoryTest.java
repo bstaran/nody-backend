@@ -235,7 +235,7 @@ class ThreadRepositoryTest {
     // 생성일 기준 내림차순 정렬 확인 (최신 순)
     assertThat(result.getContent())
         .extracting(Thread::getContent)
-        .containsExactly("공개 스레드 1 내용", "비공개 스레드 내용");
+        .containsExactly("비공개 스레드 내용", "공개 스레드 1 내용");
     
     // 실제 생성일 순서 검증
     List<Thread> threads = result.getContent();
@@ -289,6 +289,8 @@ class ThreadRepositoryTest {
   @DisplayName("독립 스레드 목록 조회 - 사용자 권한 고려")
   void findIndependentThreadsWithUser_WhenUserAuthenticated_ShouldReturnPublicAndOwnIndependentThreads() {
     // given
+    LocalDateTime baseTime = LocalDateTime.of(2024, 1, 1, 10, 0, 0);
+    
     // user1의 독립 비공개 스레드 추가
     Thread privateIndependentThread = Thread.builder()
         .user(user1)
@@ -296,6 +298,9 @@ class ThreadRepositoryTest {
         .isPublic(false)
         .build();
     entityManager.persistAndFlush(privateIndependentThread);
+    updateThreadCreatedAt(privateIndependentThread.getId(), baseTime.plusMinutes(25)); // 독립 스레드보다 늦게
+
+    entityManager.clear(); // 엔티티 캐시 클리어
 
     Pageable pageable = PageRequest.of(0, 10);
 
