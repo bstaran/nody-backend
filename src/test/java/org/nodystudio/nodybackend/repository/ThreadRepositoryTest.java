@@ -1,8 +1,18 @@
 package org.nodystudio.nodybackend.repository;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.nodystudio.nodybackend.domain.log.Log;
+import org.nodystudio.nodybackend.domain.thread.Thread;
+import org.nodystudio.nodybackend.domain.user.RoleType;
+import org.nodystudio.nodybackend.domain.user.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
@@ -10,17 +20,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
-import org.nodystudio.nodybackend.domain.log.Log;
-import org.nodystudio.nodybackend.domain.thread.Thread;
-import org.nodystudio.nodybackend.domain.user.RoleType;
-import org.nodystudio.nodybackend.domain.user.User;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @ActiveProfiles("test")
@@ -46,7 +45,21 @@ class ThreadRepositoryTest {
   @BeforeEach
   void setUp() {
     LocalDateTime baseTime = LocalDateTime.of(2024, 1, 1, 10, 0, 0);
+    setupTestData(baseTime);
+  }
 
+  /**
+   * 스레드의 생성일시를 업데이트하는 공통 메서드
+   */
+  private void updateThreadCreatedAt(Long threadId, LocalDateTime createdAt) {
+    entityManager.getEntityManager()
+        .createQuery("UPDATE Thread t SET t.createdAt = :createdAt WHERE t.id = :id")
+        .setParameter("createdAt", createdAt)
+        .setParameter("id", threadId)
+        .executeUpdate();
+  }
+
+  private void setupTestData(LocalDateTime baseTime) {
     // 사용자 생성
     user1 = User.builder()
         .email("user1@example.com")
@@ -94,11 +107,7 @@ class ThreadRepositoryTest {
     entityManager.persistAndFlush(publicThread1);
 
     // 첫 번째 스레드가 가장 오래된 것
-    entityManager.getEntityManager()
-        .createQuery("UPDATE Thread t SET t.createdAt = :createdAt WHERE t.id = :id")
-        .setParameter("createdAt", baseTime)
-        .setParameter("id", publicThread1.getId())
-        .executeUpdate();
+    updateThreadCreatedAt(publicThread1.getId(), baseTime);
     publicThread2 = Thread.builder()
         .user(user2)
         .log(log2)
@@ -108,11 +117,7 @@ class ThreadRepositoryTest {
         .build();
     entityManager.persistAndFlush(publicThread2);
 
-    entityManager.getEntityManager()
-        .createQuery("UPDATE Thread t SET t.createdAt = :createdAt WHERE t.id = :id")
-        .setParameter("createdAt", baseTime.plusMinutes(10))
-        .setParameter("id", publicThread2.getId())
-        .executeUpdate();
+    updateThreadCreatedAt(publicThread2.getId(), baseTime.plusMinutes(10));
     privateThread = Thread.builder()
         .user(user1)
         .log(log1)
@@ -122,11 +127,7 @@ class ThreadRepositoryTest {
         .build();
     entityManager.persistAndFlush(privateThread);
 
-    entityManager.getEntityManager()
-        .createQuery("UPDATE Thread t SET t.createdAt = :createdAt WHERE t.id = :id")
-        .setParameter("createdAt", baseTime.plusMinutes(5))
-        .setParameter("id", privateThread.getId())
-        .executeUpdate();
+    updateThreadCreatedAt(privateThread.getId(), baseTime.plusMinutes(5));
     independentThread = Thread.builder()
         .user(user1)
         .content("독립 스레드 내용")
@@ -135,11 +136,7 @@ class ThreadRepositoryTest {
         .build();
     entityManager.persistAndFlush(independentThread);
 
-    entityManager.getEntityManager()
-        .createQuery("UPDATE Thread t SET t.createdAt = :createdAt WHERE t.id = :id")
-        .setParameter("createdAt", baseTime.plusMinutes(20))
-        .setParameter("id", independentThread.getId())
-        .executeUpdate();
+    updateThreadCreatedAt(independentThread.getId(), baseTime.plusMinutes(20));
     linkedThread = Thread.builder()
         .user(user2)
         .log(log2)
@@ -150,11 +147,7 @@ class ThreadRepositoryTest {
     entityManager.persistAndFlush(linkedThread);
 
     // 마지막 스레드가 가장 최신
-    entityManager.getEntityManager()
-        .createQuery("UPDATE Thread t SET t.createdAt = :createdAt WHERE t.id = :id")
-        .setParameter("createdAt", baseTime.plusMinutes(30))
-        .setParameter("id", linkedThread.getId())
-        .executeUpdate();
+    updateThreadCreatedAt(linkedThread.getId(), baseTime.plusMinutes(30));
 
     entityManager.clear();
   }
@@ -281,7 +274,7 @@ class ThreadRepositoryTest {
 
     // then
     assertThat(result.getContent()).hasSize(1); // log1에 연결된 공개 스레드 1개
-    assertThat(result.getContent().get(0).getContent()).isEqualTo("공개 스레드 1 내용");
+    assertThat(result.getContent().getFirst().getContent()).isEqualTo("공개 스레드 1 내용");
   }
 
   @Test
@@ -327,8 +320,8 @@ class ThreadRepositoryTest {
 
     // then
     assertThat(result.getContent()).hasSize(1); // 독립 공개 스레드 1개
-    assertThat(result.getContent().get(0).getContent()).isEqualTo("독립 스레드 내용");
-    assertThat(result.getContent().get(0).getLog()).isNull();
+    assertThat(result.getContent().getFirst().getContent()).isEqualTo("독립 스레드 내용");
+    assertThat(result.getContent().getFirst().getLog()).isNull();
   }
 
   @Test
