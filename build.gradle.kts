@@ -3,6 +3,7 @@ plugins {
     id("org.springframework.boot") version "3.4.5"
     id("io.spring.dependency-management") version "1.1.7"
     id("com.ly.smart-doc") version "3.1.0"
+    jacoco
 }
 
 group = "org.nodystudio"
@@ -59,4 +60,44 @@ tasks.withType<Test> {
 
 tasks.withType<JavaCompile> {
     options.compilerArgs.add("-parameters")
+}
+
+jacoco {
+    toolVersion = "0.8.12"
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+    finalizedBy(tasks.jacocoTestCoverageVerification)
+}
+
+tasks.jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = "0.80".toBigDecimal()
+            }
+        }
+        rule {
+            enabled = false
+            element = "CLASS"
+            includes = listOf("org.nodystudio.nodybackend.*")
+            excludes = listOf(
+                "org.nodystudio.nodybackend.NodyBackendApplication",
+                "org.nodystudio.nodybackend.config.*",
+                "org.nodystudio.nodybackend.dto.*",
+                "org.nodystudio.nodybackend.domain.*",
+                "org.nodystudio.nodybackend.exception.*"
+            )
+        }
+    }
+}
+
+tasks.test {
+    finalizedBy(tasks.jacocoTestReport)
 }
