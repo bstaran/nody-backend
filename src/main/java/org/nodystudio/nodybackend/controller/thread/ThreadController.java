@@ -7,9 +7,7 @@ import org.nodystudio.nodybackend.dto.thread.ThreadResponse;
 import org.nodystudio.nodybackend.dto.thread.ThreadSearchRequest;
 import org.nodystudio.nodybackend.dto.thread.ThreadUpdateRequest;
 import org.nodystudio.nodybackend.service.thread.ThreadService;
-import org.nodystudio.nodybackend.util.PageableUtils;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -39,10 +37,10 @@ public class ThreadController {
   // === 공통 유틸리티 메소드 ===
 
   /**
-   * 사용자 이메일을 안전하게 가져옵니다.
+   * 로그에 표시할 사용자 정보를 안전하게 가져옵니다.
    * 인증되지 않은 사용자의 경우 "익명"을 반환합니다.
    */
-  private String getUserEmailSafely(User user) {
+  private String getUserDisplayName(User user) {
     return user != null ? user.getEmail() : "익명";
   }
 
@@ -59,7 +57,7 @@ public class ThreadController {
       @AuthenticationPrincipal User user) {
 
     log.info("스레드 생성 요청 - 사용자: {}",
-        getUserEmailSafely(user));
+        getUserDisplayName(user));
 
     ThreadResponse response = threadService.createThread(request, user.getEmail());
 
@@ -77,7 +75,7 @@ public class ThreadController {
       @AuthenticationPrincipal User user) {
 
     log.info("스레드 단건 조회 - ID: {}, 사용자: {}",
-        id, getUserEmailSafely(user));
+        id, getUserDisplayName(user));
 
     ThreadResponse response = threadService.getThread(
         id, user != null ? user.getEmail() : null);
@@ -98,7 +96,7 @@ public class ThreadController {
         searchRequest.getKeyword(),
         searchRequest.getThreadType(),
         searchRequest.getLogId(),
-        getUserEmailSafely(user));
+        getUserDisplayName(user));
 
     Page<ThreadResponse> response = threadService.searchThreads(searchRequest,
         user != null ? user.getEmail() : null);
@@ -116,7 +114,7 @@ public class ThreadController {
       @Valid @RequestBody ThreadUpdateRequest request,
       @AuthenticationPrincipal User user) {
 
-    log.info("스레드 수정 요청 - ID: {}, 사용자: {}", id, getUserEmailSafely(user));
+    log.info("스레드 수정 요청 - ID: {}, 사용자: {}", id, getUserDisplayName(user));
 
     ThreadResponse response = threadService.updateThread(id, request, user.getEmail());
 
@@ -132,36 +130,13 @@ public class ThreadController {
       @PathVariable Long id,
       @AuthenticationPrincipal User user) {
 
-    log.info("스레드 삭제 요청 - ID: {}, 사용자: {}", id, getUserEmailSafely(user));
+    log.info("스레드 삭제 요청 - ID: {}, 사용자: {}", id, getUserDisplayName(user));
 
     threadService.deleteThread(id, user.getEmail());
 
     return ResponseEntity.ok(ApiResponse.success("스레드가 성공적으로 삭제되었습니다.", null));
   }
 
-  /**
-   * 특정 로그의 스레드 목록 조회
-   * GET /api/logs/{logId}/threads
-   */
-  @GetMapping("/by-log/{logId}")
-  public ResponseEntity<ApiResponse<Page<ThreadResponse>>> getThreadsByLog(
-      @PathVariable Long logId,
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "20") int size,
-      @RequestParam(defaultValue = "createdAt") String sortBy,
-      @RequestParam(defaultValue = "desc") String sortDirection,
-      @AuthenticationPrincipal User user) {
-
-    log.info("로그 스레드 목록 조회 - 로그ID: {}, 사용자: {}",
-        logId, getUserEmailSafely(user));
-
-    Pageable pageable = PageableUtils.createThreadPageable(page, size, sortBy, sortDirection);
-
-    Page<ThreadResponse> response = threadService.getThreadsByLog(logId,
-        user != null ? user.getEmail() : null, pageable);
-
-    return ResponseEntity.ok(ApiResponse.success("로그 스레드 목록 조회가 완료되었습니다.", response));
-  }
 
   /**
    * 독립 스레드 목록 조회 (로그에 연결되지 않은 스레드)
@@ -177,7 +152,7 @@ public class ThreadController {
       @AuthenticationPrincipal User user) {
 
     log.info("독립 스레드 목록 조회 - 키워드: {}, 사용자: {}", keyword,
-        getUserEmailSafely(user));
+        getUserDisplayName(user));
 
     ThreadSearchRequest searchRequest = ThreadSearchRequest.builder()
         .page(page)
@@ -208,7 +183,7 @@ public class ThreadController {
       @AuthenticationPrincipal User user) {
 
     log.info("로그 연결 스레드 목록 조회 - 키워드: {}, 사용자: {}", keyword,
-        getUserEmailSafely(user));
+        getUserDisplayName(user));
 
     ThreadSearchRequest searchRequest = ThreadSearchRequest.builder()
         .page(page)
