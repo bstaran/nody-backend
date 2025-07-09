@@ -2,15 +2,12 @@ package org.nodystudio.nodybackend.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.math.BigDecimal;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.nodystudio.nodybackend.domain.log.Log;
 import org.nodystudio.nodybackend.domain.thread.Thread;
-import org.nodystudio.nodybackend.domain.user.RoleType;
-import org.nodystudio.nodybackend.domain.user.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
@@ -27,89 +24,70 @@ class ThreadRepositoryBasicTest {
   @Autowired
   private ThreadRepository threadRepository;
 
-  private User user1;
-  private User user2;
-  private Log log1;
-  private Thread publicThread1;
-  private Thread privateThread;
+  private ThreadRepositoryTestDataHelper.TestDataContainer testData;
 
   @BeforeEach
   void setUp() {
-    setupTestData();
-  }
+    ThreadRepositoryTestDataHelper.TestDataBuilder builder = new ThreadRepositoryTestDataHelper.TestDataBuilder(
+        entityManager)
+        .withCustomUser(u -> u
+            .email("user1@example.com")
+            .nickname("user1")
+            .socialId("123456"))
+        .withCustomUser(u -> u
+            .email("user2@example.com")
+            .nickname("user2")
+            .socialId("234567"))
+        .buildUsersAndLogs();
 
-  private void setupTestData() {
-    // 사용자 생성
-    user1 = User.builder()
-        .email("user1@example.com")
-        .nickname("user1")
-        .provider("google")
-        .socialId("123456")
-        .role(RoleType.USER)
-        .build();
-    entityManager.persistAndFlush(user1);
+    // 기본 로그 연결 테스트용
+    builder.withCustomLog(l -> l
+            .content("사용자1의 로그")
+            .user(builder.getCurrentData().users.get(0)))
+        .buildUsersAndLogs();
 
-    user2 = User.builder()
-        .email("user2@example.com")
-        .nickname("user2")
-        .provider("google")
-        .socialId("234567")
-        .role(RoleType.USER)
-        .build();
-    entityManager.persistAndFlush(user2);
+    Log log1 = builder.getCurrentData().logs.get(0);
 
-    // 로그 생성
-    log1 = Log.builder()
-        .user(user1)
-        .content("사용자1의 로그")
-        .latitude(new BigDecimal("37.5665"))
-        .longitude(new BigDecimal("126.9780"))
-        .build();
-    entityManager.persistAndFlush(log1);
-
-    // 스레드 생성
-    publicThread1 = Thread.builder()
-        .user(user1)
-        .log(log1)
-        .content("공개 스레드 1 내용")
-        .isPublic(true)
-        .viewCount(10L)
-        .build();
-    entityManager.persistAndFlush(publicThread1);
-
-    privateThread = Thread.builder()
-        .user(user1)
-        .log(log1)
-        .content("비공개 스레드 내용")
-        .isPublic(false)
-        .viewCount(3L)
-        .build();
-    entityManager.persistAndFlush(privateThread);
-
-    entityManager.clear();
+    // 로그와 연결된 스레드들 생성
+    testData = builder
+        .addThread(t -> t
+            .user(builder.getCurrentData().users.get(0))
+            .content("공개 스레드 1 내용")
+            .isPublic(true)
+            .viewCount(10L)
+            .log(log1))
+        .addThread(t -> t
+            .user(builder.getCurrentData().users.get(0))
+            .content("비공개 스레드 내용")
+            .isPublic(false)
+            .viewCount(3L)
+            .log(log1))
+        .finalizeWithTimestamps();
   }
 
   @Test
   @DisplayName("특정 사용자의 스레드 ID로 조회 - 성공")
   void findByIdAndUserId_WhenValidUserIdAndThreadId_ShouldReturnThread() {
     // when
-    Optional<Thread> result = threadRepository.findByIdAndUserId(publicThread1.getId(), user1.getId());
+    Optional<Thread> result = threadRepository.findByIdAndUserId(testData.threads.get(0).getId(),
+        testData.users.get(0).getId());
 
     // then
     assertThat(result).isPresent();
     Thread thread = result.get();
     assertThat(thread.getContent()).isEqualTo("공개 스레드 1 내용");
-    assertThat(thread.getUser().getId()).isEqualTo(user1.getId());
+    assertThat(thread.getUser().getId()).isEqualTo(testData.users.get(0).getId());
     assertThat(thread.getIsPublic()).isTrue();
     assertThat(thread.getLog()).isNotNull();
-    assertThat(thread.getLog().getId()).isEqualTo(log1.getId());
+    assertThat(thread.getLog().getId()).isEqualTo(testData.logs.get(0).getId());
   }
 
   @Test
   @DisplayName("다른 사용자의 스레드 조회 시 빈 결과 반환")
   void findByIdAndUserId_WhenDifferentUserId_ShouldReturnEmpty() {
     // when
-    Optional<Thread> result = threadRepository.findByIdAndUserId(publicThread1.getId(), user2.getId());
+    Optional<Thread> result = threadRepository.findByIdAndUserId(testData.threads.get(0).getId(),
+        testData.users.get(1).getId());
 
     // then
     assertThat(result).isEmpty();
@@ -119,14 +97,15 @@ class ThreadRepositoryBasicTest {
   @DisplayName("공개 스레드 ID로 조회 - 성공")
   void findByIdAndIsPublicTrue_WhenPublicThread_ShouldReturnThread() {
     // when
-    Optional<Thread> result = threadRepository.findByIdAndIsPublicTrue(publicThread1.getId());
+    Optional<Thread> result = threadRepository.findByIdAndIsPublicTrue(
+        testData.threads.get(0).getId());
 
     // then
     assertThat(result).isPresent();
     Thread thread = result.get();
     assertThat(thread.getContent()).isEqualTo("공개 스레드 1 내용");
     assertThat(thread.getIsPublic()).isTrue();
-    assertThat(thread.getUser().getId()).isEqualTo(user1.getId());
+    assertThat(thread.getUser().getId()).isEqualTo(testData.users.get(0).getId());
     assertThat(thread.getViewCount()).isEqualTo(10L);
   }
 
@@ -134,7 +113,8 @@ class ThreadRepositoryBasicTest {
   @DisplayName("비공개 스레드를 공개 조회로 찾을 수 없음")
   void findByIdAndIsPublicTrue_WhenPrivateThread_ShouldReturnEmpty() {
     // when
-    Optional<Thread> result = threadRepository.findByIdAndIsPublicTrue(privateThread.getId());
+    Optional<Thread> result = threadRepository.findByIdAndIsPublicTrue(
+        testData.threads.get(1).getId());
 
     // then
     assertThat(result).isEmpty();
@@ -145,7 +125,7 @@ class ThreadRepositoryBasicTest {
   void findViewableThreadByIdAndUserId_WhenPublicThread_ShouldReturnThread() {
     // when
     Optional<Thread> result = threadRepository.findViewableThreadByIdAndUserId(
-        publicThread1.getId(), user2.getId());
+        testData.threads.get(0).getId(), testData.users.get(1).getId());
 
     // then
     assertThat(result).isPresent();
@@ -157,7 +137,7 @@ class ThreadRepositoryBasicTest {
   void findViewableThreadByIdAndUserId_WhenOwnPrivateThread_ShouldReturnThread() {
     // when
     Optional<Thread> result = threadRepository.findViewableThreadByIdAndUserId(
-        privateThread.getId(), user1.getId());
+        testData.threads.get(1).getId(), testData.users.get(0).getId());
 
     // then
     assertThat(result).isPresent();
@@ -169,7 +149,7 @@ class ThreadRepositoryBasicTest {
   void findViewableThreadByIdAndUserId_WhenOtherUserPrivateThread_ShouldReturnEmpty() {
     // when
     Optional<Thread> result = threadRepository.findViewableThreadByIdAndUserId(
-        privateThread.getId(), user2.getId());
+        testData.threads.get(1).getId(), testData.users.get(1).getId());
 
     // then
     assertThat(result).isEmpty();
