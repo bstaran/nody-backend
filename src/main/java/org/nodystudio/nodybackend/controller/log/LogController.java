@@ -40,9 +40,9 @@ public class LogController {
   private final ThreadService threadService;
 
   /**
-   * 사용자 이메일을 안전하게 가져옵니다. 인증되지 않은 사용자의 경우 "익명"을 반환합니다.
+   * 로깅용 사용자 식별자를 가져옵니다. 인증된 사용자의 경우 이메일을, 인증되지 않은 사용자의 경우 "익명"을 반환합니다.
    */
-  private String getUserEmailSafely(User user) {
+  private String getUserIdentifierForLogging(User user) {
     return user != null ? user.getEmail() : "익명";
   }
 
@@ -146,7 +146,7 @@ public class LogController {
       @AuthenticationPrincipal User user) {
 
     log.info("로그 스레드 목록 조회 - 로그ID: {}, 사용자: {}",
-        logId, getUserEmailSafely(user));
+        logId, getUserIdentifierForLogging(user));
 
     Pageable pageable = PageableUtils.createThreadPageable(page, size, sortBy, sortDirection);
 
