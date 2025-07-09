@@ -23,7 +23,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 @DataJpaTest
 @ActiveProfiles("test")
-@DisplayName("ThreadRepository 테스트")
+@DisplayName("ThreadRepository 목록 조회 및 페이징 테스트")
 class ThreadRepositoryTest {
 
   @Autowired
@@ -153,87 +153,8 @@ class ThreadRepositoryTest {
   }
 
   @Test
-  @DisplayName("사용자별 스레드 조회")
-  void findByIdAndUserId_Success() {
-    // when
-    Optional<Thread> result = threadRepository.findByIdAndUserId(publicThread1.getId(), user1.getId());
-
-    // then
-    assertThat(result).isPresent();
-    assertThat(result.get().getContent()).isEqualTo("공개 스레드 1 내용");
-    assertThat(result.get().getUser().getId()).isEqualTo(user1.getId());
-  }
-
-  @Test
-  @DisplayName("다른 사용자의 스레드 조회 시 빈 결과")
-  void findByIdAndUserId_OtherUserThread_ReturnsEmpty() {
-    // when
-    Optional<Thread> result = threadRepository.findByIdAndUserId(publicThread1.getId(), user2.getId());
-
-    // then
-    assertThat(result).isEmpty();
-  }
-
-  @Test
-  @DisplayName("공개 스레드 조회")
-  void findByIdAndIsPublicTrue_Success() {
-    // when
-    Optional<Thread> result = threadRepository.findByIdAndIsPublicTrue(publicThread1.getId());
-
-    // then
-    assertThat(result).isPresent();
-    assertThat(result.get().getContent()).isEqualTo("공개 스레드 1 내용");
-    assertThat(result.get().getIsPublic()).isTrue();
-  }
-
-  @Test
-  @DisplayName("비공개 스레드를 공개 조회로 찾을 수 없음")
-  void findByIdAndIsPublicTrue_PrivateThread_ReturnsEmpty() {
-    // when
-    Optional<Thread> result = threadRepository.findByIdAndIsPublicTrue(privateThread.getId());
-
-    // then
-    assertThat(result).isEmpty();
-  }
-
-  @Test
-  @DisplayName("사용자가 볼 수 있는 스레드 조회 - 공개 스레드")
-  void findViewableThreadByIdAndUserId_PublicThread_Success() {
-    // when
-    Optional<Thread> result = threadRepository.findViewableThreadByIdAndUserId(
-        publicThread2.getId(), user1.getId());
-
-    // then
-    assertThat(result).isPresent();
-    assertThat(result.get().getContent()).isEqualTo("공개 스레드 2 내용");
-  }
-
-  @Test
-  @DisplayName("사용자가 볼 수 있는 스레드 조회 - 본인의 비공개 스레드")
-  void findViewableThreadByIdAndUserId_OwnPrivateThread_Success() {
-    // when
-    Optional<Thread> result = threadRepository.findViewableThreadByIdAndUserId(
-        privateThread.getId(), user1.getId());
-
-    // then
-    assertThat(result).isPresent();
-    assertThat(result.get().getContent()).isEqualTo("비공개 스레드 내용");
-  }
-
-  @Test
-  @DisplayName("사용자가 볼 수 없는 스레드 조회 - 다른 사용자의 비공개 스레드")
-  void findViewableThreadByIdAndUserId_OtherUserPrivateThread_ReturnsEmpty() {
-    // when
-    Optional<Thread> result = threadRepository.findViewableThreadByIdAndUserId(
-        privateThread.getId(), user2.getId());
-
-    // then
-    assertThat(result).isEmpty();
-  }
-
-  @Test
-  @DisplayName("공개 스레드 목록 조회")
-  void findByIsPublicTrueOrderByCreatedAtDesc_Success() {
+  @DisplayName("공개 스레드 목록 조회 - 생성일 내림차순 정렬")
+  void findByIsPublicTrueOrderByCreatedAtDesc_WhenPublicThreadsExist_ShouldReturnSortedList() {
     // given
     Pageable pageable = PageRequest.of(0, 10);
 
@@ -242,14 +163,23 @@ class ThreadRepositoryTest {
 
     // then
     assertThat(result.getContent()).hasSize(4); // 공개 스레드 4개
+    
+    // 생성일 기준 내림차순 정렬 확인 (최신 순)
     assertThat(result.getContent())
         .extracting(Thread::getContent)
         .containsExactly("로그 연결 스레드 내용", "독립 스레드 내용", "공개 스레드 2 내용", "공개 스레드 1 내용");
+    
+    // 실제 생성일 순서 검증
+    List<Thread> threads = result.getContent();
+    for (int i = 0; i < threads.size() - 1; i++) {
+      assertThat(threads.get(i).getCreatedAt())
+          .isAfterOrEqualTo(threads.get(i + 1).getCreatedAt());
+    }
   }
 
   @Test
-  @DisplayName("사용자가 볼 수 있는 스레드 목록 조회")
-  void findPublicOrUserThreadsOrderByCreatedAtDesc_Success() {
+  @DisplayName("사용자가 볼 수 있는 스레드 목록 조회 - 공개+본인 스레드")
+  void findPublicOrUserThreadsOrderByCreatedAtDesc_WhenUserAuthenticated_ShouldReturnPublicAndOwnThreads() {
     // given
     Pageable pageable = PageRequest.of(0, 10);
 
@@ -258,14 +188,27 @@ class ThreadRepositoryTest {
 
     // then
     assertThat(result.getContent()).hasSize(5); // 공개 스레드 4개 + user1의 비공개 스레드 1개
+    
+    // 생성일 기준 내림차순 정렬 확인 (최신 순)
     assertThat(result.getContent())
         .extracting(Thread::getContent)
-        .contains("공개 스레드 1 내용", "공개 스레드 2 내용", "비공개 스레드 내용", "독립 스레드 내용", "로그 연결 스레드 내용");
+        .containsExactly("로그 연결 스레드 내용", "독립 스레드 내용", "공개 스레드 2 내용", "비공개 스레드 내용", "공개 스레드 1 내용");
+    
+    // user1이 볼 수 있는 스레드 확인 (공개 스레드 + 본인 스레드)
+    assertThat(result.getContent())
+        .allMatch(thread -> thread.getIsPublic() || thread.getUser().getId().equals(user1.getId()));
+    
+    // 실제 생성일 순서 검증
+    List<Thread> threads = result.getContent();
+    for (int i = 0; i < threads.size() - 1; i++) {
+      assertThat(threads.get(i).getCreatedAt())
+          .isAfterOrEqualTo(threads.get(i + 1).getCreatedAt());
+    }
   }
 
   @Test
-  @DisplayName("특정 로그의 공개 스레드 목록 조회")
-  void findPublicThreadsByLogIdOrderByCreatedAtDesc_Success() {
+  @DisplayName("특정 로그의 공개 스레드 목록 조회 - 생성일 내림차순")
+  void findPublicThreadsByLogIdOrderByCreatedAtDesc_WhenLogIdExists_ShouldReturnPublicThreadsForLog() {
     // given
     Pageable pageable = PageRequest.of(0, 10);
 
@@ -278,8 +221,8 @@ class ThreadRepositoryTest {
   }
 
   @Test
-  @DisplayName("특정 로그의 스레드 목록 조회 (사용자별 권한 고려)")
-  void findThreadsByLogIdWithUser_Success() {
+  @DisplayName("특정 로그의 스레드 목록 조회 - 사용자 권한 고려")
+  void findThreadsByLogIdWithUser_WhenUserAuthenticated_ShouldReturnPublicAndOwnThreadsForLog() {
     // given
     Pageable pageable = PageRequest.of(0, 10);
 
@@ -288,14 +231,23 @@ class ThreadRepositoryTest {
 
     // then
     assertThat(result.getContent()).hasSize(2); // log1에 연결된 스레드 2개 (공개 1개 + user1의 비공개 1개)
+    
+    // 생성일 기준 내림차순 정렬 확인 (최신 순)
     assertThat(result.getContent())
         .extracting(Thread::getContent)
-        .containsExactlyInAnyOrder("공개 스레드 1 내용", "비공개 스레드 내용");
+        .containsExactly("공개 스레드 1 내용", "비공개 스레드 내용");
+    
+    // 실제 생성일 순서 검증
+    List<Thread> threads = result.getContent();
+    for (int i = 0; i < threads.size() - 1; i++) {
+      assertThat(threads.get(i).getCreatedAt())
+          .isAfterOrEqualTo(threads.get(i + 1).getCreatedAt());
+    }
   }
 
   @Test
-  @DisplayName("특정 사용자의 스레드 목록 조회")
-  void findByUserIdOrderByCreatedAtDesc_Success() {
+  @DisplayName("특정 사용자의 스레드 목록 조회 - 생성일 내림차순")
+  void findByUserIdOrderByCreatedAtDesc_WhenUserIdExists_ShouldReturnUserThreadsSortedByCreatedAt() {
     // given
     Pageable pageable = PageRequest.of(0, 10);
 
@@ -304,14 +256,23 @@ class ThreadRepositoryTest {
 
     // then
     assertThat(result.getContent()).hasSize(3); // user1의 스레드 3개
+    
+    // 생성일 기준 내림차순 정렬 확인 (최신 순)
     assertThat(result.getContent())
         .extracting(Thread::getContent)
-        .containsExactlyInAnyOrder("공개 스레드 1 내용", "비공개 스레드 내용", "독립 스레드 내용");
+        .containsExactly("독립 스레드 내용", "비공개 스레드 내용", "공개 스레드 1 내용");
+    
+    // 실제 생성일 순서 검증
+    List<Thread> threads = result.getContent();
+    for (int i = 0; i < threads.size() - 1; i++) {
+      assertThat(threads.get(i).getCreatedAt())
+          .isAfterOrEqualTo(threads.get(i + 1).getCreatedAt());
+    }
   }
 
   @Test
-  @DisplayName("독립 공개 스레드 목록 조회")
-  void findIndependentPublicThreadsOrderByCreatedAtDesc_Success() {
+  @DisplayName("독립 공개 스레드 목록 조회 - 로그에 연결되지 않은 스레드")
+  void findIndependentPublicThreadsOrderByCreatedAtDesc_WhenIndependentThreadsExist_ShouldReturnPublicThreadsNotLinkedToLog() {
     // given
     Pageable pageable = PageRequest.of(0, 10);
 
@@ -325,8 +286,8 @@ class ThreadRepositoryTest {
   }
 
   @Test
-  @DisplayName("독립 스레드 목록 조회 (사용자별 권한 고려)")
-  void findIndependentThreadsWithUser_Success() {
+  @DisplayName("독립 스레드 목록 조회 - 사용자 권한 고려")
+  void findIndependentThreadsWithUser_WhenUserAuthenticated_ShouldReturnPublicAndOwnIndependentThreads() {
     // given
     // user1의 독립 비공개 스레드 추가
     Thread privateIndependentThread = Thread.builder()
@@ -343,14 +304,23 @@ class ThreadRepositoryTest {
 
     // then
     assertThat(result.getContent()).hasSize(2); // 독립 스레드 2개 (공개 1개 + user1의 비공개 1개)
-    assertThat(result.getContent())
+    
+    // 생성일 기준 내림차순 정렬 확인 (최신 순)
+    List<Thread> threads = result.getContent();
+    assertThat(threads)
         .extracting(Thread::getContent)
-        .containsExactlyInAnyOrder("독립 스레드 내용", "독립 비공개 스레드 내용");
+        .containsExactly("독립 비공개 스레드 내용", "독립 스레드 내용");
+    
+    // 실제 생성일 순서 검증
+    for (int i = 0; i < threads.size() - 1; i++) {
+      assertThat(threads.get(i).getCreatedAt())
+          .isAfterOrEqualTo(threads.get(i + 1).getCreatedAt());
+    }
   }
 
   @Test
-  @DisplayName("로그 연결 공개 스레드 목록 조회")
-  void findLinkedPublicThreadsOrderByCreatedAtDesc_Success() {
+  @DisplayName("로그 연결 공개 스레드 목록 조회 - 로그에 연결된 스레드")
+  void findLinkedPublicThreadsOrderByCreatedAtDesc_WhenLinkedThreadsExist_ShouldReturnPublicThreadsLinkedToLog() {
     // given
     Pageable pageable = PageRequest.of(0, 10);
 
@@ -359,15 +329,25 @@ class ThreadRepositoryTest {
 
     // then
     assertThat(result.getContent()).hasSize(3); // 로그 연결 공개 스레드 3개
+    
+    // 생성일 기준 내림차순 정렬 확인 (최신 순)
     assertThat(result.getContent())
         .extracting(Thread::getContent)
-        .containsExactlyInAnyOrder("공개 스레드 1 내용", "공개 스레드 2 내용", "로그 연결 스레드 내용");
+        .containsExactly("로그 연결 스레드 내용", "공개 스레드 2 내용", "공개 스레드 1 내용");
+    
     assertThat(result.getContent()).allMatch(thread -> thread.getLog() != null);
+    
+    // 실제 생성일 순서 검증
+    List<Thread> threads = result.getContent();
+    for (int i = 0; i < threads.size() - 1; i++) {
+      assertThat(threads.get(i).getCreatedAt())
+          .isAfterOrEqualTo(threads.get(i + 1).getCreatedAt());
+    }
   }
 
   @Test
-  @DisplayName("로그 연결 스레드 목록 조회 (사용자별 권한 고려)")
-  void findLinkedThreadsWithUser_Success() {
+  @DisplayName("로그 연결 스레드 목록 조회 - 사용자 권한 고려")
+  void findLinkedThreadsWithUser_WhenUserAuthenticated_ShouldReturnPublicAndOwnLinkedThreads() {
     // given
     Pageable pageable = PageRequest.of(0, 10);
 
@@ -376,107 +356,23 @@ class ThreadRepositoryTest {
 
     // then
     assertThat(result.getContent()).hasSize(4); // 로그 연결 스레드 4개 (공개 3개 + user1의 비공개 1개)
-    assertThat(result.getContent())
-        .extracting(Thread::getContent)
-        .containsExactlyInAnyOrder("공개 스레드 1 내용", "공개 스레드 2 내용", "로그 연결 스레드 내용", "비공개 스레드 내용");
-  }
-
-  @Test
-  @DisplayName("내용으로 공개 스레드 검색")
-  void searchPublicThreadsByContent_Success() {
-    // given
-    Pageable pageable = PageRequest.of(0, 10);
-
-    // when
-    Page<Thread> result = threadRepository.searchPublicThreadsByContent("공개", pageable);
-
-    // then
-    assertThat(result.getContent()).hasSize(2); // "공개"가 포함된 공개 스레드 2개
-    assertThat(result.getContent())
-        .extracting(Thread::getContent)
-        .containsExactlyInAnyOrder("공개 스레드 1 내용", "공개 스레드 2 내용");
-  }
-
-  @Test
-  @DisplayName("내용으로 스레드 검색 (사용자별 권한 고려)")
-  void searchThreadsByContentWithUser_Success() {
-    // given
-    Pageable pageable = PageRequest.of(0, 10);
-
-    // when
-    Page<Thread> result = threadRepository.searchThreadsByContentWithUser("스레드", user1.getId(), pageable);
-
-    // then
-    assertThat(result.getContent()).hasSize(5); // "스레드"가 포함된 스레드 5개 (user1이 볼 수 있는 모든 스레드)
-    assertThat(result.getContent())
-        .extracting(Thread::getContent)
-        .containsExactlyInAnyOrder("공개 스레드 1 내용", "공개 스레드 2 내용", "비공개 스레드 내용", "독립 스레드 내용", "로그 연결 스레드 내용");
-  }
-
-  @Test
-  @DisplayName("대소문자 구분 없는 검색")
-  void searchPublicThreadsByContent_CaseInsensitive_Success() {
-    // given
-    // 영문 대소문자 혼용 스레드 추가
-    Thread mixedCaseThread1 = Thread.builder()
-        .user(user1)
-        .content("Public Content Thread")
-        .isPublic(true)
-        .build();
-    entityManager.persistAndFlush(mixedCaseThread1);
     
-    Thread mixedCaseThread2 = Thread.builder()
-        .user(user2)
-        .content("public content thread")
-        .isPublic(true)
-        .build();
-    entityManager.persistAndFlush(mixedCaseThread2);
-    
-    Pageable pageable = PageRequest.of(0, 10);
-
-    // when - 소문자로 검색
-    Page<Thread> result = threadRepository.searchPublicThreadsByContent("public", pageable);
-
-    // then - 대소문자 관계없이 모두 검색되어야 함
-    assertThat(result.getContent()).hasSize(2);
+    // 생성일 기준 내림차순 정렬 확인 (최신 순)
     assertThat(result.getContent())
         .extracting(Thread::getContent)
-        .containsExactlyInAnyOrder("Public Content Thread", "public content thread");
+        .containsExactly("로그 연결 스레드 내용", "공개 스레드 2 내용", "비공개 스레드 내용", "공개 스레드 1 내용");
+    
+    // 실제 생성일 순서 검증
+    List<Thread> threads = result.getContent();
+    for (int i = 0; i < threads.size() - 1; i++) {
+      assertThat(threads.get(i).getCreatedAt())
+          .isAfterOrEqualTo(threads.get(i + 1).getCreatedAt());
+    }
   }
 
   @Test
-  @DisplayName("특정 로그의 스레드 개수 조회")
-  void countByLogId_Success() {
-    // when
-    long count = threadRepository.countByLogId(log1.getId());
-
-    // then
-    assertThat(count).isEqualTo(2); // log1에 연결된 스레드 2개 (공개 1개 + 비공개 1개)
-  }
-
-  @Test
-  @DisplayName("특정 사용자의 스레드 개수 조회")
-  void countByUserId_Success() {
-    // when
-    long count = threadRepository.countByUserId(user1.getId());
-
-    // then
-    assertThat(count).isEqualTo(3); // user1이 작성한 스레드 3개
-  }
-
-  @Test
-  @DisplayName("존재하지 않는 로그의 스레드 개수 조회")
-  void countByLogId_NonExistentLog_ReturnsZero() {
-    // when
-    long count = threadRepository.countByLogId(Long.MAX_VALUE);
-
-    // then
-    assertThat(count).isZero();
-  }
-
-  @Test
-  @DisplayName("페이징 기능 테스트")
-  void findByIsPublicTrueOrderByCreatedAtDesc_Pagination_Success() {
+  @DisplayName("페이징 기능 테스트 - 공개 스레드 목록 페이징")
+  void findByIsPublicTrueOrderByCreatedAtDesc_WhenPaginationApplied_ShouldReturnCorrectPageInfo() {
     // given
     Pageable pageable = PageRequest.of(0, 2); // 페이지 크기 2
 
@@ -492,8 +388,8 @@ class ThreadRepositoryTest {
   }
 
   @Test
-  @DisplayName("정렬 기능 테스트 - 생성일 기준 내림차순")
-  void findByIsPublicTrueOrderByCreatedAtDesc_Sorting_Success() {
+  @DisplayName("정렬 기능 테스트 - 생성일 기준 내림차순 정렬 검증")
+  void findByIsPublicTrueOrderByCreatedAtDesc_WhenSortingApplied_ShouldReturnThreadsInDescendingOrder() {
     // given
     Pageable pageable = PageRequest.of(0, 10);
 
