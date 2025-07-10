@@ -36,6 +36,8 @@ import org.nodystudio.nodybackend.service.log.LogService;
 import org.nodystudio.nodybackend.service.thread.ThreadService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -99,8 +101,8 @@ class LogControllerTest {
         .willReturn(testLogResponse);
 
     // when
-    ResponseEntity<ApiResponse<LogResponse>> response = logController.createLog(request,
-        mockUserDetails);
+    ResponseEntity<ApiResponse<LogResponse>> response = logController.createLog(mockUserDetails,
+        request);
 
     // then
     assertEquals(201, response.getStatusCode().value());
@@ -118,10 +120,10 @@ class LogControllerTest {
   @DisplayName("GET /api/logs/{id} - 로그 단건 조회 API 테스트")
   void getLog_Success() {
     // given
-    given(logService.getLog(1L, "test@example.com")).willReturn(testLogResponse);
+    given(logService.getLog(1L, null)).willReturn(testLogResponse);
 
     // when
-    ResponseEntity<ApiResponse<LogResponse>> response = logController.getLog(1L, mockUserDetails);
+    ResponseEntity<ApiResponse<LogResponse>> response = logController.getLog(1L);
 
     // then
     assertEquals(200, response.getStatusCode().value());
@@ -133,7 +135,7 @@ class LogControllerTest {
     assertEquals(1L, body.getData().getViewCount());
     assertEquals("로그 조회가 완료되었습니다.", body.getMessage());
 
-    verify(logService).getLog(1L, "test@example.com");
+    verify(logService).getLog(1L, null);
   }
 
   @Test
@@ -143,7 +145,7 @@ class LogControllerTest {
     given(logService.getLog(1L, null)).willReturn(testLogResponse);
 
     // when
-    ResponseEntity<ApiResponse<LogResponse>> response = logController.getLog(1L, null);
+    ResponseEntity<ApiResponse<LogResponse>> response = logController.getLog(1L);
 
     // then
     assertEquals(200, response.getStatusCode().value());
@@ -168,12 +170,13 @@ class LogControllerTest {
         .size(20)
         .build();
 
-    given(logService.searchLogs(any(LogSearchRequest.class), eq("test@example.com"))).willReturn(
+    given(logService.searchLogs(any(LogSearchRequest.class), eq(null))).willReturn(
         logPage);
 
     // when
+    Pageable pageable = PageRequest.of(0, 20);
     ResponseEntity<ApiResponse<Page<LogResponse>>> response = logController.getLogs(searchRequest,
-        mockUserDetails);
+        pageable);
 
     // then
     assertEquals(200, response.getStatusCode().value());
@@ -185,7 +188,7 @@ class LogControllerTest {
     assertEquals(1L, body.getData().getContent().get(0).getId());
     assertEquals("로그 목록 조회가 완료되었습니다.", body.getMessage());
 
-    verify(logService).searchLogs(any(LogSearchRequest.class), eq("test@example.com"));
+    verify(logService).searchLogs(any(LogSearchRequest.class), eq(null));
   }
 
   @Test
@@ -214,8 +217,7 @@ class LogControllerTest {
         .willReturn(updatedResponse);
 
     // when
-    ResponseEntity<ApiResponse<LogResponse>> response = logController.updateLog(1L, request,
-        mockUserDetails);
+    ResponseEntity<ApiResponse<LogResponse>> response = logController.updateLog(1L, mockUserDetails, request);
 
     // then
     assertEquals(200, response.getStatusCode().value());
@@ -296,11 +298,12 @@ class LogControllerTest {
         .build();
 
     Page<ThreadResponse> threadPage = new PageImpl<>(Arrays.asList(threadResponse));
-    given(threadService.getThreadsByLog(eq(logId), eq("test@example.com"), any())).willReturn(threadPage);
+    given(threadService.getThreadsByLog(eq(logId), eq(null), any())).willReturn(threadPage);
 
     // when
-    ResponseEntity<ApiResponse<Page<ThreadResponse>>> response = logController.getThreadsByLog(
-        logId, 0, 20, "createdAt", "desc", mockUserDetails);
+    Pageable pageable = PageRequest.of(0, 20);
+    ResponseEntity<ApiResponse<Page<ThreadResponse>>> response = logController.getLogThreads(
+        logId, pageable);
 
     // then
     assertEquals(200, response.getStatusCode().value());
@@ -311,7 +314,7 @@ class LogControllerTest {
     assertEquals("테스트 스레드 내용", body.getData().getContent().get(0).getContent());
     assertEquals("로그 스레드 목록 조회가 완료되었습니다.", body.getMessage());
 
-    verify(threadService).getThreadsByLog(eq(logId), eq("test@example.com"), any());
+    verify(threadService).getThreadsByLog(eq(logId), eq(null), any());
   }
 
   @Test
@@ -338,8 +341,9 @@ class LogControllerTest {
     given(threadService.getThreadsByLog(eq(logId), isNull(), any())).willReturn(threadPage);
 
     // when
-    ResponseEntity<ApiResponse<Page<ThreadResponse>>> response = logController.getThreadsByLog(
-        logId, 0, 20, "createdAt", "desc", null);
+    Pageable pageable = PageRequest.of(0, 20);
+    ResponseEntity<ApiResponse<Page<ThreadResponse>>> response = logController.getLogThreads(
+        logId, pageable);
 
     // then
     assertEquals(200, response.getStatusCode().value());
@@ -359,11 +363,12 @@ class LogControllerTest {
     // given
     Long logId = 999L;
     Page<ThreadResponse> emptyPage = new PageImpl<>(Collections.emptyList());
-    given(threadService.getThreadsByLog(eq(logId), eq("test@example.com"), any())).willReturn(emptyPage);
+    given(threadService.getThreadsByLog(eq(logId), eq(null), any())).willReturn(emptyPage);
 
     // when
-    ResponseEntity<ApiResponse<Page<ThreadResponse>>> response = logController.getThreadsByLog(
-        logId, 0, 20, "createdAt", "desc", mockUserDetails);
+    Pageable pageable = PageRequest.of(0, 20);
+    ResponseEntity<ApiResponse<Page<ThreadResponse>>> response = logController.getLogThreads(
+        logId, pageable);
 
     // then
     assertEquals(200, response.getStatusCode().value());
@@ -373,6 +378,6 @@ class LogControllerTest {
     assertTrue(body.getData().getContent().isEmpty());
     assertEquals("로그 스레드 목록 조회가 완료되었습니다.", body.getMessage());
 
-    verify(threadService).getThreadsByLog(eq(logId), eq("test@example.com"), any());
+    verify(threadService).getThreadsByLog(eq(logId), eq(null), any());
   }
 }
