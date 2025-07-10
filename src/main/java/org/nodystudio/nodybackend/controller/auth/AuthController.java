@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-public class AuthController {
+public class AuthController implements org.nodystudio.nodybackend.controller.auth.docs.AuthApiDocs {
 
   private final AuthService authService;
 
@@ -29,8 +29,9 @@ public class AuthController {
    * @param requestDto 토큰 재발급 요청 DTO
    * @return 토큰 재발급 응답
    */
+  @Override
   @PostMapping(value = "/refresh")
-  public ResponseEntity<ApiResponse<TokenResponseDto>> refreshAccessToken(
+  public ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<TokenResponseDto>> refreshAccessToken(
       @Valid @RequestBody TokenRefreshRequestDto requestDto) {
     TokenResponseDto tokenData = authService.refreshAccessToken(requestDto);
     return ResponseEntity
