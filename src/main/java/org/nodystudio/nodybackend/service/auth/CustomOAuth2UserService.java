@@ -124,12 +124,12 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         // 탈퇴한 사용자 계정 재활성화
         user = deactivatedUserOptional.get();
         log.info("탈퇴한 계정 재활성화: provider={}, socialId={}, userId={}",
-                attributes.getProvider(), 
-                LoggingUtils.maskIdentifier(attributes.getProviderId()),
-                LoggingUtils.maskUserId(user.getId()));
+            attributes.getProvider(),
+            LoggingUtils.maskIdentifier(attributes.getProviderId()),
+            LoggingUtils.maskUserId(user.getId()));
         log.debug("계정 재활성화 상세: 기존닉네임={}, 새닉네임={}",
-                LoggingUtils.maskNickname(user.getNickname()),
-                LoggingUtils.maskNickname(attributes.getName()));
+            LoggingUtils.maskNickname(user.getNickname()),
+            LoggingUtils.maskNickname(attributes.getName()));
         user.reactivateAccount();
       } else {
         // 완전히 새로운 사용자 등록

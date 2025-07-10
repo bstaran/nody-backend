@@ -82,7 +82,8 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
           .findByProviderAndSocialId(attributes.getProvider(), attributes.getProviderId());
 
       if (userOptional.isEmpty()) {
-        log.error("CRITICAL: User not found in DB after OAuth2 login success handling! Provider: {}", 
+        log.error(
+            "CRITICAL: User not found in DB after OAuth2 login success handling! Provider: {}",
             attributes.getProvider());
         log.debug("CRITICAL: 사용자 찾기 실패 상세 - Provider: {}, SocialId: {}",
             attributes.getProvider(), LoggingUtils.maskIdentifier(attributes.getProviderId()));
