@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.dto.OAuthAttributes;
 import org.nodystudio.nodybackend.repository.UserRepository;
+import org.nodystudio.nodybackend.util.LoggingUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -78,7 +79,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
     User user = saveOrUpdate(attributes);
 
-    log.debug("Returning DefaultOAuth2User for security context. User ID: {}", user.getId());
+    log.debug("보안 컨텍스트용 DefaultOAuth2User 반환: userId={}", LoggingUtils.maskUserId(user.getId()));
     return new DefaultOAuth2User(Collections.singleton(
         new SimpleGrantedAuthority("ROLE_USER")),
         attributes.getAttributes(),
@@ -93,9 +94,9 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
    * @throws OAuth2AuthenticationException 재가입 제한 위반 시
    */
   User saveOrUpdate(OAuthAttributes attributes) {
-    log.debug("Attempting to find user by provider [{}] and socialId [{}]",
+    log.debug("OAuth 사용자 조회 시도: provider={}, socialId={}",
         attributes.getProvider(),
-        attributes.getProviderId());
+        LoggingUtils.maskIdentifier(attributes.getProviderId()));
 
     // 1. 활성 사용자 먼저 확인 (기존 로직)
     Optional<User> activeUserOptional = userRepository.findByProviderAndSocialIdAndIsActiveTrue(
@@ -106,8 +107,11 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
       // 기존 활성 사용자 업데이트
       user = activeUserOptional.get();
       user.updateOAuthInfo(attributes.getName(), attributes.getEmail());
-      log.info("Existing active user found and updated: provider={}, socialId={}",
-          attributes.getProvider(), attributes.getProviderId());
+      log.info("기존 활성 사용자 업데이트: provider={}, socialId={}",
+          attributes.getProvider(), LoggingUtils.maskIdentifier(attributes.getProviderId()));
+      log.debug("사용자 정보 업데이트 상세: email={}, nickname={}",
+          LoggingUtils.maskEmail(attributes.getEmail()),
+          LoggingUtils.maskNickname(attributes.getName()));
     } else {
       // 2. 새 사용자 등록 전 재가입 제한 검증
       validateReRegistration(attributes.getEmail());
@@ -119,15 +123,23 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
       if (deactivatedUserOptional.isPresent()) {
         // 탈퇴한 사용자 계정 재활성화
         user = deactivatedUserOptional.get();
-        log.info("탈퇴한 계정 재활성화: provider={}, socialId={}, userId={}, 기존닉네임={}",
-            attributes.getProvider(), attributes.getProviderId(), user.getId(), user.getNickname());
+        log.info("탈퇴한 계정 재활성화: provider={}, socialId={}, userId={}",
+                attributes.getProvider(), 
+                LoggingUtils.maskIdentifier(attributes.getProviderId()),
+                LoggingUtils.maskUserId(user.getId()));
+        log.debug("계정 재활성화 상세: 기존닉네임={}, 새닉네임={}",
+                LoggingUtils.maskNickname(user.getNickname()),
+                LoggingUtils.maskNickname(attributes.getName()));
         user.reactivateAccount();
       } else {
         // 완전히 새로운 사용자 등록
         user = attributes.toEntity();
         user = userRepository.saveAndFlush(user);
-        log.info("New user registered: provider={}, socialId={}",
-            attributes.getProvider(), attributes.getProviderId());
+        log.info("새 사용자 등록: provider={}, socialId={}",
+            attributes.getProvider(), LoggingUtils.maskIdentifier(attributes.getProviderId()));
+        log.debug("새 사용자 등록 상세: email={}, nickname={}",
+            LoggingUtils.maskEmail(attributes.getEmail()),
+            LoggingUtils.maskNickname(attributes.getName()));
       }
     }
     return user;
@@ -149,7 +161,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         thirtyDaysAgo);
 
     if (recentlyDeactivatedUser.isPresent()) {
-      log.warn("재가입 제한 위반: 30일 이내 탈퇴한 이메일로 가입 시도. email={}", email);
+      log.warn("재가입 제한 위반: 30일 이내 탈퇴한 이메일로 가입 시도. email={}", LoggingUtils.maskEmail(email));
       OAuth2Error oauth2Error = new OAuth2Error("reregistration_restricted",
           "해당 이메일로는 탈퇴 후 30일 동안 재가입할 수 없습니다. " +
               "30일 후에 다시 시도해주세요.",
