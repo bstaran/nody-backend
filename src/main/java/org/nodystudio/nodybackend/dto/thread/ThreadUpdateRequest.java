@@ -1,12 +1,12 @@
 package org.nodystudio.nodybackend.dto.thread;
 
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 import org.nodystudio.nodybackend.validation.NotBlankIfPresent;
-import jakarta.validation.constraints.AssertTrue;
 
 @Getter
 @NoArgsConstructor

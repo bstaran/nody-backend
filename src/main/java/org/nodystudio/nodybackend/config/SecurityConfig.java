@@ -1,7 +1,7 @@
 package org.nodystudio.nodybackend.config;
 
-import java.util.List;
 import jakarta.annotation.PostConstruct;
+import java.util.List;
 import org.nodystudio.nodybackend.security.filter.JwtAuthenticationFilter;
 import org.nodystudio.nodybackend.security.handler.CustomAccessDeniedHandler;
 import org.nodystudio.nodybackend.security.handler.CustomAuthenticationEntryPoint;
@@ -72,7 +72,8 @@ public class SecurityConfig {
 
     for (String origin : allowedOrigins) {
       if (origin == null || origin.trim().isEmpty()) {
-        throw new IllegalStateException("CORS allowed-origins에 유효하지 않은 값이 포함되어 있습니다. 빈 문자열이나 공백은 허용되지 않습니다.");
+        throw new IllegalStateException(
+            "CORS allowed-origins에 유효하지 않은 값이 포함되어 있습니다. 빈 문자열이나 공백은 허용되지 않습니다.");
       }
     }
   }

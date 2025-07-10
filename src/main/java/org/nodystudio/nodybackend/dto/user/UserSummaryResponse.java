@@ -12,13 +12,13 @@ import org.nodystudio.nodybackend.domain.user.User;
 @Builder
 public class UserSummaryResponse {
 
-    private Long id;
-    private String nickname;
+  private Long id;
+  private String nickname;
 
-    public static UserSummaryResponse from(User user) {
-        return UserSummaryResponse.builder()
-                .id(user.getId())
-                .nickname(user.getNickname())
-                .build();
-    }
+  public static UserSummaryResponse from(User user) {
+    return UserSummaryResponse.builder()
+        .id(user.getId())
+        .nickname(user.getNickname())
+        .build();
+  }
 }

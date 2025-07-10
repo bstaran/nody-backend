@@ -32,17 +32,14 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 @ExtendWith(MockitoExtension.class)
 class AuthControllerTest {
 
-  @Mock
-  private AuthService authService;
-
-  @InjectMocks
-  private AuthController authController;
-
-  private MockMvc mockMvc;
   private final ObjectMapper objectMapper = new ObjectMapper();
-
   private final String refreshToken = "test-refresh-token";
   private final String newAccessToken = "new-access-token";
+  @Mock
+  private AuthService authService;
+  @InjectMocks
+  private AuthController authController;
+  private MockMvc mockMvc;
 
   @BeforeEach
   void setUp() {
@@ -95,8 +92,8 @@ class AuthControllerTest {
 
     // when & then
     mockMvc.perform(post("/api/auth/refresh")
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(requestDto)))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(requestDto)))
         .andDo(print())
         .andExpect(status().isUnauthorized())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))

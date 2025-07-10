@@ -8,8 +8,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 public class NodyBackendApplication {
 
-    public static void main(String[] args) {
-        SpringApplication.run(NodyBackendApplication.class, args);
-    }
+  public static void main(String[] args) {
+    SpringApplication.run(NodyBackendApplication.class, args);
+  }
 
 }

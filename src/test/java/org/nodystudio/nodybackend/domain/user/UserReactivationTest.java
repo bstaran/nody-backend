@@ -1,12 +1,12 @@
 package org.nodystudio.nodybackend.domain.user;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.nodystudio.nodybackend.exception.custom.AccountAlreadyActivatedException;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("사용자 계정 재활성화 테스트")
 class UserReactivationTest {
@@ -112,9 +112,9 @@ class UserReactivationTest {
   @DisplayName("재활성화 시 리프레시 토큰 초기화 확인")
   void reactivateAccount_shouldClearRefreshToken() {
     // given
-    deactivatedUser.updateRefreshToken("existing-refresh-token", 
+    deactivatedUser.updateRefreshToken("existing-refresh-token",
         java.time.LocalDateTime.now().plusDays(7));
-    
+
     // 토큰이 설정되어 있는지 확인
     assertThat(deactivatedUser.getRefreshToken()).isNotNull();
     assertThat(deactivatedUser.getRefreshTokenExpiry()).isNotNull();

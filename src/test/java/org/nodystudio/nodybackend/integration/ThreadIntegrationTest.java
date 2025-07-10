@@ -98,9 +98,9 @@ class ThreadIntegrationTest extends BaseIntegrationTest {
 
     // when & then
     mockMvc.perform(post("/api/threads")
-        .with(authentication(authentication))
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(request)))
+            .with(authentication(authentication))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(request)))
         .andDo(print())
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.code").exists())
@@ -124,9 +124,9 @@ class ThreadIntegrationTest extends BaseIntegrationTest {
 
     // when & then
     mockMvc.perform(post("/api/threads")
-        .with(authentication(authentication))
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(request)))
+            .with(authentication(authentication))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(request)))
         .andDo(print())
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.code").exists())
@@ -149,9 +149,9 @@ class ThreadIntegrationTest extends BaseIntegrationTest {
         .build();
 
     mockMvc.perform(post("/api/threads")
-        .with(authentication(authentication))
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(createRequest)))
+            .with(authentication(authentication))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(createRequest)))
         .andExpect(status().isCreated());
 
     // 생성된 스레드 ID 추출
@@ -160,7 +160,7 @@ class ThreadIntegrationTest extends BaseIntegrationTest {
 
     // when & then
     mockMvc.perform(get("/api/threads/" + threadId)
-        .with(authentication(authentication)))
+            .with(authentication(authentication)))
         .andDo(print())
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.code").exists())
@@ -180,9 +180,9 @@ class ThreadIntegrationTest extends BaseIntegrationTest {
         .build();
 
     mockMvc.perform(post("/api/threads")
-        .with(authentication(authentication))
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(createRequest)))
+            .with(authentication(authentication))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(createRequest)))
         .andExpect(status().isCreated());
 
     Thread savedThread = threadRepository.findAll().get(0);
@@ -210,9 +210,9 @@ class ThreadIntegrationTest extends BaseIntegrationTest {
         .build();
 
     mockMvc.perform(post("/api/threads")
-        .with(authentication(authentication))
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(createRequest)))
+            .with(authentication(authentication))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(createRequest)))
         .andExpect(status().isCreated());
 
     Thread savedThread = threadRepository.findAll().get(0);
@@ -226,9 +226,9 @@ class ThreadIntegrationTest extends BaseIntegrationTest {
 
     // when & then
     mockMvc.perform(put("/api/threads/" + threadId)
-        .with(authentication(authentication))
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(updateRequest)))
+            .with(authentication(authentication))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(updateRequest)))
         .andDo(print())
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.code").exists())
@@ -250,9 +250,9 @@ class ThreadIntegrationTest extends BaseIntegrationTest {
         .build();
 
     mockMvc.perform(post("/api/threads")
-        .with(authentication(authentication))
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(createRequest)))
+            .with(authentication(authentication))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(createRequest)))
         .andExpect(status().isCreated());
 
     Thread savedThread = threadRepository.findAll().get(0);
@@ -260,7 +260,7 @@ class ThreadIntegrationTest extends BaseIntegrationTest {
 
     // when & then
     mockMvc.perform(delete("/api/threads/" + threadId)
-        .with(authentication(authentication)))
+            .with(authentication(authentication)))
         .andDo(print())
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.code").exists());
@@ -282,9 +282,9 @@ class ThreadIntegrationTest extends BaseIntegrationTest {
         .build();
 
     mockMvc.perform(post("/api/threads")
-        .with(authentication(testUserAuth))
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(createRequest)))
+            .with(authentication(testUserAuth))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(createRequest)))
         .andExpect(status().isCreated());
 
     Thread savedThread = threadRepository.findAll().get(0);
@@ -299,9 +299,9 @@ class ThreadIntegrationTest extends BaseIntegrationTest {
         .build();
 
     mockMvc.perform(put("/api/threads/" + threadId)
-        .with(authentication(otherUserAuth))
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(updateRequest)))
+            .with(authentication(otherUserAuth))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(updateRequest)))
         .andDo(print())
         .andExpect(status().isNotFound());
   }

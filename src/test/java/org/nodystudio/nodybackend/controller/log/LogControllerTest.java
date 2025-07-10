@@ -1,5 +1,23 @@
 package org.nodystudio.nodybackend.controller.log;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.verify;
+import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.Mockito.lenient;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Objects;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -7,10 +25,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.nodystudio.nodybackend.dto.ApiResponse;
 import org.nodystudio.nodybackend.dto.log.LogCreateRequest;
 import org.nodystudio.nodybackend.dto.log.LogResponse;
@@ -18,23 +32,13 @@ import org.nodystudio.nodybackend.dto.log.LogSearchRequest;
 import org.nodystudio.nodybackend.dto.log.LogUpdateRequest;
 import org.nodystudio.nodybackend.dto.user.UserSummaryResponse;
 import org.nodystudio.nodybackend.service.log.LogService;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Objects;
-
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.BDDMockito.*;
-import static org.mockito.Mockito.lenient;
-import static org.junit.jupiter.api.Assertions.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UserDetails;
 
 /**
- * - 로그 CRUD 기능 테스트
- * - 위치 기반 검색 테스트
- * - 권한 검증 테스트
- * - 공개/비공개 필터링 테스트
+ * - 로그 CRUD 기능 테스트 - 위치 기반 검색 테스트 - 권한 검증 테스트 - 공개/비공개 필터링 테스트
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("LogController 통합 테스트")
@@ -90,7 +94,8 @@ class LogControllerTest {
         .willReturn(testLogResponse);
 
     // when
-    ResponseEntity<ApiResponse<LogResponse>> response = logController.createLog(request, mockUserDetails);
+    ResponseEntity<ApiResponse<LogResponse>> response = logController.createLog(request,
+        mockUserDetails);
 
     // then
     assertEquals(201, response.getStatusCode().value());
@@ -158,10 +163,12 @@ class LogControllerTest {
         .size(20)
         .build();
 
-    given(logService.searchLogs(any(LogSearchRequest.class), eq("test@example.com"))).willReturn(logPage);
+    given(logService.searchLogs(any(LogSearchRequest.class), eq("test@example.com"))).willReturn(
+        logPage);
 
     // when
-    ResponseEntity<ApiResponse<Page<LogResponse>>> response = logController.getLogs(searchRequest, mockUserDetails);
+    ResponseEntity<ApiResponse<Page<LogResponse>>> response = logController.getLogs(searchRequest,
+        mockUserDetails);
 
     // then
     assertEquals(200, response.getStatusCode().value());
@@ -202,7 +209,8 @@ class LogControllerTest {
         .willReturn(updatedResponse);
 
     // when
-    ResponseEntity<ApiResponse<LogResponse>> response = logController.updateLog(1L, request, mockUserDetails);
+    ResponseEntity<ApiResponse<LogResponse>> response = logController.updateLog(1L, request,
+        mockUserDetails);
 
     // then
     assertEquals(200, response.getStatusCode().value());
@@ -249,7 +257,8 @@ class LogControllerTest {
     given(logService.searchLogs(any(LogSearchRequest.class), isNull())).willReturn(emptyPage);
 
     // when
-    ResponseEntity<ApiResponse<Page<LogResponse>>> response = logController.getLogs(searchRequest, null);
+    ResponseEntity<ApiResponse<Page<LogResponse>>> response = logController.getLogs(searchRequest,
+        null);
 
     // then
     assertEquals(200, response.getStatusCode().value());

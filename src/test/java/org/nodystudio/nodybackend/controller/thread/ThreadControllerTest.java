@@ -38,8 +38,6 @@ import org.nodystudio.nodybackend.service.thread.ThreadService;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -63,7 +61,7 @@ class ThreadControllerTest {
     try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
       validator = factory.getValidator();
     }
-    
+
     // Mock User 생성
     mockUser = User.builder()
         .id(1L)
@@ -123,7 +121,8 @@ class ThreadControllerTest {
         .willReturn(createResponse);
 
     // when
-    ResponseEntity<ApiResponse<ThreadResponse>> response = threadController.createThread(request, mockUser);
+    ResponseEntity<ApiResponse<ThreadResponse>> response = threadController.createThread(request,
+        mockUser);
 
     // then
     assertEquals(201, response.getStatusCode().value());

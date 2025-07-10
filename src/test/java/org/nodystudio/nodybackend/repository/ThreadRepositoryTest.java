@@ -109,12 +109,12 @@ class ThreadRepositoryTest {
 
     // then
     assertThat(result.getContent()).hasSize(4); // 공개 스레드 4개
-    
+
     // 생성일 기준 내림차순 정렬 확인 (최신 순)
     assertThat(result.getContent())
         .extracting(Thread::getContent)
         .containsExactly("로그 연결 스레드 내용", "독립 스레드 내용", "공개 스레드 2 내용", "공개 스레드 1 내용");
-    
+
     // 실제 생성일 순서 검증
     List<Thread> threads = result.getContent();
     for (int i = 0; i < threads.size() - 1; i++) {
@@ -185,13 +185,13 @@ class ThreadRepositoryTest {
 
     // then
     assertThat(result.getContent()).hasSize(6); // user1의 스레드 6개 (모든 스레드가 user1 소유)
-    
+
     // 생성일 기준 내림차순 정렬 확인 (최신 순)
     assertThat(result.getContent())
         .extracting(Thread::getContent)
         .containsExactly("로그 연결 스레드 내용", "독립 비공개 스레드 내용", "독립 스레드 내용", "공개 스레드 2 내용", "비공개 스레드 내용",
             "공개 스레드 1 내용");
-    
+
     // 실제 생성일 순서 검증
     List<Thread> threads = result.getContent();
     for (int i = 0; i < threads.size() - 1; i++) {
@@ -207,7 +207,8 @@ class ThreadRepositoryTest {
     Pageable pageable = PageRequest.of(0, 10);
 
     // when
-    Page<Thread> result = threadRepository.findIndependentPublicThreadsOrderByCreatedAtDesc(pageable);
+    Page<Thread> result = threadRepository.findIndependentPublicThreadsOrderByCreatedAtDesc(
+        pageable);
 
     // then
     assertThat(result.getContent()).hasSize(1); // 독립 공개 스레드 1개

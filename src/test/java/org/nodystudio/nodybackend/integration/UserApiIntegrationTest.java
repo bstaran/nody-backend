@@ -1,5 +1,14 @@
 package org.nodystudio.nodybackend.integration;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -13,12 +22,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.web.servlet.MockMvc;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @DisplayName("사용자 API 통합 테스트")
 class UserApiIntegrationTest extends BaseIntegrationTest {
@@ -49,12 +52,13 @@ class UserApiIntegrationTest extends BaseIntegrationTest {
   @Test
   @DisplayName("현재 사용자 정보 조회 - 성공")
   void getCurrentUser_success() throws Exception {
-    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(testUser, null,
+    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+        testUser, null,
         testUser.getRoles());
 
     mockMvc.perform(get("/api/user/me")
-        .with(authentication(authentication))
-        .contentType(MediaType.APPLICATION_JSON))
+            .with(authentication(authentication))
+            .contentType(MediaType.APPLICATION_JSON))
         .andDo(print())
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.code").value("SUCCESS_S001"))
@@ -66,7 +70,7 @@ class UserApiIntegrationTest extends BaseIntegrationTest {
   @DisplayName("현재 사용자 정보 조회 - 인증되지 않은 사용자")
   void getCurrentUser_notAuthenticated() throws Exception {
     mockMvc.perform(get("/api/user/me")
-        .contentType(MediaType.APPLICATION_JSON))
+            .contentType(MediaType.APPLICATION_JSON))
         .andDo(print())
         .andExpect(status().isUnauthorized())
         .andExpect(jsonPath("$.code").value("A007"));
@@ -78,14 +82,15 @@ class UserApiIntegrationTest extends BaseIntegrationTest {
     // given
     String newNickname = "새로운닉네임";
     UpdateNicknameRequestDto requestDto = new UpdateNicknameRequestDto(newNickname);
-    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(testUser, null,
+    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+        testUser, null,
         testUser.getRoles());
 
     // when & then
     mockMvc.perform(put("/api/user/nickname")
-        .with(authentication(authentication))
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(requestDto)))
+            .with(authentication(authentication))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(requestDto)))
         .andDo(print())
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.code").value("SUCCESS_S001"))
@@ -100,14 +105,15 @@ class UserApiIntegrationTest extends BaseIntegrationTest {
   void updateNickname_validationFail_blankNickname() throws Exception {
     // given
     UpdateNicknameRequestDto requestDto = new UpdateNicknameRequestDto("");
-    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(testUser, null,
+    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+        testUser, null,
         testUser.getRoles());
 
     // when & then
     mockMvc.perform(put("/api/user/nickname")
-        .with(authentication(authentication))
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(requestDto)))
+            .with(authentication(authentication))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(requestDto)))
         .andDo(print())
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.code").value("C001"));
@@ -121,8 +127,8 @@ class UserApiIntegrationTest extends BaseIntegrationTest {
 
     // when & then
     mockMvc.perform(put("/api/user/nickname")
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(requestDto)))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(requestDto)))
         .andDo(print())
         .andExpect(status().isUnauthorized())
         .andExpect(jsonPath("$.code").value("A007"));
@@ -132,13 +138,14 @@ class UserApiIntegrationTest extends BaseIntegrationTest {
   @DisplayName("계정 탈퇴 - 성공")
   void deactivateAccount_success() throws Exception {
     // given
-    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(testUser, null,
+    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+        testUser, null,
         testUser.getRoles());
 
     // when & then
     mockMvc.perform(delete("/api/user/me")
-        .with(authentication(authentication))
-        .contentType(MediaType.APPLICATION_JSON))
+            .with(authentication(authentication))
+            .contentType(MediaType.APPLICATION_JSON))
         .andDo(print())
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.code").value("SUCCESS_S001"))
@@ -155,7 +162,7 @@ class UserApiIntegrationTest extends BaseIntegrationTest {
   void deactivateAccount_notAuthenticated() throws Exception {
     // when & then
     mockMvc.perform(delete("/api/user/me")
-        .contentType(MediaType.APPLICATION_JSON))
+            .contentType(MediaType.APPLICATION_JSON))
         .andDo(print())
         .andExpect(status().isUnauthorized())
         .andExpect(jsonPath("$.code").value("A007"));
@@ -168,13 +175,14 @@ class UserApiIntegrationTest extends BaseIntegrationTest {
     testUser.deactivateAccount();
     userRepository.save(testUser);
 
-    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(testUser, null,
+    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+        testUser, null,
         testUser.getRoles());
 
     // when & then - 탈퇴한 계정으로는 API 접근 불가 (활성 사용자만 조회)
     mockMvc.perform(delete("/api/user/me")
-        .with(authentication(authentication))
-        .contentType(MediaType.APPLICATION_JSON))
+            .with(authentication(authentication))
+            .contentType(MediaType.APPLICATION_JSON))
         .andDo(print())
         .andExpect(status().isConflict())
         .andExpect(jsonPath("$.code").value("U005"));

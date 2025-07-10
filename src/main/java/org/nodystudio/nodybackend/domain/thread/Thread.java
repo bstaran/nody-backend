@@ -1,10 +1,5 @@
 package org.nodystudio.nodybackend.domain.thread;
 
-import org.hibernate.annotations.ColumnDefault;
-import org.nodystudio.nodybackend.domain.BaseTimeEntity;
-import org.nodystudio.nodybackend.domain.log.Log;
-import org.nodystudio.nodybackend.domain.user.User;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -22,6 +17,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
+import org.nodystudio.nodybackend.domain.BaseTimeEntity;
+import org.nodystudio.nodybackend.domain.log.Log;
+import org.nodystudio.nodybackend.domain.user.User;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -114,9 +113,7 @@ public class Thread extends BaseTimeEntity {
   }
 
   /**
-   * 현재 사용자가 이 스레드를 볼 수 있는지 확인합니다.
-   * - 공개 스레드는 모든 사용자가 조회 가능
-   * - 비공개 스레드는 작성자만 조회 가능
+   * 현재 사용자가 이 스레드를 볼 수 있는지 확인합니다. - 공개 스레드는 모든 사용자가 조회 가능 - 비공개 스레드는 작성자만 조회 가능
    */
   public boolean isViewableBy(User viewer) {
     if (this.isPublic) {
@@ -140,8 +137,7 @@ public class Thread extends BaseTimeEntity {
   }
 
   /**
-   * 연결된 로그의 작성자와 스레드 작성자가 동일한지 확인합니다.
-   * 로그가 연결되지 않은 경우 true를 반환합니다.
+   * 연결된 로그의 작성자와 스레드 작성자가 동일한지 확인합니다. 로그가 연결되지 않은 경우 true를 반환합니다.
    */
   public boolean isLogOwnerMatchesThreadOwner() {
     if (this.log == null) {

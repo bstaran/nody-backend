@@ -1,17 +1,28 @@
 package org.nodystudio.nodybackend.domain.user;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.Email;
-import lombok.*;
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 import org.nodystudio.nodybackend.domain.BaseTimeEntity;
 import org.nodystudio.nodybackend.exception.custom.AccountAlreadyActivatedException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-
-import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -19,7 +30,7 @@ import java.util.List;
 @Builder
 @Entity
 @Table(name = "users", uniqueConstraints = {
-    @UniqueConstraint(columnNames = { "provider", "social_id" })
+    @UniqueConstraint(columnNames = {"provider", "social_id"})
 // 이메일 unique constraint는 DB 레벨에서 부분 인덱스로 처리
 // CREATE UNIQUE INDEX idx_users_email_active ON users (email) WHERE is_active =
 // true AND deleted_at IS NULL;
@@ -88,10 +99,7 @@ public class User extends BaseTimeEntity {
   }
 
   /**
-   * 계정을 비활성화합니다 (회원탈퇴)
-   * - isActive를 false로 설정
-   * - deletedAt을 현재 시간으로 설정
-   * - 리프레시 토큰 무효화
+   * 계정을 비활성화합니다 (회원탈퇴) - isActive를 false로 설정 - deletedAt을 현재 시간으로 설정 - 리프레시 토큰 무효화
    */
   public void deactivateAccount() {
     this.isActive = false;
@@ -100,8 +108,7 @@ public class User extends BaseTimeEntity {
   }
 
   /**
-   * 탈퇴한 계정을 재활성화합니다. (30일 유예기간 내 완전 복구)
-   * 기존 사용자 정보를 그대로 유지하며 계정만 활성화합니다.
+   * 탈퇴한 계정을 재활성화합니다. (30일 유예기간 내 완전 복구) 기존 사용자 정보를 그대로 유지하며 계정만 활성화합니다.
    *
    * @throws AccountAlreadyActivatedException 이미 활성 상태인 계정인 경우
    */
@@ -119,8 +126,8 @@ public class User extends BaseTimeEntity {
   }
 
   /**
-   * 사용자의 역할을 Spring Security {@link GrantedAuthority} 목록으로 반환합니다.
-   * 현재 시스템에서는 사용자가 단일 역할만 가지지만, Spring Security 호환성을 위해 목록 형태로 반환합니다.
+   * 사용자의 역할을 Spring Security {@link GrantedAuthority} 목록으로 반환합니다. 현재 시스템에서는 사용자가 단일 역할만 가지지만,
+   * Spring Security 호환성을 위해 목록 형태로 반환합니다.
    *
    * @return 사용자의 권한 목록 (항상 단일 요소)
    */

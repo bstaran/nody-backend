@@ -1,5 +1,8 @@
 package org.nodystudio.nodybackend.repository;
 
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
 import org.nodystudio.nodybackend.domain.log.Log;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -8,14 +11,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Optional;
-
 /**
- * - findByLocationNear: 특정 좌표 반경 내 로그 조회 (Haversine 공식)
- * - findByUserIdOrderByCreatedAtDesc: 사용자별 로그 조회
- * - @Query 어노테이션으로 네이티브 쿼리 작성
+ * - findByLocationNear: 특정 좌표 반경 내 로그 조회 (Haversine 공식) - findByUserIdOrderByCreatedAtDesc: 사용자별 로그
+ * 조회 - @Query 어노테이션으로 네이티브 쿼리 작성
  */
 @Repository
 public interface LogRepository extends JpaRepository<Log, Long> {
@@ -32,7 +30,7 @@ public interface LogRepository extends JpaRepository<Log, Long> {
 
   /**
    * 특정 좌표 반경 내 로그 조회 (Haversine 공식 사용)
-   * 
+   *
    * @param latitude  중심 위도
    * @param longitude 중심 경도
    * @param radiusKm  반경 (km)
@@ -161,5 +159,6 @@ public interface LogRepository extends JpaRepository<Log, Long> {
    * 공개 로그 + 특정 사용자의 비공개 로그 조회 (로그인 사용자용)
    */
   @Query("SELECT l FROM Log l WHERE l.isPublic = true OR l.user.id = :userId ORDER BY l.createdAt DESC")
-  Page<Log> findPublicOrUserLogsOrderByCreatedAtDesc(@Param("userId") Long userId, Pageable pageable);
+  Page<Log> findPublicOrUserLogsOrderByCreatedAtDesc(@Param("userId") Long userId,
+      Pageable pageable);
 }

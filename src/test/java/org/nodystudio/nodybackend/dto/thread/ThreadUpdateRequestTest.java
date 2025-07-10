@@ -2,17 +2,15 @@ package org.nodystudio.nodybackend.dto.thread;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Set;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.test.context.ActiveProfiles;
-
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
+import java.util.Set;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.test.context.ActiveProfiles;
 
 @ActiveProfiles("test")
 @DisplayName("ThreadUpdateRequest 유효성 검증 테스트")

@@ -37,11 +37,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
 /**
- * - 로그 CRUD 기능 테스트
- * - 위치 기반 검색 테스트
- * - 권한 검증 테스트
- * - 공개/비공개 필터링 테스트
- * - 페이징 기능 테스트
+ * - 로그 CRUD 기능 테스트 - 위치 기반 검색 테스트 - 권한 검증 테스트 - 공개/비공개 필터링 테스트 - 페이징 기능 테스트
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("LogService 테스트")
@@ -289,109 +285,6 @@ class LogServiceTest {
     verify(logRepository).delete(testLog);
   }
 
-  @Nested
-  @DisplayName("위치 정보 검증 테스트")
-  class LocationValidationTest {
-
-    @Test
-    @DisplayName("잘못된 위도로 로그 생성 시도")
-    void createLog_InvalidLatitude_ThrowsExceptionWithSpecificMessage() {
-      // given
-      LogCreateRequest request = LogCreateRequest.builder()
-          .content("테스트 로그")
-          .latitude(new BigDecimal("999.0")) // 잘못된 위도 (90도 초과)
-          .longitude(new BigDecimal("126.9780")) // 정상 경도
-          .address("서울특별시")
-          .isPublic(true)
-          .build();
-
-      given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
-
-      // when & then
-      assertThatThrownBy(() -> logService.createLog(request, "test@example.com"))
-          .isInstanceOf(InvalidCoordinateException.class)
-          .hasMessage("위도는 -90도에서 90도 사이여야 합니다. 입력값: 999.0");
-    }
-
-    @Test
-    @DisplayName("잘못된 경도로 로그 생성 시도")
-    void createLog_InvalidLongitude_ThrowsExceptionWithSpecificMessage() {
-      // given
-      LogCreateRequest request = LogCreateRequest.builder()
-          .content("테스트 로그")
-          .latitude(new BigDecimal("37.5665")) // 정상 위도
-          .longitude(new BigDecimal("999.0")) // 잘못된 경도 (180도 초과)
-          .address("서울특별시")
-          .isPublic(true)
-          .build();
-
-      given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
-
-      // when & then
-      assertThatThrownBy(() -> logService.createLog(request, "test@example.com"))
-          .isInstanceOf(InvalidCoordinateException.class)
-          .hasMessage("경도는 -180도에서 180도 사이여야 합니다. 입력값: 999.0");
-    }
-
-    @Test
-    @DisplayName("경계값 테스트 (유효한 극값)")
-    void createLog_BoundaryCoordinates_Success() {
-      // given - 유효한 경계값들
-      LogCreateRequest request = LogCreateRequest.builder()
-          .content("경계값 테스트")
-          .latitude(new BigDecimal("90.0")) // 최대 유효 위도
-          .longitude(new BigDecimal("-180.0")) // 최소 유효 경도
-          .address("극지방")
-          .isPublic(true)
-          .build();
-
-      Log expectedLog = Log.builder()
-          .id(2L)
-          .user(testUser)
-          .content("경계값 테스트")
-          .latitude(new BigDecimal("90.0"))
-          .longitude(new BigDecimal("-180.0"))
-          .address("극지방")
-          .isPublic(true)
-          .viewCount(0L)
-          .build();
-
-      given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
-      given(logRepository.save(any(Log.class))).willReturn(expectedLog);
-
-      // when
-      LogResponse response = logService.createLog(request, "test@example.com");
-
-      // then
-      assertThat(response).isNotNull();
-      assertThat(response.getLatitude()).isEqualTo(new BigDecimal("90.0"));
-      assertThat(response.getLongitude()).isEqualTo(new BigDecimal("-180.0"));
-      verify(logRepository).save(any(Log.class));
-    }
-
-    @Test
-    @DisplayName("경계값 초과 (무효한 극값)")
-    void createLog_OutOfBoundaryCoordinates_ThrowsException() {
-      // given - 경계값을 벗어난 좌표들
-      LogCreateRequest request = LogCreateRequest.builder()
-          .content("경계값 초과 테스트")
-          .latitude(new BigDecimal("-90.1")) // 최소값 미만
-          .longitude(new BigDecimal("180.1")) // 최대값 초과
-          .address("유효하지 않은 위치")
-          .isPublic(true)
-          .build();
-
-      given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
-
-      // when & then
-      // LocationUtils는 위도를 먼저 검증하므로, 위도 오류만 반환됨
-      // (경도도 유효하지 않지만 위도 검증에서 먼저 실패)
-      assertThatThrownBy(() -> logService.createLog(request, "test@example.com"))
-          .isInstanceOf(InvalidCoordinateException.class)
-          .hasMessage("위도는 -90도에서 90도 사이여야 합니다. 입력값: -90.1");
-    }
-  }
-
   @Test
   @DisplayName("로그 수정 - 부분 좌표 제공 시 예외 발생 (위도만 제공)")
   void updateLog_PartialCoordinates_ThrowsException() {
@@ -488,7 +381,8 @@ class LogServiceTest {
     assertThat(response.getContent().get(0).getIsPublic()).isTrue();
 
     verify(logRepository).findByIsPublicTrueOrderByCreatedAtDesc(any(Pageable.class));
-    verify(logRepository, never()).findPublicOrUserLogsOrderByCreatedAtDesc(anyLong(), any(Pageable.class));
+    verify(logRepository, never()).findPublicOrUserLogsOrderByCreatedAtDesc(anyLong(),
+        any(Pageable.class));
   }
 
   @Test
@@ -700,6 +594,109 @@ class LogServiceTest {
 
     verify(logRepository).findPublicOrUserLogsOrderByCreatedAtDesc(eq(1L), any(Pageable.class));
     verify(logRepository, never()).findByIsPublicTrueOrderByCreatedAtDesc(any(Pageable.class));
+  }
+
+  @Nested
+  @DisplayName("위치 정보 검증 테스트")
+  class LocationValidationTest {
+
+    @Test
+    @DisplayName("잘못된 위도로 로그 생성 시도")
+    void createLog_InvalidLatitude_ThrowsExceptionWithSpecificMessage() {
+      // given
+      LogCreateRequest request = LogCreateRequest.builder()
+          .content("테스트 로그")
+          .latitude(new BigDecimal("999.0")) // 잘못된 위도 (90도 초과)
+          .longitude(new BigDecimal("126.9780")) // 정상 경도
+          .address("서울특별시")
+          .isPublic(true)
+          .build();
+
+      given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
+
+      // when & then
+      assertThatThrownBy(() -> logService.createLog(request, "test@example.com"))
+          .isInstanceOf(InvalidCoordinateException.class)
+          .hasMessage("위도는 -90도에서 90도 사이여야 합니다. 입력값: 999.0");
+    }
+
+    @Test
+    @DisplayName("잘못된 경도로 로그 생성 시도")
+    void createLog_InvalidLongitude_ThrowsExceptionWithSpecificMessage() {
+      // given
+      LogCreateRequest request = LogCreateRequest.builder()
+          .content("테스트 로그")
+          .latitude(new BigDecimal("37.5665")) // 정상 위도
+          .longitude(new BigDecimal("999.0")) // 잘못된 경도 (180도 초과)
+          .address("서울특별시")
+          .isPublic(true)
+          .build();
+
+      given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
+
+      // when & then
+      assertThatThrownBy(() -> logService.createLog(request, "test@example.com"))
+          .isInstanceOf(InvalidCoordinateException.class)
+          .hasMessage("경도는 -180도에서 180도 사이여야 합니다. 입력값: 999.0");
+    }
+
+    @Test
+    @DisplayName("경계값 테스트 (유효한 극값)")
+    void createLog_BoundaryCoordinates_Success() {
+      // given - 유효한 경계값들
+      LogCreateRequest request = LogCreateRequest.builder()
+          .content("경계값 테스트")
+          .latitude(new BigDecimal("90.0")) // 최대 유효 위도
+          .longitude(new BigDecimal("-180.0")) // 최소 유효 경도
+          .address("극지방")
+          .isPublic(true)
+          .build();
+
+      Log expectedLog = Log.builder()
+          .id(2L)
+          .user(testUser)
+          .content("경계값 테스트")
+          .latitude(new BigDecimal("90.0"))
+          .longitude(new BigDecimal("-180.0"))
+          .address("극지방")
+          .isPublic(true)
+          .viewCount(0L)
+          .build();
+
+      given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
+      given(logRepository.save(any(Log.class))).willReturn(expectedLog);
+
+      // when
+      LogResponse response = logService.createLog(request, "test@example.com");
+
+      // then
+      assertThat(response).isNotNull();
+      assertThat(response.getLatitude()).isEqualTo(new BigDecimal("90.0"));
+      assertThat(response.getLongitude()).isEqualTo(new BigDecimal("-180.0"));
+      verify(logRepository).save(any(Log.class));
+    }
+
+    @Test
+    @DisplayName("경계값 초과 (무효한 극값)")
+    void createLog_OutOfBoundaryCoordinates_ThrowsException() {
+      // given - 경계값을 벗어난 좌표들
+      LogCreateRequest request = LogCreateRequest.builder()
+          .content("경계값 초과 테스트")
+          .latitude(new BigDecimal("-90.1")) // 최소값 미만
+          .longitude(new BigDecimal("180.1")) // 최대값 초과
+          .address("유효하지 않은 위치")
+          .isPublic(true)
+          .build();
+
+      given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
+
+      // when & then
+      // LocationUtils는 위도를 먼저 검증하므로, 위도 오류만 반환됨
+      // (경도도 유효하지 않지만 위도 검증에서 먼저 실패)
+      assertThatThrownBy(() -> logService.createLog(request, "test@example.com"))
+          .isInstanceOf(InvalidCoordinateException.class)
+          .hasMessage("위도는 -90도에서 90도 사이여야 합니다. 입력값: -90.1");
+    }
   }
 
 }

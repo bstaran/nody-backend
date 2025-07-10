@@ -1,7 +1,6 @@
 package org.nodystudio.nodybackend.repository;
 
 import java.util.Optional;
-
 import org.nodystudio.nodybackend.domain.thread.Thread;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -156,8 +155,7 @@ public interface ThreadRepository extends JpaRepository<Thread, Long> {
   long countByUserId(Long userId);
 
   /**
-   * 스레드의 조회수를 원자적으로 증가시킵니다.
-   * 동시성 이슈를 해결하기 위해 데이터베이스 레벨에서 원자적 증가를 수행합니다.
+   * 스레드의 조회수를 원자적으로 증가시킵니다. 동시성 이슈를 해결하기 위해 데이터베이스 레벨에서 원자적 증가를 수행합니다.
    */
   @Modifying
   @Query("UPDATE Thread t SET t.viewCount = t.viewCount + 1 WHERE t.id = :threadId")

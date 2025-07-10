@@ -17,8 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 예외 처리 테스트를 위한 컨트롤러
- * 테스트 환경에서만 사용되는 컨트롤러입니다.
+ * 예외 처리 테스트를 위한 컨트롤러 테스트 환경에서만 사용되는 컨트롤러입니다.
  */
 @RestController
 @RequestMapping("/api/test/exceptions")
@@ -75,8 +74,8 @@ public class ExceptionTestController {
   }
 
   /**
-   * Spring Security 인증 실패 테스트 (401 Unauthorized)
-   * 이 엔드포인트는 인증이 필요하므로 토큰 없이 접근하면 CustomAuthenticationEntryPoint가 호출됩니다.
+   * Spring Security 인증 실패 테스트 (401 Unauthorized) 이 엔드포인트는 인증이 필요하므로 토큰 없이 접근하면
+   * CustomAuthenticationEntryPoint가 호출됩니다.
    */
   @GetMapping("/security-auth-test")
   public ResponseEntity<ApiResponse<?>> getSecurityAuthTest() {
@@ -84,8 +83,8 @@ public class ExceptionTestController {
   }
 
   /**
-   * Spring Security 권한 부족 테스트 (403 Forbidden)
-   * 이 엔드포인트는 ADMIN 권한이 필요하므로 일반 사용자가 접근하면 CustomAccessDeniedHandler가 호출됩니다.
+   * Spring Security 권한 부족 테스트 (403 Forbidden) 이 엔드포인트는 ADMIN 권한이 필요하므로 일반 사용자가 접근하면
+   * CustomAccessDeniedHandler가 호출됩니다.
    */
   @GetMapping("/security-access-test")
   public ResponseEntity<ApiResponse<?>> getSecurityAccessTest() {

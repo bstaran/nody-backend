@@ -23,11 +23,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 스레드 관리 서비스
- * 
+ *
  * <p>
- * 로그 연결 스레드와 독립 스레드의 생성, 조회, 수정, 삭제 기능을 제공합니다.
- * 사용자 권한에 따라 공개/비공개 스레드에 대한 접근을 제어하며,
- * 로그-스레드 연관관계 검증을 수행합니다.
+ * 로그 연결 스레드와 독립 스레드의 생성, 조회, 수정, 삭제 기능을 제공합니다. 사용자 권한에 따라 공개/비공개 스레드에 대한 접근을 제어하며, 로그-스레드 연관관계 검증을
+ * 수행합니다.
  * </p>
  */
 @Slf4j
@@ -42,7 +41,7 @@ public class ThreadService {
 
   /**
    * 새로운 스레드를 생성합니다.
-   * 
+   *
    * @param request   스레드 생성 요청 정보
    * @param userEmail 스레드 작성자의 이메일
    * @return 생성된 스레드 정보
@@ -79,7 +78,7 @@ public class ThreadService {
 
   /**
    * 스레드를 조회하고 조회수를 증가시킵니다.
-   * 
+   *
    * @param threadId  조회할 스레드 ID
    * @param userEmail 조회 요청자의 이메일 (null 가능)
    * @return 스레드 상세 정보
@@ -100,7 +99,7 @@ public class ThreadService {
 
   /**
    * 스레드 목록을 검색합니다.
-   * 
+   *
    * @param searchRequest 검색 조건
    * @param userEmail     검색 요청자의 이메일 (null 가능)
    * @return 검색된 스레드 목록 (페이징 처리됨)
@@ -112,9 +111,9 @@ public class ThreadService {
 
     User viewer = userEmail != null ? findUserByEmail(userEmail) : null;
     Pageable pageable = PageableUtils.createThreadPageable(
-        searchRequest.getPage(), 
-        searchRequest.getSize(), 
-        searchRequest.getSortBy(), 
+        searchRequest.getPage(),
+        searchRequest.getSize(),
+        searchRequest.getSortBy(),
         searchRequest.getSortDirection());
 
     Page<Thread> threads = performSearch(searchRequest, viewer, pageable);
@@ -125,7 +124,7 @@ public class ThreadService {
 
   /**
    * 스레드를 수정합니다.
-   * 
+   *
    * @param threadId  수정할 스레드 ID
    * @param request   수정할 정보
    * @param userEmail 수정 요청자의 이메일
@@ -148,7 +147,7 @@ public class ThreadService {
 
   /**
    * 스레드를 삭제합니다.
-   * 
+   *
    * @param threadId  삭제할 스레드 ID
    * @param userEmail 삭제 요청자의 이메일
    * @throws ResourceNotFoundException 스레드를 찾을 수 없는 경우
@@ -167,7 +166,7 @@ public class ThreadService {
 
   /**
    * 특정 로그의 스레드 목록을 조회합니다.
-   * 
+   *
    * @param logId     로그 ID
    * @param userEmail 조회 요청자의 이메일 (null 가능)
    * @param pageable  페이징 정보
@@ -230,19 +229,23 @@ public class ThreadService {
   }
 
 
-  private Page<Thread> performSearch(ThreadSearchRequest searchRequest, User viewer, Pageable pageable) {
+  private Page<Thread> performSearch(ThreadSearchRequest searchRequest, User viewer,
+      Pageable pageable) {
     // 키워드 검색이 있는 경우
     if (searchRequest.getKeyword() != null && !searchRequest.getKeyword().trim().isEmpty()) {
       return viewer != null
-          ? threadRepository.searchThreadsByContentWithUser(searchRequest.getKeyword(), viewer.getId(), pageable)
+          ? threadRepository.searchThreadsByContentWithUser(searchRequest.getKeyword(),
+          viewer.getId(), pageable)
           : threadRepository.searchPublicThreadsByContent(searchRequest.getKeyword(), pageable);
     }
 
     // 특정 로그의 스레드 검색
     if (searchRequest.getLogId() != null) {
       return viewer != null
-          ? threadRepository.findThreadsByLogIdWithUser(searchRequest.getLogId(), viewer.getId(), pageable)
-          : threadRepository.findPublicThreadsByLogIdOrderByCreatedAtDesc(searchRequest.getLogId(), pageable);
+          ? threadRepository.findThreadsByLogIdWithUser(searchRequest.getLogId(), viewer.getId(),
+          pageable)
+          : threadRepository.findPublicThreadsByLogIdOrderByCreatedAtDesc(searchRequest.getLogId(),
+              pageable);
     }
 
     // 스레드 타입별 검색

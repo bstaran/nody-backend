@@ -28,9 +28,8 @@ import org.springframework.test.web.servlet.MvcResult;
 
 /**
  * 프론트엔드 로그인 기능의 핵심 시나리오 검증 테스트
- * 
- * 이 테스트는 프론트엔드에서 자주 발생하는 로그인 관련 요청들이
- * 백엔드 서버에서 올바르게 처리되는지 검증합니다.
+ * <p>
+ * 이 테스트는 프론트엔드에서 자주 발생하는 로그인 관련 요청들이 백엔드 서버에서 올바르게 처리되는지 검증합니다.
  */
 @DisplayName("프론트엔드 로그인 핵심 시나리오 테스트")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
@@ -101,8 +100,8 @@ class FrontendLoginScenarioTest extends BaseIntegrationTest {
 
     // when: 프론트엔드에서 토큰 갱신 요청
     MvcResult result = mockMvc.perform(post("/api/auth/refresh")
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(request)))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(request)))
         .andDo(print())
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value(200))
@@ -135,8 +134,8 @@ class FrontendLoginScenarioTest extends BaseIntegrationTest {
 
     // when: 잘못된 토큰으로 갱신 요청
     MvcResult result = mockMvc.perform(post("/api/auth/refresh")
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(request)))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(request)))
         .andDo(print())
         .andExpect(status().isUnauthorized())
         .andExpect(jsonPath("$.status").value(401))
@@ -169,8 +168,8 @@ class FrontendLoginScenarioTest extends BaseIntegrationTest {
       TokenRefreshRequestDto request = new TokenRefreshRequestDto(currentToken);
 
       MvcResult result = mockMvc.perform(post("/api/auth/refresh")
-          .contentType(MediaType.APPLICATION_JSON)
-          .content(objectMapper.writeValueAsString(request)))
+              .contentType(MediaType.APPLICATION_JSON)
+              .content(objectMapper.writeValueAsString(request)))
           .andExpect(status().isOk())
           .andReturn();
 
@@ -203,14 +202,14 @@ class FrontendLoginScenarioTest extends BaseIntegrationTest {
 
     // when: 첫 번째 갱신 성공
     mockMvc.perform(post("/api/auth/refresh")
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(request)))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk());
 
     // then: 동일한 토큰으로 두 번째 시도 시 차단
     mockMvc.perform(post("/api/auth/refresh")
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(request)))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isUnauthorized())
         .andExpect(jsonPath("$.code").value("A005"));
   }
@@ -238,8 +237,8 @@ class FrontendLoginScenarioTest extends BaseIntegrationTest {
     TokenRefreshRequestDto refreshRequest = new TokenRefreshRequestDto(initialToken);
 
     MvcResult refreshResult = mockMvc.perform(post("/api/auth/refresh")
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(refreshRequest)))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(refreshRequest)))
         .andExpect(status().isOk())
         .andReturn();
 
@@ -254,8 +253,8 @@ class FrontendLoginScenarioTest extends BaseIntegrationTest {
     TokenRefreshRequestDto secondRequest = new TokenRefreshRequestDto(newRefreshToken);
 
     mockMvc.perform(post("/api/auth/refresh")
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(secondRequest)))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(secondRequest)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.accessToken").exists());
   }

@@ -7,13 +7,14 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,32 +39,25 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2UserAuthority;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletResponse;
-
 @ExtendWith(MockitoExtension.class)
 class OAuth2LoginSuccessHandlerTest {
 
-  @Mock
-  private TokenProvider tokenProvider;
-
-  @Mock
-  private UserRepository userRepository;
-
-  @Mock
-  private ClientRegistrationRepository clientRegistrationRepository;
-
-  @InjectMocks
-  private OAuth2LoginSuccessHandler successHandler;
-
-  private MockHttpServletRequest request;
-  private MockHttpServletResponse response;
-  private Authentication authentication;
-  private User testUser;
   private final String accessToken = "test-access-token";
   private final String refreshToken = "test-refresh-token-jwt";
   private final LocalDateTime refreshTokenExpiry = LocalDateTime.now().plusDays(7);
   private final String redirectUrl = "http://localhost:3000/login/oauth2/code/google";
+  @Mock
+  private TokenProvider tokenProvider;
+  @Mock
+  private UserRepository userRepository;
+  @Mock
+  private ClientRegistrationRepository clientRegistrationRepository;
+  @InjectMocks
+  private OAuth2LoginSuccessHandler successHandler;
+  private MockHttpServletRequest request;
+  private MockHttpServletResponse response;
+  private Authentication authentication;
+  private User testUser;
 
   @BeforeEach
   void setUp() {

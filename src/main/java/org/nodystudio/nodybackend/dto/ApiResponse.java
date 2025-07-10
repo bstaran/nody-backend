@@ -12,8 +12,7 @@ import org.nodystudio.nodybackend.dto.code.SuccessCode;
 import org.nodystudio.nodybackend.exception.FieldErrorProvider;
 
 /**
- * API 응답을 위한 범용 DTO 클래스입니다. 성공 시 데이터와 함께 상태, 코드, 메시지를 포함하며, 실패 시 에러 코드와 메시지,
- * 선택적으로 필드 에러 정보를
+ * API 응답을 위한 범용 DTO 클래스입니다. 성공 시 데이터와 함께 상태, 코드, 메시지를 포함하며, 실패 시 에러 코드와 메시지, 선택적으로 필드 에러 정보를
  * 포함합니다.
  *
  * @param <T> 응답 데이터의 타입
@@ -23,12 +22,12 @@ import org.nodystudio.nodybackend.exception.FieldErrorProvider;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {
 
+  private final LocalDateTime timestamp = LocalDateTime.now();
   private int status;
   private String code;
   private String message;
   private T data;
   private List<FieldErrorDto> errors;
-  private final LocalDateTime timestamp = LocalDateTime.now();
 
   /**
    * 성공 응답 생성자
@@ -113,8 +112,7 @@ public class ApiResponse<T> {
   }
 
   /**
-   * {@link SuccessCode}와 커스텀 메시지를 기반으로 성공 응답을 생성합니다. (데이터 포함) 커스텀 메시지가 null이거나
-   * 비어있으면
+   * {@link SuccessCode}와 커스텀 메시지를 기반으로 성공 응답을 생성합니다. (데이터 포함) 커스텀 메시지가 null이거나 비어있으면
    * {@link SuccessCode}의 기본 메시지를 사용합니다.
    *
    * @param successCode 성공 코드 열거형
@@ -124,7 +122,8 @@ public class ApiResponse<T> {
    * @return 성공 ApiResponse 객체
    */
   public static <T> ApiResponse<T> success(SuccessCode successCode, String message, T data) {
-    String determinedMessage = (message == null || message.trim().isEmpty()) ? successCode.getMessage() : message;
+    String determinedMessage =
+        (message == null || message.trim().isEmpty()) ? successCode.getMessage() : message;
     return new ApiResponse<>(successCode.getStatus().value(), successCode.getCode(),
         determinedMessage, data);
   }
@@ -142,8 +141,7 @@ public class ApiResponse<T> {
   }
 
   /**
-   * {@link ErrorCode}와 커스텀 메시지를 기반으로 실패 응답을 생성합니다. 커스텀 메시지가 null이거나 비어있으면
-   * {@link ErrorCode}의 기본
+   * {@link ErrorCode}와 커스텀 메시지를 기반으로 실패 응답을 생성합니다. 커스텀 메시지가 null이거나 비어있으면 {@link ErrorCode}의 기본
    * 메시지를 사용합니다.
    *
    * @param errorCode 에러 코드 열거형
@@ -152,7 +150,8 @@ public class ApiResponse<T> {
    * @return 실패 ApiResponse 객체
    */
   public static <T> ApiResponse<T> error(ErrorCode errorCode, String message) {
-    String determinedMessage = (message == null || message.trim().isEmpty()) ? errorCode.getMessage() : message;
+    String determinedMessage =
+        (message == null || message.trim().isEmpty()) ? errorCode.getMessage() : message;
     return new ApiResponse<>(errorCode.getStatus().value(), errorCode.getCode(), determinedMessage);
   }
 
