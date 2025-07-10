@@ -8,6 +8,7 @@ import org.nodystudio.nodybackend.dto.user.UserDetailResponseDto;
 import org.nodystudio.nodybackend.exception.custom.AccountAlreadyDeactivatedException;
 import org.nodystudio.nodybackend.exception.custom.UserNotFoundException;
 import org.nodystudio.nodybackend.repository.UserRepository;
+import org.nodystudio.nodybackend.util.LoggingUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,8 +29,10 @@ public class UserService {
   public UserDetailResponseDto updateNickname(String userId, UpdateNicknameRequestDto requestDto) {
     User user = findUserById(userId);
 
-    log.info("사용자 닉네임 변경: userId={}, 기존닉네임={}, 새닉네임={}",
-        userId, user.getNickname(), requestDto.getNickname());
+    log.info("사용자 닉네임 변경: userId={}", LoggingUtils.maskUserId(userId));
+    log.debug("닉네임 변경 상세: 기존닉네임={}, 새닉네임={}",
+        LoggingUtils.maskNickname(user.getNickname()),
+        LoggingUtils.maskNickname(requestDto.getNickname()));
 
     user.updateNickname(requestDto.getNickname());
 
@@ -51,8 +54,10 @@ public class UserService {
       throw new AccountAlreadyDeactivatedException("이미 탈퇴한 계정입니다.");
     }
 
-    log.info("사용자 계정 탈퇴 처리: userId={}, email={}, nickname={}",
-        userId, user.getEmail(), user.getNickname());
+    log.info("사용자 계정 탈퇴 처리: userId={}", LoggingUtils.maskUserId(userId));
+    log.debug("계정 탈퇴 상세: email={}, nickname={}",
+        LoggingUtils.maskEmail(user.getEmail()),
+        LoggingUtils.maskNickname(user.getNickname()));
 
     // 1. 사용자 생성 데이터 삭제 (현재는 User만 존재, 추후 Log/Thread/Comment 추가 시 확장)
     deleteUserGeneratedData(user);
@@ -60,7 +65,7 @@ public class UserService {
     // 2. 계정 비활성화
     user.deactivateAccount();
 
-    log.info("사용자 계정 탈퇴 완료: userId={}", userId);
+    log.info("사용자 계정 탈퇴 완료: userId={}", LoggingUtils.maskUserId(userId));
   }
 
   /**
@@ -69,7 +74,7 @@ public class UserService {
    * @param user 탈퇴하는 사용자
    */
   private void deleteUserGeneratedData(User user) {
-    log.debug("사용자 생성 데이터 비활성화 시작: userId={}", user.getId());
+    log.debug("사용자 생성 데이터 비활성화 시작: userId={}", LoggingUtils.maskUserId(user.getId()));
 
     // TODO: 아래 엔티티들이 구현되면 주석 해제
     // 1. Log 비활성화 (isVisible = false 설정)
@@ -84,7 +89,7 @@ public class UserService {
     // 4. 좋아요 비활성화 (soft delete)
     // likeRepository.deactivateByUserId(user.getUserId());
 
-    log.debug("사용자 생성 데이터 비활성화 완료: userId={}", user.getId());
+    log.debug("사용자 생성 데이터 비활성화 완료: userId={}", LoggingUtils.maskUserId(user.getId()));
   }
 
   /**
@@ -93,7 +98,7 @@ public class UserService {
    * @param user 재활성화할 사용자
    */
   public void reactivateUserGeneratedData(User user) {
-    log.debug("사용자 생성 데이터 재활성화 시작: userId={}", user.getId());
+    log.debug("사용자 생성 데이터 재활성화 시작: userId={}", LoggingUtils.maskUserId(user.getId()));
 
     // TODO: 아래 엔티티들이 구현되면 주석 해제
     // 1. Log 재활성화 (isVisible = true 설정)
@@ -108,7 +113,7 @@ public class UserService {
     // 4. 좋아요 데이터 재활성화
     // likeRepository.reactivateByUserId(user.getUserId());
 
-    log.debug("사용자 생성 데이터 재활성화 완료: userId={}", user.getId());
+    log.debug("사용자 생성 데이터 재활성화 완료: userId={}", LoggingUtils.maskUserId(user.getId()));
   }
 
   /**

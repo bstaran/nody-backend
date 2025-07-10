@@ -22,6 +22,7 @@ import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.dto.code.ErrorCode;
 import org.nodystudio.nodybackend.exception.custom.InvalidTokenException;
 import org.nodystudio.nodybackend.exception.custom.UnauthorizedException;
+import org.nodystudio.nodybackend.util.LoggingUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -68,7 +69,9 @@ public class TokenProvider {
    * @return 생성된 Access Token
    */
   public String createAccessToken(User user) {
-    log.debug("Attempting to create access token for user ID: {}", user.getId());
+    log.info("액세스 토큰 생성 시작: userId={}", LoggingUtils.maskUserId(user.getId()));
+    log.debug("액세스 토큰 생성 상세: userId={}, provider={}",
+        LoggingUtils.maskUserId(user.getId()), user.getProvider());
     try {
       Instant now = Instant.now();
       Instant expirationInstant = now.plusMillis(accessTokenExpirationMillis);
@@ -84,7 +87,9 @@ public class TokenProvider {
           .signWith(secretKey, SIGNATURE_ALGORITHM)
           .compact();
     } catch (Exception e) {
-      log.error("Error creating access token for user ID: {}", user.getId(), e);
+      log.error("액세스 토큰 생성 실패: userId={}, error={}",
+          LoggingUtils.maskUserId(user.getId()), e.getMessage());
+      log.debug("액세스 토큰 생성 실패 상세", e);
       throw new UnauthorizedException("토큰 생성 중 오류가 발생했습니다.", ErrorCode.AUTHENTICATION_FAILED, e);
     }
   }
@@ -96,7 +101,9 @@ public class TokenProvider {
    * @return 생성된 Refresh Token
    */
   public String createRefreshToken(User user) {
-    log.debug("Attempting to create refresh token for user ID: {}", user.getId());
+    log.info("리프레시 토큰 생성 시작: userId={}", LoggingUtils.maskUserId(user.getId()));
+    log.debug("리프레시 토큰 생성 상세: userId={}, provider={}",
+        LoggingUtils.maskUserId(user.getId()), user.getProvider());
     try {
       Instant now = Instant.now();
       Instant expirationInstant = now.plusMillis(refreshTokenExpirationMillis);
@@ -113,7 +120,9 @@ public class TokenProvider {
           .signWith(secretKey, SIGNATURE_ALGORITHM)
           .compact();
     } catch (Exception e) {
-      log.error("Error creating refresh token for user ID: {}", user.getId(), e);
+      log.error("리프레시 토큰 생성 실패: userId={}, error={}",
+          LoggingUtils.maskUserId(user.getId()), e.getMessage());
+      log.debug("리프레시 토큰 생성 실패 상세", e);
       throw new UnauthorizedException("리프레시 토큰 생성 중 오류가 발생했습니다.", ErrorCode.AUTHENTICATION_FAILED,
           e);
     }

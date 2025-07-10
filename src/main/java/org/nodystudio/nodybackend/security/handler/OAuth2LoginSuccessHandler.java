@@ -17,6 +17,7 @@ import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.dto.OAuthAttributes;
 import org.nodystudio.nodybackend.repository.UserRepository;
 import org.nodystudio.nodybackend.security.jwt.TokenProvider;
+import org.nodystudio.nodybackend.util.LoggingUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
@@ -73,24 +74,27 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
       OAuthAttributes attributes = OAuthAttributes.of(registrationId, userNameAttributeName,
           oAuth2User.getAttributes());
 
-      log.debug("Extracted OAuthAttributes: provider={}, providerId={}",
-          attributes.getProvider(), attributes.getProviderId());
+      log.info("OAuth 속성 추출 완료: provider={}", attributes.getProvider());
+      log.debug("OAuth 속성 추출 상세: provider={}, providerId={}",
+          attributes.getProvider(), LoggingUtils.maskIdentifier(attributes.getProviderId()));
 
       Optional<User> userOptional = userRepository
           .findByProviderAndSocialId(attributes.getProvider(), attributes.getProviderId());
 
       if (userOptional.isEmpty()) {
         log.error(
-            "CRITICAL: User not found in DB after OAuth2 login success handling! Provider: {}, SocialId: {}",
-            attributes.getProvider(), attributes.getProviderId());
+            "CRITICAL: User not found in DB after OAuth2 login success handling! Provider: {}",
+            attributes.getProvider());
+        log.debug("CRITICAL: 사용자 찾기 실패 상세 - Provider: {}, SocialId: {}",
+            attributes.getProvider(), LoggingUtils.maskIdentifier(attributes.getProviderId()));
 
         throw new IllegalStateException(
             "User not found in DB after OAuth2 login success handling! Provider: "
-                + attributes.getProvider() + ", SocialId: " + attributes.getProviderId());
+                + attributes.getProvider());
       }
 
       User user = userOptional.get();
-      log.info("Found user in DB: {}", user.getId());
+      log.info("DB에서 사용자 찾기 성공: userId={}", LoggingUtils.maskUserId(user.getId()));
 
       String refreshToken = tokenProvider.createRefreshToken(user);
       LocalDateTime refreshTokenExpiry = tokenProvider.getRefreshTokenExpiry();
@@ -98,7 +102,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
       user.updateRefreshToken(refreshToken, refreshTokenExpiry);
       userRepository.saveAndFlush(user);
 
-      log.info("Updated refresh token for user: {}", user.getId());
+      log.info("리프레시 토큰 업데이트 완료: userId={}", LoggingUtils.maskUserId(user.getId()));
 
       String accessToken = tokenProvider.createAccessToken(user);
       long accessTokenMaxAgeSeconds = tokenProvider.getAccessTokenExpirationMillis() / 1000;

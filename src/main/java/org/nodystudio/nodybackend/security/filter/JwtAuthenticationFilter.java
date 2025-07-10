@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.repository.UserRepository;
 import org.nodystudio.nodybackend.security.jwt.TokenProvider;
+import org.nodystudio.nodybackend.util.LoggingUtils;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -134,7 +135,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     try {
       Long userId = tokenProvider.getUserIdFromToken(jwt);
       User user = userRepository.findByIdAndIsActiveTrue(userId)
-          .orElseThrow(() -> new DisabledException("비활성화되었거나 존재하지 않는 사용자 계정입니다: " + userId));
+          .orElseThrow(() -> {
+            log.warn("JWT 토큰의 사용자 ID로 활성 사용자를 찾을 수 없음: userId={}", LoggingUtils.maskUserId(userId));
+            return new DisabledException("비활성화되었거나 존재하지 않는 사용자 계정입니다");
+          });
 
       List<GrantedAuthority> authorities = user.getRoles();
 

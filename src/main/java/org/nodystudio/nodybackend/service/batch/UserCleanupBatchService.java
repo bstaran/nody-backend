@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.repository.UserRepository;
+import org.nodystudio.nodybackend.util.LoggingUtils;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,11 +53,14 @@ public class UserCleanupBatchService {
         try {
           deleteUserCompletely(user);
           deletedCount++;
-          log.debug("사용자 계정 완전 삭제 완료: userId={}, email={}",
-              user.getId(), user.getEmail());
+          log.info("사용자 계정 완전 삭제 완료: userId={}", LoggingUtils.maskUserId(user.getId()));
+          log.debug("사용자 계정 완전 삭제 상세: userId={}, email={}",
+              LoggingUtils.maskUserId(user.getId()), LoggingUtils.maskEmail(user.getEmail()));
         } catch (Exception e) {
-          log.error("사용자 계정 삭제 중 오류 발생: userId={}, email={}",
-              user.getId(), user.getEmail(), e);
+          log.error("사용자 계정 삭제 중 오류 발생: userId={}, error={}",
+              LoggingUtils.maskUserId(user.getId()), e.getMessage());
+          log.debug("사용자 계정 삭제 오류 상세: userId={}, email={}",
+              LoggingUtils.maskUserId(user.getId()), LoggingUtils.maskEmail(user.getEmail()), e);
         }
       }
 
@@ -64,7 +68,7 @@ public class UserCleanupBatchService {
           deletedCount, expiredUsers.size());
 
     } catch (Exception e) {
-      log.error("탈퇴한 사용자 정리 배치 작업 중 예상치 못한 오류 발생", e);
+      log.error("탈퇴한 사용자 정리 배치 작업 중 오류 발생", e);
     }
   }
 
@@ -98,7 +102,7 @@ public class UserCleanupBatchService {
     // 4. 탈퇴한 사용자 계정 완전 삭제
     userRepository.delete(user);
 
-    log.info("탈퇴 후 30일 경과 사용자 관련 모든 데이터 완전 삭제 완료: userId={}", userId);
+    log.info("탈퇴 후 30일 경과 사용자 관련 모든 데이터 완전 삭제 완료: userId={}", LoggingUtils.maskUserId(userId));
   }
 
   /**
@@ -124,7 +128,9 @@ public class UserCleanupBatchService {
         deleteUserCompletely(user);
         deletedCount++;
       } catch (Exception e) {
-        log.error("사용자 계정 삭제 중 오류 발생: userId={}", user.getId(), e);
+        log.error("사용자 계정 삭제 중 오류 발생: userId={}, error={}",
+            LoggingUtils.maskUserId(user.getId()), e.getMessage());
+        log.debug("사용자 계정 삭제 오류 상세", e);
       }
     }
 
@@ -133,6 +139,7 @@ public class UserCleanupBatchService {
 
     return deletedCount;
   }
+
 
   /**
    * 탈퇴 예정 사용자 수를 조회합니다.
