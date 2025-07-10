@@ -62,7 +62,8 @@ public class LocationUtils {
 
     if (latitude.compareTo(BigDecimal.valueOf(-90.0)) < 0 ||
         latitude.compareTo(BigDecimal.valueOf(90.0)) > 0) {
-      throw new InvalidCoordinateException("위도는 -90도에서 90도 사이여야 합니다. 입력값: " + latitude, ErrorCode.INVALID_COORDINATE);
+      throw new InvalidCoordinateException("위도는 -90도에서 90도 사이여야 합니다. 입력값: " + latitude,
+          ErrorCode.INVALID_COORDINATE);
     }
   }
 
@@ -79,7 +80,8 @@ public class LocationUtils {
 
     if (longitude.compareTo(BigDecimal.valueOf(-180.0)) < 0 ||
         longitude.compareTo(BigDecimal.valueOf(180.0)) > 0) {
-      throw new InvalidCoordinateException("경도는 -180도에서 180도 사이여야 합니다. 입력값: " + longitude, ErrorCode.INVALID_COORDINATE);
+      throw new InvalidCoordinateException("경도는 -180도에서 180도 사이여야 합니다. 입력값: " + longitude,
+          ErrorCode.INVALID_COORDINATE);
     }
   }
 

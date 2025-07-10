@@ -55,7 +55,8 @@ class SecurityConfigTest {
     // when & then
     assertThatThrownBy(() -> securityConfig.validateConfiguration())
         .isInstanceOf(IllegalStateException.class)
-        .hasMessage("CORS allowed-origins 설정이 누락되었습니다. application.yaml에서 'cors.allowed-origins' 값을 설정해주세요.");
+        .hasMessage(
+            "CORS allowed-origins 설정이 누락되었습니다. application.yaml에서 'cors.allowed-origins' 값을 설정해주세요.");
   }
 
   @Test
@@ -101,7 +102,8 @@ class SecurityConfigTest {
   @DisplayName("allowedOrigins에 공백만 있는 문자열이 포함된 경우 IllegalStateException 발생")
   void validateAllowedOrigins_WhenContainsWhitespaceOnly_ShouldThrowException() {
     // given
-    List<String> listWithWhitespace = Arrays.asList("http://localhost:3000", "   ", "https://example.com");
+    List<String> listWithWhitespace = Arrays.asList("http://localhost:3000", "   ",
+        "https://example.com");
     ReflectionTestUtils.setField(securityConfig, "allowedOrigins", listWithWhitespace);
 
     // when & then

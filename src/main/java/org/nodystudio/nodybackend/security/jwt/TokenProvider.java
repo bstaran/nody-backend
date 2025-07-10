@@ -114,7 +114,8 @@ public class TokenProvider {
           .compact();
     } catch (Exception e) {
       log.error("Error creating refresh token for user ID: {}", user.getId(), e);
-      throw new UnauthorizedException("리프레시 토큰 생성 중 오류가 발생했습니다.", ErrorCode.AUTHENTICATION_FAILED, e);
+      throw new UnauthorizedException("리프레시 토큰 생성 중 오류가 발생했습니다.", ErrorCode.AUTHENTICATION_FAILED,
+          e);
     }
   }
 
@@ -196,8 +197,8 @@ public class TokenProvider {
   }
 
   /**
-   * 현재 시간을 기준으로 새로 생성될 Refresh Token의 예상 만료 시간을 LocalDateTime으로 반환합니다.
-   * 이 메서드는 특정 토큰의 실제 만료 시간을 분석하지 않고, 시스템 설정에 따른 리프레시 토큰의 유효 기간을 알려줍니다.
+   * 현재 시간을 기준으로 새로 생성될 Refresh Token의 예상 만료 시간을 LocalDateTime으로 반환합니다. 이 메서드는 특정 토큰의 실제 만료 시간을 분석하지
+   * 않고, 시스템 설정에 따른 리프레시 토큰의 유효 기간을 알려줍니다.
    *
    * @return 새로 생성될 Refresh Token의 예상 만료 시간 (LocalDateTime)
    */

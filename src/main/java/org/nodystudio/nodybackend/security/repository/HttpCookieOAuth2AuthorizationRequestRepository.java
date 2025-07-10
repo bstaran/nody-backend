@@ -5,7 +5,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
-
 import lombok.extern.slf4j.Slf4j;
 import org.nodystudio.nodybackend.util.CookieUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -111,7 +110,7 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
 
   /**
    * 요청이 HTTPS인지 확인하여 쿠키의 보안 설정을 결정합니다.
-   * 
+   *
    * @param request HTTP 요청
    * @return HTTPS 요청이면 true, 그렇지 않으면 false
    */

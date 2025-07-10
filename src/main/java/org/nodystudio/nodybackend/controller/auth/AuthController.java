@@ -24,8 +24,7 @@ public class AuthController {
   private final AuthService authService;
 
   /**
-   * Access Token 재발급
-   * 유효한 Refresh Token을 사용하여 새로운 Access Token을 발급받습니다.
+   * Access Token 재발급 유효한 Refresh Token을 사용하여 새로운 Access Token을 발급받습니다.
    *
    * @param requestDto 토큰 재발급 요청 DTO
    * @return 토큰 재발급 응답

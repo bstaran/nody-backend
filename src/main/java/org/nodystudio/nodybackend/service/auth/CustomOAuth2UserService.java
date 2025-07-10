@@ -119,8 +119,8 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
       if (deactivatedUserOptional.isPresent()) {
         // 탈퇴한 사용자 계정 재활성화
         user = deactivatedUserOptional.get();
-        log.info("탈퇴한 계정 재활성화: provider={}, socialId={}, userId={}, 기존닉네임={}", 
-                attributes.getProvider(), attributes.getProviderId(), user.getId(), user.getNickname());
+        log.info("탈퇴한 계정 재활성화: provider={}, socialId={}, userId={}, 기존닉네임={}",
+            attributes.getProvider(), attributes.getProviderId(), user.getId(), user.getNickname());
         user.reactivateAccount();
       } else {
         // 완전히 새로운 사용자 등록
@@ -134,8 +134,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
   }
 
   /**
-   * 재가입 제한을 검증합니다.
-   * 30일 이내에 탈퇴한 이메일로는 재가입할 수 없습니다.
+   * 재가입 제한을 검증합니다. 30일 이내에 탈퇴한 이메일로는 재가입할 수 없습니다.
    *
    * @param email 검증할 이메일
    * @throws OAuth2AuthenticationException 재가입 제한 위반 시
@@ -146,7 +145,8 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     }
 
     LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
-    Optional<User> recentlyDeactivatedUser = userRepository.findByEmailAndDeletedAtAfter(email, thirtyDaysAgo);
+    Optional<User> recentlyDeactivatedUser = userRepository.findByEmailAndDeletedAtAfter(email,
+        thirtyDaysAgo);
 
     if (recentlyDeactivatedUser.isPresent()) {
       log.warn("재가입 제한 위반: 30일 이내 탈퇴한 이메일로 가입 시도. email={}", email);

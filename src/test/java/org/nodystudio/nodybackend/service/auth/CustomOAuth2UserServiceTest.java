@@ -38,6 +38,9 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 @ExtendWith(MockitoExtension.class)
 class CustomOAuth2UserServiceTest {
 
+  private final String registrationId = "google";
+  private final String userNameAttributeName = "sub";
+  private final String socialId = "google_12345";
   @Mock
   private UserRepository userRepository;
   @Mock
@@ -54,14 +57,10 @@ class CustomOAuth2UserServiceTest {
   private OAuth2AccessToken accessToken;
   @Mock
   private OAuth2User mockOAuth2User;
-
   private CustomOAuth2UserService customOAuth2UserService;
   private Map<String, Object> googleAttributes;
   private User existingUser;
   private User newUser;
-  private final String registrationId = "google";
-  private final String userNameAttributeName = "sub";
-  private final String socialId = "google_12345";
 
   @BeforeEach
   void setUp() {
@@ -106,9 +105,11 @@ class CustomOAuth2UserServiceTest {
     given(delegateUserService.loadUser(userRequest)).willReturn(mockOAuth2User);
     given(mockOAuth2User.getAttributes()).willReturn(googleAttributes);
 
-    given(userRepository.findByProviderAndSocialIdAndIsActiveTrue("google", "google_12345")).willReturn(
+    given(userRepository.findByProviderAndSocialIdAndIsActiveTrue("google",
+        "google_12345")).willReturn(
         Optional.empty());
-    given(userRepository.findByEmailAndDeletedAtAfter(anyString(), any(LocalDateTime.class))).willReturn(
+    given(userRepository.findByEmailAndDeletedAtAfter(anyString(),
+        any(LocalDateTime.class))).willReturn(
         Optional.empty());
     given(userRepository.findByProviderAndSocialId("google", "google_12345")).willReturn(
         Optional.empty());
@@ -130,7 +131,8 @@ class CustomOAuth2UserServiceTest {
 
     // then
     then(delegateUserService).should(times(1)).loadUser(userRequest);
-    then(userRepository).should(times(1)).findByProviderAndSocialIdAndIsActiveTrue(registrationId, socialId);
+    then(userRepository).should(times(1))
+        .findByProviderAndSocialIdAndIsActiveTrue(registrationId, socialId);
     then(userRepository).should(times(1)).saveAndFlush(any(User.class));
     then(userRepository).should(never()).save(any(User.class));
 
@@ -160,7 +162,8 @@ class CustomOAuth2UserServiceTest {
 
     // then
     then(delegateUserService).should(times(1)).loadUser(userRequest);
-    then(userRepository).should(times(1)).findByProviderAndSocialIdAndIsActiveTrue(registrationId, socialId);
+    then(userRepository).should(times(1))
+        .findByProviderAndSocialIdAndIsActiveTrue(registrationId, socialId);
     then(userRepository).should(never()).save(any(User.class));
     then(userRepository).should(never()).saveAndFlush(any(User.class));
 
@@ -210,7 +213,8 @@ class CustomOAuth2UserServiceTest {
 
     assertThat(actualException.getError().getErrorCode()).isEqualTo("user_loading_failed");
     assertThat(actualException.getCause()).isSameAs(expectedCause);
-    then(userRepository).should(never()).findByProviderAndSocialIdAndIsActiveTrue(anyString(), anyString());
+    then(userRepository).should(never())
+        .findByProviderAndSocialIdAndIsActiveTrue(anyString(), anyString());
     then(userRepository).should(never()).saveAndFlush(any(User.class));
   }
 
@@ -227,7 +231,7 @@ class CustomOAuth2UserServiceTest {
     // 활성 사용자 없음
     given(userRepository.findByProviderAndSocialIdAndIsActiveTrue("google", "google_12345"))
         .willReturn(Optional.empty());
-    
+
     // 30일 이내 탈퇴한 사용자 존재
     User recentlyDeactivatedUser = User.builder()
         .id(3L)
@@ -238,8 +242,9 @@ class CustomOAuth2UserServiceTest {
         .isActive(false)
         .build();
     recentlyDeactivatedUser.deactivateAccount();
-    
-    given(userRepository.findByEmailAndDeletedAtAfter(eq("test@example.com"), any(LocalDateTime.class)))
+
+    given(userRepository.findByEmailAndDeletedAtAfter(eq("test@example.com"),
+        any(LocalDateTime.class)))
         .willReturn(Optional.of(recentlyDeactivatedUser));
 
     // when & then
@@ -247,8 +252,10 @@ class CustomOAuth2UserServiceTest {
         .isInstanceOf(OAuth2AuthenticationException.class)
         .hasMessageContaining("해당 이메일로는 탈퇴 후 30일 동안 재가입할 수 없습니다");
 
-    then(userRepository).should(times(1)).findByProviderAndSocialIdAndIsActiveTrue("google", "google_12345");
-    then(userRepository).should(times(1)).findByEmailAndDeletedAtAfter(eq("test@example.com"), any(LocalDateTime.class));
+    then(userRepository).should(times(1))
+        .findByProviderAndSocialIdAndIsActiveTrue("google", "google_12345");
+    then(userRepository).should(times(1))
+        .findByEmailAndDeletedAtAfter(eq("test@example.com"), any(LocalDateTime.class));
     then(userRepository).should(never()).saveAndFlush(any(User.class));
   }
 
@@ -265,11 +272,12 @@ class CustomOAuth2UserServiceTest {
     // 활성 사용자 없음
     given(userRepository.findByProviderAndSocialIdAndIsActiveTrue("google", "google_12345"))
         .willReturn(Optional.empty());
-    
+
     // 재가입 제한 없음 (30일 지남)
-    given(userRepository.findByEmailAndDeletedAtAfter(eq("test@example.com"), any(LocalDateTime.class)))
+    given(userRepository.findByEmailAndDeletedAtAfter(eq("test@example.com"),
+        any(LocalDateTime.class)))
         .willReturn(Optional.empty());
-    
+
     // 탈퇴한 사용자 존재
     User deactivatedUser = User.builder()
         .id(4L)
@@ -280,7 +288,7 @@ class CustomOAuth2UserServiceTest {
         .isActive(false)
         .build();
     deactivatedUser.deactivateAccount();
-    
+
     given(userRepository.findByProviderAndSocialId("google", "google_12345"))
         .willReturn(Optional.of(deactivatedUser));
 
@@ -288,8 +296,10 @@ class CustomOAuth2UserServiceTest {
     OAuth2User resultUser = customOAuth2UserService.loadUser(userRequest);
 
     // then
-    then(userRepository).should(times(1)).findByProviderAndSocialIdAndIsActiveTrue("google", "google_12345");
-    then(userRepository).should(times(1)).findByEmailAndDeletedAtAfter(eq("test@example.com"), any(LocalDateTime.class));
+    then(userRepository).should(times(1))
+        .findByProviderAndSocialIdAndIsActiveTrue("google", "google_12345");
+    then(userRepository).should(times(1))
+        .findByEmailAndDeletedAtAfter(eq("test@example.com"), any(LocalDateTime.class));
     then(userRepository).should(times(1)).findByProviderAndSocialId("google", "google_12345");
     then(userRepository).should(never()).saveAndFlush(any(User.class));
 
@@ -298,7 +308,7 @@ class CustomOAuth2UserServiceTest {
     assertThat(deactivatedUser.getDeletedAt()).isNull();
     assertThat(deactivatedUser.getNickname()).isEqualTo("Old Name"); // 기존 닉네임 유지
     assertThat(deactivatedUser.getEmail()).isEqualTo("old@example.com"); // 기존 이메일 유지
-    
+
     assertThat(resultUser).isNotNull();
     assertThat(resultUser.getAuthorities()).extracting(GrantedAuthority::getAuthority)
         .containsExactly("ROLE_USER");

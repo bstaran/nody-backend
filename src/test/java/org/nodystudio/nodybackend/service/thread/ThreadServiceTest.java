@@ -354,11 +354,12 @@ class ThreadServiceTest {
     // then
     assertThat(response.getContent()).hasSize(1);
     assertThat(response.getContent().get(0).getContent()).isEqualTo("검색용 스레드 내용");
-    
+
     ArgumentCaptor<String> keywordCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<PageRequest> pageRequestCaptor = ArgumentCaptor.forClass(PageRequest.class);
-    verify(threadRepository).searchPublicThreadsByContent(keywordCaptor.capture(), pageRequestCaptor.capture());
-    
+    verify(threadRepository).searchPublicThreadsByContent(keywordCaptor.capture(),
+        pageRequestCaptor.capture());
+
     assertThat(keywordCaptor.getValue()).isEqualTo("검색");
     assertThat(pageRequestCaptor.getValue().getPageNumber()).isEqualTo(0);
     assertThat(pageRequestCaptor.getValue().getPageSize()).isEqualTo(10);
@@ -467,7 +468,8 @@ class ThreadServiceTest {
   void incrementViewCount_ConcurrencyTest() {
     // given
     given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
-    given(threadRepository.findViewableThreadByIdAndUserId(1L, 1L)).willReturn(Optional.of(testThread));
+    given(threadRepository.findViewableThreadByIdAndUserId(1L, 1L)).willReturn(
+        Optional.of(testThread));
     given(threadRepository.incrementViewCount(1L)).willReturn(1);
 
     // when
@@ -475,10 +477,10 @@ class ThreadServiceTest {
 
     // then
     assertThat(response.getId()).isEqualTo(1L);
-    
+
     // 원자적 조회수 증가 메서드가 호출되는지 확인
     verify(threadRepository).incrementViewCount(1L);
-    
+
     // 엔티티의 incrementViewCount 메서드는 호출되지 않아야 함
     verify(threadRepository, times(0)).save(any(Thread.class));
   }
@@ -488,7 +490,8 @@ class ThreadServiceTest {
   void incrementViewCount_FailureHandling() {
     // given
     given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
-    given(threadRepository.findViewableThreadByIdAndUserId(1L, 1L)).willReturn(Optional.of(testThread));
+    given(threadRepository.findViewableThreadByIdAndUserId(1L, 1L)).willReturn(
+        Optional.of(testThread));
     given(threadRepository.incrementViewCount(1L)).willReturn(0); // 업데이트 실패 시뮬레이션
 
     // when
@@ -496,7 +499,7 @@ class ThreadServiceTest {
 
     // then
     assertThat(response.getId()).isEqualTo(1L);
-    
+
     // 조회수 증가가 실패해도 스레드 조회는 성공해야 함
     verify(threadRepository).incrementViewCount(1L);
   }
@@ -528,7 +531,7 @@ class ThreadServiceTest {
 
     // then
     assertThat(response.getContent()).isEqualTo("앞뒤 공백이 있는 내용");
-    
+
     // Thread.builder에 전달되는 content가 trim되었는지 확인
     ArgumentCaptor<Thread> threadCaptor = ArgumentCaptor.forClass(Thread.class);
     verify(threadRepository).save(threadCaptor.capture());
@@ -553,10 +556,10 @@ class ThreadServiceTest {
 
     // then
     assertThat(response.getId()).isEqualTo(1L);
-    
+
     // 실제 엔티티의 content가 trim되었는지 확인
     assertThat(testThread.getContent()).isEqualTo("수정된 내용");
-    
+
     verify(threadRepository).findByIdAndUserId(1L, 1L);
   }
 
@@ -586,12 +589,12 @@ class ThreadServiceTest {
 
     // then
     assertThat(response.getId()).isEqualTo(1L);
-    
+
     // 로그 연결이 해제되었는지 확인
     assertThat(linkedThread.getLog()).isNull();
     assertThat(linkedThread.isIndependent()).isTrue();
     assertThat(linkedThread.isLinkedToLog()).isFalse();
-    
+
     verify(threadRepository).findByIdAndUserId(1L, 1L);
   }
 
@@ -619,12 +622,12 @@ class ThreadServiceTest {
 
     // then
     assertThat(response.getId()).isEqualTo(1L);
-    
+
     // 새로운 로그로 연결되었는지 확인
     assertThat(testThread.getLog()).isEqualTo(newLog);
     assertThat(testThread.isLinkedToLog()).isTrue();
     assertThat(testThread.isIndependent()).isFalse();
-    
+
     verify(threadRepository).findByIdAndUserId(1L, 1L);
     verify(logRepository).findById(2L);
   }

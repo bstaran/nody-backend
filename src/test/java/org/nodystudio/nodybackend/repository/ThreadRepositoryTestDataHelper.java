@@ -54,6 +54,35 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 public class ThreadRepositoryTestDataHelper {
 
   /**
+   * 스레드의 생성일시를 업데이트하는 공통 메서드입니다.
+   *
+   * <p>JPA Auditing으로 인해 자동으로 설정된 생성일시를 테스트 요구사항에 맞게 수정합니다.
+   * 주로 시간 순서에 따른 정렬 테스트에서 사용됩니다.</p>
+   *
+   * @param entityManager JPA 테스트용 EntityManager
+   * @param threadId      업데이트할 스레드 ID
+   * @param createdAt     새로운 생성일시
+   *
+   *                      <h3>사용 예시:</h3>
+   *                      <pre>{@code
+   *                                           // 스레드들의 생성일시를 5분 간격으로 설정
+   *                                           LocalDateTime baseTime = LocalDateTime.of(2024, 1, 1, 10, 0, 0);
+   *                                           for (int i = 0; i < threads.size(); i++) {
+   *                                               updateThreadCreatedAt(entityManager, threads.get(i).getId(),
+   *                                                                    baseTime.plusMinutes(i * 5));
+   *                                           }
+   *                                           }</pre>
+   */
+  public static void updateThreadCreatedAt(TestEntityManager entityManager, Long threadId,
+      LocalDateTime createdAt) {
+    entityManager.getEntityManager()
+        .createQuery("UPDATE Thread t SET t.createdAt = :createdAt WHERE t.id = :id")
+        .setParameter("createdAt", createdAt)
+        .setParameter("id", threadId)
+        .executeUpdate();
+  }
+
+  /**
    * 테스트 데이터를 담는 간단한 컨테이너 클래스입니다.
    *
    * <p>생성된 테스트 엔티티들을 타입별로 분류하여 저장하며,
@@ -95,7 +124,6 @@ public class ThreadRepositoryTestDataHelper {
      */
     public final List<Thread> threads = new ArrayList<>();
   }
-
 
   /**
    * Builder 패턴을 사용한 테스트 데이터 생성기입니다.
@@ -140,15 +168,22 @@ public class ThreadRepositoryTestDataHelper {
   public static class TestDataBuilder {
 
     private final TestEntityManager entityManager;
-    private LocalDateTime baseTime = LocalDateTime.of(2024, 1, 1, 10, 0, 0);
-    private int intervalMinutes = 5;
-
     // 커스터마이저 함수들
     private final List<Function<User.UserBuilder, User.UserBuilder>> userCustomizers = new ArrayList<>();
     private final List<Function<Log.LogBuilder, Log.LogBuilder>> logCustomizers = new ArrayList<>();
-
+    private LocalDateTime baseTime = LocalDateTime.of(2024, 1, 1, 10, 0, 0);
+    private int intervalMinutes = 5;
     // 빌드 과정에서 생성된 데이터 (addThread 메소드에서 사용)
     private TestDataContainer currentData = null;
+
+    /**
+     * TestDataBuilder를 생성합니다.
+     *
+     * @param entityManager JPA 테스트용 EntityManager
+     */
+    public TestDataBuilder(TestEntityManager entityManager) {
+      this.entityManager = entityManager;
+    }
 
     /**
      * 현재까지 생성된 데이터 컨테이너를 반환합니다.
@@ -161,15 +196,6 @@ public class ThreadRepositoryTestDataHelper {
      */
     public TestDataContainer getCurrentData() {
       return currentData;
-    }
-
-    /**
-     * TestDataBuilder를 생성합니다.
-     *
-     * @param entityManager JPA 테스트용 EntityManager
-     */
-    public TestDataBuilder(TestEntityManager entityManager) {
-      this.entityManager = entityManager;
     }
 
     /**
@@ -246,7 +272,7 @@ public class ThreadRepositoryTestDataHelper {
      *   <li>latitude: 37.5665 (서울 시청)</li>
      *   <li>longitude: 126.9780 (서울 시청)</li>
      * </ul>
-     * 
+     *
      * <h3>명시적 지정 필수 필드:</h3>
      * <ul>
      *   <li>user: 로그 작성자 (반드시 지정)</li>
@@ -267,7 +293,6 @@ public class ThreadRepositoryTestDataHelper {
       this.logCustomizers.add(customizer);
       return this;
     }
-
 
 
     /**
@@ -327,7 +352,7 @@ public class ThreadRepositoryTestDataHelper {
         entityManager.persistAndFlush(log);
         currentData.logs.add(log);
       }
-      
+
       return this;
     }
 
@@ -416,35 +441,6 @@ public class ThreadRepositoryTestDataHelper {
       return currentData;
     }
 
-  }
-
-  /**
-   * 스레드의 생성일시를 업데이트하는 공통 메서드입니다.
-   *
-   * <p>JPA Auditing으로 인해 자동으로 설정된 생성일시를 테스트 요구사항에 맞게 수정합니다.
-   * 주로 시간 순서에 따른 정렬 테스트에서 사용됩니다.</p>
-   *
-   * @param entityManager JPA 테스트용 EntityManager
-   * @param threadId      업데이트할 스레드 ID
-   * @param createdAt     새로운 생성일시
-   *
-   *                      <h3>사용 예시:</h3>
-   *                      <pre>{@code
-   *                      // 스레드들의 생성일시를 5분 간격으로 설정
-   *                      LocalDateTime baseTime = LocalDateTime.of(2024, 1, 1, 10, 0, 0);
-   *                      for (int i = 0; i < threads.size(); i++) {
-   *                          updateThreadCreatedAt(entityManager, threads.get(i).getId(),
-   *                                               baseTime.plusMinutes(i * 5));
-   *                      }
-   *                      }</pre>
-   */
-  public static void updateThreadCreatedAt(TestEntityManager entityManager, Long threadId,
-      LocalDateTime createdAt) {
-    entityManager.getEntityManager()
-        .createQuery("UPDATE Thread t SET t.createdAt = :createdAt WHERE t.id = :id")
-        .setParameter("createdAt", createdAt)
-        .setParameter("id", threadId)
-        .executeUpdate();
   }
 
 

@@ -1,5 +1,8 @@
 package org.nodystudio.nodybackend.controller.thread;
 
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.dto.ApiResponse;
 import org.nodystudio.nodybackend.dto.thread.ThreadCreateRequest;
@@ -22,10 +25,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
 @Slf4j
 @RestController
 @RequestMapping("/api/threads")
@@ -37,19 +36,14 @@ public class ThreadController {
   // === 공통 유틸리티 메소드 ===
 
   /**
-   * 로그에 표시할 사용자 정보를 안전하게 가져옵니다.
-   * 인증되지 않은 사용자의 경우 "익명"을 반환합니다.
+   * 로그에 표시할 사용자 정보를 안전하게 가져옵니다. 인증되지 않은 사용자의 경우 "익명"을 반환합니다.
    */
   private String getUserDisplayName(User user) {
     return user != null ? user.getEmail() : "익명";
   }
 
-
-
-
   /**
-   * 스레드 생성
-   * POST /api/threads
+   * 스레드 생성 POST /api/threads
    */
   @PostMapping
   public ResponseEntity<ApiResponse<ThreadResponse>> createThread(
@@ -66,8 +60,7 @@ public class ThreadController {
   }
 
   /**
-   * 스레드 단건 조회
-   * GET /api/threads/{id}
+   * 스레드 단건 조회 GET /api/threads/{id}
    */
   @GetMapping("/{id}")
   public ResponseEntity<ApiResponse<ThreadResponse>> getThread(
@@ -84,8 +77,7 @@ public class ThreadController {
   }
 
   /**
-   * 스레드 목록 조회 (검색, 필터링, 페이징)
-   * GET /api/threads
+   * 스레드 목록 조회 (검색, 필터링, 페이징) GET /api/threads
    */
   @GetMapping
   public ResponseEntity<ApiResponse<Page<ThreadResponse>>> getThreads(
@@ -105,8 +97,7 @@ public class ThreadController {
   }
 
   /**
-   * 스레드 수정
-   * PUT /api/threads/{id}
+   * 스레드 수정 PUT /api/threads/{id}
    */
   @PutMapping("/{id}")
   public ResponseEntity<ApiResponse<ThreadResponse>> updateThread(
@@ -122,8 +113,7 @@ public class ThreadController {
   }
 
   /**
-   * 스레드 삭제
-   * DELETE /api/threads/{id}
+   * 스레드 삭제 DELETE /api/threads/{id}
    */
   @DeleteMapping("/{id}")
   public ResponseEntity<ApiResponse<Void>> deleteThread(
@@ -139,8 +129,7 @@ public class ThreadController {
 
 
   /**
-   * 독립 스레드 목록 조회 (로그에 연결되지 않은 스레드)
-   * GET /api/threads/independent
+   * 독립 스레드 목록 조회 (로그에 연결되지 않은 스레드) GET /api/threads/independent
    */
   @GetMapping("/independent")
   public ResponseEntity<ApiResponse<Page<ThreadResponse>>> getIndependentThreads(
@@ -170,8 +159,7 @@ public class ThreadController {
   }
 
   /**
-   * 로그 연결 스레드 목록 조회 (로그에 연결된 스레드)
-   * GET /api/threads/linked
+   * 로그 연결 스레드 목록 조회 (로그에 연결된 스레드) GET /api/threads/linked
    */
   @GetMapping("/linked")
   public ResponseEntity<ApiResponse<Page<ThreadResponse>>> getLinkedThreads(

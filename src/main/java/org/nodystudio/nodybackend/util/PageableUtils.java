@@ -16,9 +16,9 @@ public final class PageableUtils {
   /**
    * 기본 페이지네이션 객체를 생성합니다.
    *
-   * @param page 페이지 번호 (0부터 시작)
-   * @param size 페이지 크기
-   * @param sortBy 정렬 필드
+   * @param page          페이지 번호 (0부터 시작)
+   * @param size          페이지 크기
+   * @param sortBy        정렬 필드
    * @param sortDirection 정렬 방향 ("asc" 또는 "desc")
    * @return Pageable 객체
    */
@@ -30,13 +30,14 @@ public final class PageableUtils {
   /**
    * Thread 엔티티에 최적화된 페이지네이션 객체를 생성합니다.
    *
-   * @param page 페이지 번호 (0부터 시작)
-   * @param size 페이지 크기
-   * @param sortBy 정렬 필드
+   * @param page          페이지 번호 (0부터 시작)
+   * @param size          페이지 크기
+   * @param sortBy        정렬 필드
    * @param sortDirection 정렬 방향 ("asc" 또는 "desc")
    * @return Pageable 객체
    */
-  public static Pageable createThreadPageable(int page, int size, String sortBy, String sortDirection) {
+  public static Pageable createThreadPageable(int page, int size, String sortBy,
+      String sortDirection) {
     Sort sort = createThreadSort(sortBy, sortDirection);
     return PageRequest.of(page, size, sort);
   }
@@ -44,7 +45,7 @@ public final class PageableUtils {
   /**
    * 정렬 객체를 생성합니다.
    *
-   * @param sortBy 정렬 필드
+   * @param sortBy        정렬 필드
    * @param sortDirection 정렬 방향 ("asc" 또는 "desc")
    * @return Sort 객체
    */
@@ -54,10 +55,9 @@ public final class PageableUtils {
   }
 
   /**
-   * Thread 엔티티에 최적화된 정렬 객체를 생성합니다.
-   * 유효하지 않은 정렬 필드의 경우 기본값(createdAt DESC)을 사용합니다.
+   * Thread 엔티티에 최적화된 정렬 객체를 생성합니다. 유효하지 않은 정렬 필드의 경우 기본값(createdAt DESC)을 사용합니다.
    *
-   * @param sortBy 정렬 필드
+   * @param sortBy        정렬 필드
    * @param sortDirection 정렬 방향 ("asc" 또는 "desc")
    * @return Sort 객체
    */

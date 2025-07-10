@@ -63,8 +63,7 @@ public class LogController {
   }
 
   /**
-   * 로그 단건 조회
-   * GET /api/logs/{id}
+   * 로그 단건 조회 GET /api/logs/{id}
    */
   @GetMapping("/{id}")
   public ResponseEntity<ApiResponse<LogResponse>> getLog(
@@ -81,8 +80,7 @@ public class LogController {
   }
 
   /**
-   * 로그 목록 조회 (위치 기반, 페이징)
-   * GET /api/logs
+   * 로그 목록 조회 (위치 기반, 페이징) GET /api/logs
    */
   @GetMapping
   public ResponseEntity<ApiResponse<Page<LogResponse>>> getLogs(
@@ -101,8 +99,7 @@ public class LogController {
   }
 
   /**
-   * 로그 수정
-   * PUT /api/logs/{id}
+   * 로그 수정 PUT /api/logs/{id}
    */
   @PutMapping("/{id}")
   public ResponseEntity<ApiResponse<LogResponse>> updateLog(
@@ -118,8 +115,7 @@ public class LogController {
   }
 
   /**
-   * 로그 삭제
-   * DELETE /api/logs/{id}
+   * 로그 삭제 DELETE /api/logs/{id}
    */
   @DeleteMapping("/{id}")
   public ResponseEntity<ApiResponse<Void>> deleteLog(

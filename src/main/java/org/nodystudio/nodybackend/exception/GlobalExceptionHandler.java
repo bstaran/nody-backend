@@ -72,13 +72,6 @@ public class GlobalExceptionHandler {
   }
 
   /**
-   * 로그 레벨 열거형
-   */
-  private enum LogLevel {
-    WARN, ERROR;
-  }
-
-  /**
    * 예외 정보를 지정된 로그 레벨로 기록
    *
    * @param ex       기록할 예외
@@ -223,8 +216,8 @@ public class GlobalExceptionHandler {
   /**
    * JWT 예외 처리 그룹 - 보안/서명 예외, 형식 오류, 미지원 토큰, 기타 JWT 예외
    */
-  @ExceptionHandler({ SecurityException.class, MalformedJwtException.class,
-      UnsupportedJwtException.class, JwtException.class })
+  @ExceptionHandler({SecurityException.class, MalformedJwtException.class,
+      UnsupportedJwtException.class, JwtException.class})
   public ResponseEntity<ApiResponse<Object>> handleJwtExceptions(JwtException ex) {
     return handleException(ex, ErrorCode.INVALID_TOKEN, LogLevel.WARN);
   }
@@ -235,5 +228,12 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ApiResponse<Object>> handleGlobalException(Exception ex) {
     return handleException(ex, ErrorCode.INTERNAL_SERVER_ERROR, LogLevel.ERROR);
+  }
+
+  /**
+   * 로그 레벨 열거형
+   */
+  private enum LogLevel {
+    WARN, ERROR;
   }
 }

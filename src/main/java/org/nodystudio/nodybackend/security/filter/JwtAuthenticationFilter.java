@@ -27,9 +27,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 /**
  * JWT 토큰 기반 인증 필터입니다.
  * <p>
- * HTTP 요청의 {@code Authorization} 헤더에서 JWT 토큰을 추출하고, 토큰의 유효성을 검증하여
- * Spring Security 컨텍스트에 인증 정보를 설정합니다.
- * 특정 경로 (예: 로그인, 회원가입, 공개 API)는 이 필터의 처리를 받지 않습니다.
+ * HTTP 요청의 {@code Authorization} 헤더에서 JWT 토큰을 추출하고, 토큰의 유효성을 검증하여 Spring Security 컨텍스트에 인증 정보를
+ * 설정합니다. 특정 경로 (예: 로그인, 회원가입, 공개 API)는 이 필터의 처리를 받지 않습니다.
  * </p>
  *
  * @see OncePerRequestFilter
@@ -44,8 +43,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   private static final String BEARER_PREFIX = "Bearer ";
 
   /**
-   * JWT 인증 필터가 적용되지 않아야 하는 경로 목록입니다.
-   * AntPathMatcher 패턴을 사용하여 요청 경로와 비교합니다.
+   * JWT 인증 필터가 적용되지 않아야 하는 경로 목록입니다. AntPathMatcher 패턴을 사용하여 요청 경로와 비교합니다.
    */
   private static final List<String> EXCLUDED_PATHS = List.of(
       "/api/auth/refresh",
@@ -62,8 +60,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   private final UserRepository userRepository;
 
   /**
-   * 현재 요청이 JWT 인증 필터를 거치지 않아야 하는지 여부를 결정합니다.
-   * {@link #EXCLUDED_PATHS} 목록에 포함된 경로는 필터링하지 않습니다.
+   * 현재 요청이 JWT 인증 필터를 거치지 않아야 하는지 여부를 결정합니다. {@link #EXCLUDED_PATHS} 목록에 포함된 경로는 필터링하지 않습니다.
    *
    * @param request 현재 HTTP 요청
    * @return 필터링하지 않아야 하면 {@code true}, 그렇지 않으면 {@code false}
@@ -78,9 +75,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   /**
    * 실제 필터링 로직을 수행합니다.
    * <p>
-   * 요청에서 JWT 토큰을 추출하고 유효성을 검증한 후, 성공하면 {@link SecurityContextHolder}에 인증 정보를
-   * 설정합니다.
-   * 인증 과정에서 예외 발생 시 로그를 남기고 컨텍스트를 정리합니다.
+   * 요청에서 JWT 토큰을 추출하고 유효성을 검증한 후, 성공하면 {@link SecurityContextHolder}에 인증 정보를 설정합니다. 인증 과정에서 예외 발생 시
+   * 로그를 남기고 컨텍스트를 정리합니다.
    * </p>
    *
    * @param request     현재 HTTP 요청

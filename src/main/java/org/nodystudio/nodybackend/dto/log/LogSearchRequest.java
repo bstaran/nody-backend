@@ -1,19 +1,22 @@
 package org.nodystudio.nodybackend.dto.log;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import java.math.BigDecimal;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-
 /**
  * 로그 검색을 위한 요청 DTO 클래스
- * 
+ *
  * <p>
- * 위치 기반 로그 검색 시 사용되는 파라미터들을 포함합니다.
- * 위도와 경도는 필수 입력값이며, 그 외의 필드는 기본값이 설정되어 있습니다.
+ * 위치 기반 로그 검색 시 사용되는 파라미터들을 포함합니다. 위도와 경도는 필수 입력값이며, 그 외의 필드는 기본값이 설정되어 있습니다.
  * </p>
  */
 @Getter

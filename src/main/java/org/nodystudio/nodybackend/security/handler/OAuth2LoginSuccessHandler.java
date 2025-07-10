@@ -2,7 +2,6 @@ package org.nodystudio.nodybackend.security.handler;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.http.ResponseCookie;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -19,6 +18,7 @@ import org.nodystudio.nodybackend.dto.OAuthAttributes;
 import org.nodystudio.nodybackend.repository.UserRepository;
 import org.nodystudio.nodybackend.security.jwt.TokenProvider;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
@@ -103,7 +103,8 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
       String accessToken = tokenProvider.createAccessToken(user);
       long accessTokenMaxAgeSeconds = tokenProvider.getAccessTokenExpirationMillis() / 1000;
 
-      ResponseCookie.ResponseCookieBuilder accessTokenBuilder = ResponseCookie.from("access_token", accessToken)
+      ResponseCookie.ResponseCookieBuilder accessTokenBuilder = ResponseCookie.from("access_token",
+              accessToken)
           .httpOnly(true)
           .secure(true)
           .path("/")
@@ -123,7 +124,8 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
       Duration duration = Duration.between(LocalDateTime.now(), refreshTokenExpiry);
       long refreshTokenMaxAgeSeconds = Math.max(0, duration.getSeconds());
 
-      ResponseCookie.ResponseCookieBuilder refreshTokenBuilder = ResponseCookie.from("refresh_token", refreshToken)
+      ResponseCookie.ResponseCookieBuilder refreshTokenBuilder = ResponseCookie.from(
+              "refresh_token", refreshToken)
           .httpOnly(true)
           .secure(true)
           .path("/")
@@ -193,8 +195,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
   }
 
   /**
-   * 리다이렉트 URL이 허용된 도메인인지 검증 도메인 경로('/path')가 포함된 URL도 허용하고, 서브도메인은 보호합니다.
-   * 프로토콜(http/https)은 비교에서
+   * 리다이렉트 URL이 허용된 도메인인지 검증 도메인 경로('/path')가 포함된 URL도 허용하고, 서브도메인은 보호합니다. 프로토콜(http/https)은 비교에서
    * 제외하여 환경 전환 시에도 인증이 유지됩니다.
    *
    * @param url 검증할 URL
@@ -239,8 +240,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
    *
    * @param redirectFullHost 리다이렉트 URL의 호스트:포트 또는 호스트 부분.
    * @param redirectHostOnly 리다이렉트 URL의 호스트 부분.
-   * @param rawAllowedDomain 원시 허용 도메인 문자열 (예: "https://example.com:8080",
-   *                         "sub.example.com").
+   * @param rawAllowedDomain 원시 허용 도메인 문자열 (예: "https://example.com:8080", "sub.example.com").
    * @return 리다이렉트 URL이 허용 도메인 패턴과 일치하면 true, 그렇지 않으면 false.
    */
   private boolean domainMatches(String redirectFullHost, String redirectHostOnly,

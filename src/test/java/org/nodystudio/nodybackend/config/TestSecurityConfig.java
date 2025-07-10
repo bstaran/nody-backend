@@ -1,7 +1,6 @@
 package org.nodystudio.nodybackend.config;
 
 import java.util.List;
-
 import org.nodystudio.nodybackend.security.filter.JwtAuthenticationFilter;
 import org.nodystudio.nodybackend.security.handler.CustomAccessDeniedHandler;
 import org.nodystudio.nodybackend.security.handler.CustomAuthenticationEntryPoint;
@@ -22,8 +21,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfigurationSource;
 
 /**
- * 테스트 환경용 Security 설정
- * 테스트에서만 필요한 설정들을 포함합니다.
+ * 테스트 환경용 Security 설정 테스트에서만 필요한 설정들을 포함합니다.
  */
 @Configuration
 @EnableWebSecurity
@@ -52,8 +50,7 @@ public class TestSecurityConfig {
   }
 
   /**
-   * 테스트 환경용 Security 설정
-   * 테스트 전용 엔드포인트들을 포함합니다.
+   * 테스트 환경용 Security 설정 테스트 전용 엔드포인트들을 포함합니다.
    */
   @Bean
   @Profile("test")

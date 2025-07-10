@@ -1,17 +1,16 @@
 package org.nodystudio.nodybackend.dto.log;
 
+import static jakarta.validation.Validation.buildDefaultValidatorFactory;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
+import java.math.BigDecimal;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.math.BigDecimal;
-import java.util.Set;
-
-import static jakarta.validation.Validation.buildDefaultValidatorFactory;
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * LogSearchRequest Bean Validation 테스트
@@ -64,7 +63,8 @@ class LogSearchRequestValidationTest {
     // then
     assertThat(violations).hasSize(1);
     ConstraintViolation<LogSearchRequest> violation = violations.iterator().next();
-    assertThat(violation.getMessage()).isEqualTo("정렬 기준은 createdAt, viewCount, distance 중 하나여야 합니다.");
+    assertThat(violation.getMessage()).isEqualTo(
+        "정렬 기준은 createdAt, viewCount, distance 중 하나여야 합니다.");
     assertThat(violation.getPropertyPath().toString()).isEqualTo("sortBy");
   }
 

@@ -21,11 +21,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 사용자의 위치 기반 로그 관리 서비스
- * 
+ *
  * <p>
- * 지리적 위치 정보를 활용한 로그 생성, 조회, 검색 기능을 제공합니다.
- * 사용자 권한에 따라 공개/비공개 로그에 대한 접근을 제어하며,
- * Haversine 공식을 사용한 반경 기반 검색을 지원합니다.
+ * 지리적 위치 정보를 활용한 로그 생성, 조회, 검색 기능을 제공합니다. 사용자 권한에 따라 공개/비공개 로그에 대한 접근을 제어하며, Haversine 공식을 사용한 반경
+ * 기반 검색을 지원합니다.
  * </p>
  */
 @Slf4j
@@ -39,7 +38,7 @@ public class LogService {
 
   /**
    * 새로운 로그를 생성합니다.
-   * 
+   *
    * @param request   로그 생성 요청 정보
    * @param userEmail 로그 작성자의 이메일
    * @return 생성된 로그 정보
@@ -81,14 +80,14 @@ public class LogService {
 
   /**
    * 로그를 조회하고 조회수를 증가시킵니다.
-   * 
+   *
    * <p>
    * 사용자 권한에 따라 접근 가능한 로그를 제한합니다:
    * <ul>
    * <li>로그인 사용자: 공개 로그 + 본인의 비공개 로그</li>
    * <li>비로그인 사용자: 공개 로그만</li>
    * </ul>
-   * 
+   *
    * @param logId     조회할 로그 ID
    * @param userEmail 조회 요청자의 이메일 (null 가능)
    * @return 로그 상세 정보
@@ -109,13 +108,11 @@ public class LogService {
 
   /**
    * 위치 기반 로그를 검색합니다.
-   * 
+   *
    * <p>
-   * 위치 정보가 제공된 경우 지정된 반경 내의 로그를 검색하고,
-   * 위치 정보가 없는 경우 전체 로그를 조회합니다.
-   * 사용자 권한에 따라 공개/비공개 로그 접근을 제어합니다.
+   * 위치 정보가 제공된 경우 지정된 반경 내의 로그를 검색하고, 위치 정보가 없는 경우 전체 로그를 조회합니다. 사용자 권한에 따라 공개/비공개 로그 접근을 제어합니다.
    * </p>
-   * 
+   *
    * @param searchRequest 검색 조건 (위치, 반경, 페이징 정보)
    * @param userEmail     검색 요청자의 이메일 (null 가능)
    * @return 검색된 로그 목록 (페이징 처리됨)
@@ -139,12 +136,11 @@ public class LogService {
 
   /**
    * 로그를 수정합니다.
-   * 
+   *
    * <p>
-   * 로그 작성자만 수정할 수 있으며, 제공된 필드만 업데이트됩니다.
-   * null이 아닌 필드만 변경되는 부분 업데이트 방식을 사용합니다.
+   * 로그 작성자만 수정할 수 있으며, 제공된 필드만 업데이트됩니다. null이 아닌 필드만 변경되는 부분 업데이트 방식을 사용합니다.
    * </p>
-   * 
+   *
    * @param logId     수정할 로그 ID
    * @param request   수정할 정보
    * @param userEmail 수정 요청자의 이메일
@@ -168,11 +164,11 @@ public class LogService {
 
   /**
    * 로그를 삭제합니다.
-   * 
+   *
    * <p>
    * 로그 작성자만 삭제할 수 있습니다.
    * </p>
-   * 
+   *
    * @param logId     삭제할 로그 ID
    * @param userEmail 삭제 요청자의 이메일
    * @throws IllegalArgumentException 권한이 없거나 로그를 찾을 수 없는 경우
@@ -198,7 +194,7 @@ public class LogService {
 
   /**
    * 정렬 기준과 방향에 따라 Sort 객체를 생성합니다.
-   * 
+   *
    * @param sortBy        정렬 기준 (createdAt, viewCount, distance)
    * @param sortDirection 정렬 방향 (asc, desc)
    * @return Sort 객체 (distance의 경우 Repository 쿼리에서 거리 정렬이 이미 처리됨)
@@ -222,7 +218,7 @@ public class LogService {
 
   /**
    * 이메일로 사용자를 조회합니다.
-   * 
+   *
    * @param email 조회할 사용자 이메일
    * @return 조회된 사용자
    * @throws UserNotFoundException 사용자를 찾을 수 없는 경우
@@ -265,7 +261,8 @@ public class LogService {
   /**
    * 위치 기반 로그 검색을 수행합니다.
    */
-  private Page<Log> searchByLocation(LogSearchRequest searchRequest, User viewer, Pageable pageable) {
+  private Page<Log> searchByLocation(LogSearchRequest searchRequest, User viewer,
+      Pageable pageable) {
     LocationUtils.validateCoordinates(searchRequest.getLatitude(), searchRequest.getLongitude());
 
     // 거리 정렬 방향 결정
@@ -336,7 +333,8 @@ public class LogService {
       logEntity.updateContent(request.getContent());
     }
 
-    if (request.getLatitude() != null || request.getLongitude() != null || request.getAddress() != null) {
+    if (request.getLatitude() != null || request.getLongitude() != null
+        || request.getAddress() != null) {
       logEntity.updateLocation(request.getLatitude(), request.getLongitude(), request.getAddress());
     }
 

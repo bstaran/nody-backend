@@ -26,7 +26,8 @@ class ThreadRepositoryCountTest {
 
   @BeforeEach
   void setUp() {
-    ThreadRepositoryTestDataHelper.TestDataBuilder builder = new ThreadRepositoryTestDataHelper.TestDataBuilder(entityManager)
+    ThreadRepositoryTestDataHelper.TestDataBuilder builder = new ThreadRepositoryTestDataHelper.TestDataBuilder(
+        entityManager)
         .withCustomUser(u -> u
             .email("user1@example.com")
             .nickname("user1")
@@ -36,15 +37,15 @@ class ThreadRepositoryCountTest {
             .nickname("user2")
             .socialId("234567"))
         .buildUsersAndLogs();
-    
+
     // log별 카운트 테스트용 로그 - 사용자 명시적 지정
     builder.withCustomLog(l -> l
             .content("사용자1의 로그")
             .user(builder.getCurrentData().users.get(0)))
         .buildUsersAndLogs();
-    
+
     Log log1 = builder.getCurrentData().logs.get(0);
-    
+
     // 스레드들 생성
     testData = builder
         // user1의 로그 연결 스레드들

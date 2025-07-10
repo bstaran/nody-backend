@@ -1,13 +1,11 @@
 package org.nodystudio.nodybackend.dto.thread;
 
 import java.time.LocalDateTime;
-
+import lombok.Builder;
+import lombok.Getter;
 import org.nodystudio.nodybackend.domain.thread.Thread;
 import org.nodystudio.nodybackend.dto.log.LogResponse;
 import org.nodystudio.nodybackend.dto.user.UserSummaryResponse;
-
-import lombok.Builder;
-import lombok.Getter;
 
 @Getter
 @Builder

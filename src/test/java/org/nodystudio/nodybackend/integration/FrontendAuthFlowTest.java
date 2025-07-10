@@ -28,9 +28,8 @@ import org.springframework.test.web.servlet.MvcResult;
 
 /**
  * 프론트엔드 관점에서 검증하는 인증 플로우 통합 테스트
- * 
- * 이 테스트는 프론트엔드 개발자가 백엔드 인증 API를 어떻게 사용해야 하는지
- * 명확하게 보여주는 실용적인 예제들을 포함합니다.
+ * <p>
+ * 이 테스트는 프론트엔드 개발자가 백엔드 인증 API를 어떻게 사용해야 하는지 명확하게 보여주는 실용적인 예제들을 포함합니다.
  */
 @DisplayName("프론트엔드 인증 플로우 통합 테스트")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
@@ -71,9 +70,8 @@ class FrontendAuthFlowTest extends BaseIntegrationTest {
 
   /**
    * 시나리오 1: 프론트엔드에서 "구글로 로그인" 버튼 클릭
-   * 
-   * 프론트엔드에서는 사용자를 '/oauth2/authorization/google'로 리다이렉트시켜야 합니다.
-   * 이는 OAuth2 인증 과정을 시작하는 표준적인 방법입니다.
+   * <p>
+   * 프론트엔드에서는 사용자를 '/oauth2/authorization/google'로 리다이렉트시켜야 합니다. 이는 OAuth2 인증 과정을 시작하는 표준적인 방법입니다.
    */
   @Test
   @DisplayName("1. 구글 로그인 시작 - OAuth2 인증 서버로 리다이렉트")
@@ -95,9 +93,8 @@ class FrontendAuthFlowTest extends BaseIntegrationTest {
 
   /**
    * 시나리오 2: 토큰 갱신하기
-   * 
-   * 프론트엔드에서 Access Token이 만료되었을 때 Refresh Token을 사용해
-   * 새로운 토큰을 발급받는 방법입니다.
+   * <p>
+   * 프론트엔드에서 Access Token이 만료되었을 때 Refresh Token을 사용해 새로운 토큰을 발급받는 방법입니다.
    */
   @Test
   @DisplayName("2. 토큰 갱신 - Refresh Token으로 새 Access Token 발급")
@@ -114,8 +111,8 @@ class FrontendAuthFlowTest extends BaseIntegrationTest {
 
     // when: 프론트엔드에서 토큰 갱신 요청
     MvcResult result = mockMvc.perform(post("/api/auth/refresh")
-        .contentType("application/json")
-        .content(objectMapper.writeValueAsString(request)))
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(request)))
         .andDo(print())
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value(200))
@@ -142,9 +139,8 @@ class FrontendAuthFlowTest extends BaseIntegrationTest {
 
   /**
    * 시나리오 3: 잘못된 토큰 처리
-   * 
-   * 프론트엔드에서 잘못된 refresh token을 보냈을 때의 에러 처리입니다.
-   * 이런 경우 사용자를 다시 로그인 페이지로 리다이렉트해야 합니다.
+   * <p>
+   * 프론트엔드에서 잘못된 refresh token을 보냈을 때의 에러 처리입니다. 이런 경우 사용자를 다시 로그인 페이지로 리다이렉트해야 합니다.
    */
   @Test
   @DisplayName("3. 잘못된 토큰 - 적절한 에러 응답으로 재로그인 유도")
@@ -154,8 +150,8 @@ class FrontendAuthFlowTest extends BaseIntegrationTest {
 
     // when: 잘못된 토큰으로 갱신 시도
     MvcResult result = mockMvc.perform(post("/api/auth/refresh")
-        .contentType("application/json")
-        .content(objectMapper.writeValueAsString(request)))
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(request)))
         .andDo(print())
         .andExpect(status().isUnauthorized())
         .andExpect(jsonPath("$.status").value(401))
@@ -175,9 +171,8 @@ class FrontendAuthFlowTest extends BaseIntegrationTest {
 
   /**
    * 시나리오 4: 토큰 재사용 방지
-   * 
-   * 보안을 위해 한 번 사용된 refresh token은 더 이상 사용할 수 없습니다.
-   * 프론트엔드는 항상 최신 토큰을 사용해야 합니다.
+   * <p>
+   * 보안을 위해 한 번 사용된 refresh token은 더 이상 사용할 수 없습니다. 프론트엔드는 항상 최신 토큰을 사용해야 합니다.
    */
   @Test
   @DisplayName("4. 보안 - 사용된 토큰 재사용 방지")
@@ -194,23 +189,22 @@ class FrontendAuthFlowTest extends BaseIntegrationTest {
 
     // when: 첫 번째 갱신 성공
     mockMvc.perform(post("/api/auth/refresh")
-        .contentType("application/json")
-        .content(objectMapper.writeValueAsString(request)))
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk());
 
     // then: 같은 토큰으로 두 번째 시도 시 차단
     mockMvc.perform(post("/api/auth/refresh")
-        .contentType("application/json")
-        .content(objectMapper.writeValueAsString(request)))
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isUnauthorized())
         .andExpect(jsonPath("$.code").value("A005"));
   }
 
   /**
    * 시나리오 5: 연속 토큰 갱신
-   * 
-   * 장시간 사용하는 SPA에서 여러 번 토큰을 갱신하는 시나리오입니다.
-   * 각 갱신마다 새로운 토큰이 발급되어야 합니다.
+   * <p>
+   * 장시간 사용하는 SPA에서 여러 번 토큰을 갱신하는 시나리오입니다. 각 갱신마다 새로운 토큰이 발급되어야 합니다.
    */
   @Test
   @DisplayName("5. 장시간 사용 - 연속 토큰 갱신")
@@ -228,8 +222,8 @@ class FrontendAuthFlowTest extends BaseIntegrationTest {
       TokenRefreshRequestDto request = new TokenRefreshRequestDto(currentRefreshToken);
 
       MvcResult result = mockMvc.perform(post("/api/auth/refresh")
-          .contentType("application/json")
-          .content(objectMapper.writeValueAsString(request)))
+              .contentType("application/json")
+              .content(objectMapper.writeValueAsString(request)))
           .andExpect(status().isOk())
           .andReturn();
 
