@@ -30,8 +30,10 @@ import org.nodystudio.nodybackend.dto.log.LogCreateRequest;
 import org.nodystudio.nodybackend.dto.log.LogResponse;
 import org.nodystudio.nodybackend.dto.log.LogSearchRequest;
 import org.nodystudio.nodybackend.dto.log.LogUpdateRequest;
+import org.nodystudio.nodybackend.dto.thread.ThreadResponse;
 import org.nodystudio.nodybackend.dto.user.UserSummaryResponse;
 import org.nodystudio.nodybackend.service.log.LogService;
+import org.nodystudio.nodybackend.service.thread.ThreadService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.http.ResponseEntity;
@@ -46,6 +48,9 @@ class LogControllerTest {
 
   @Mock
   private LogService logService;
+
+  @Mock
+  private ThreadService threadService;
 
   @InjectMocks
   private LogController logController;
@@ -268,5 +273,106 @@ class LogControllerTest {
     assertTrue(body.getData().getContent().isEmpty());
 
     verify(logService).searchLogs(any(LogSearchRequest.class), isNull());
+  }
+
+  @Test
+  @DisplayName("GET /api/logs/{logId}/threads - 로그별 스레드 목록 조회 API 테스트 (인증된 사용자)")
+  void getThreadsByLog_AuthenticatedUser_Success() {
+    // given
+    Long logId = 1L;
+    ThreadResponse threadResponse = ThreadResponse.builder()
+        .id(1L)
+        .content("테스트 스레드 내용")
+        .isPublic(true)
+        .viewCount(0L)
+        .user(UserSummaryResponse.builder()
+            .id(1L)
+            .nickname("테스트유저")
+            .build())
+        .isLinkedToLog(true)
+        .isIndependent(false)
+        .createdAt(LocalDateTime.now())
+        .updatedAt(LocalDateTime.now())
+        .build();
+
+    Page<ThreadResponse> threadPage = new PageImpl<>(Arrays.asList(threadResponse));
+    given(threadService.getThreadsByLog(eq(logId), eq("test@example.com"), any())).willReturn(threadPage);
+
+    // when
+    ResponseEntity<ApiResponse<Page<ThreadResponse>>> response = logController.getThreadsByLog(
+        logId, 0, 20, "createdAt", "desc", mockUserDetails);
+
+    // then
+    assertEquals(200, response.getStatusCode().value());
+    assertNotNull(response.getBody());
+    ApiResponse<Page<ThreadResponse>> body = Objects.requireNonNull(response.getBody());
+    assertEquals(200, body.getStatus());
+    assertEquals(1, body.getData().getContent().size());
+    assertEquals("테스트 스레드 내용", body.getData().getContent().get(0).getContent());
+    assertEquals("로그 스레드 목록 조회가 완료되었습니다.", body.getMessage());
+
+    verify(threadService).getThreadsByLog(eq(logId), eq("test@example.com"), any());
+  }
+
+  @Test
+  @DisplayName("GET /api/logs/{logId}/threads - 로그별 스레드 목록 조회 API 테스트 (익명 사용자)")
+  void getThreadsByLog_AnonymousUser_Success() {
+    // given
+    Long logId = 1L;
+    ThreadResponse threadResponse = ThreadResponse.builder()
+        .id(1L)
+        .content("공개 스레드 내용")
+        .isPublic(true)
+        .viewCount(0L)
+        .user(UserSummaryResponse.builder()
+            .id(1L)
+            .nickname("작성자")
+            .build())
+        .isLinkedToLog(true)
+        .isIndependent(false)
+        .createdAt(LocalDateTime.now())
+        .updatedAt(LocalDateTime.now())
+        .build();
+
+    Page<ThreadResponse> threadPage = new PageImpl<>(Arrays.asList(threadResponse));
+    given(threadService.getThreadsByLog(eq(logId), isNull(), any())).willReturn(threadPage);
+
+    // when
+    ResponseEntity<ApiResponse<Page<ThreadResponse>>> response = logController.getThreadsByLog(
+        logId, 0, 20, "createdAt", "desc", null);
+
+    // then
+    assertEquals(200, response.getStatusCode().value());
+    assertNotNull(response.getBody());
+    ApiResponse<Page<ThreadResponse>> body = Objects.requireNonNull(response.getBody());
+    assertEquals(200, body.getStatus());
+    assertEquals(1, body.getData().getContent().size());
+    assertEquals("공개 스레드 내용", body.getData().getContent().get(0).getContent());
+    assertEquals("로그 스레드 목록 조회가 완료되었습니다.", body.getMessage());
+
+    verify(threadService).getThreadsByLog(eq(logId), isNull(), any());
+  }
+
+  @Test
+  @DisplayName("GET /api/logs/{logId}/threads - 로그별 스레드 목록 조회 API 테스트 (빈 결과)")
+  void getThreadsByLog_EmptyResult() {
+    // given
+    Long logId = 999L;
+    Page<ThreadResponse> emptyPage = new PageImpl<>(Collections.emptyList());
+    given(threadService.getThreadsByLog(eq(logId), eq("test@example.com"), any())).willReturn(emptyPage);
+
+    // when
+    ResponseEntity<ApiResponse<Page<ThreadResponse>>> response = logController.getThreadsByLog(
+        logId, 0, 20, "createdAt", "desc", mockUserDetails);
+
+    // then
+    assertEquals(200, response.getStatusCode().value());
+    assertNotNull(response.getBody());
+    ApiResponse<Page<ThreadResponse>> body = Objects.requireNonNull(response.getBody());
+    assertEquals(200, body.getStatus());
+    assertTrue(body.getData().getContent().isEmpty());
+    assertEquals("로그 스레드 목록 조회가 완료되었습니다.", body.getMessage());
+
+    verify(threadService).getThreadsByLog(eq(logId), eq("test@example.com"), any());
   }
 }

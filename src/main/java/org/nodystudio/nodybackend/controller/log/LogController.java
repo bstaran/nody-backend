@@ -3,7 +3,6 @@ package org.nodystudio.nodybackend.controller.log;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.dto.ApiResponse;
 import org.nodystudio.nodybackend.dto.log.LogCreateRequest;
 import org.nodystudio.nodybackend.dto.log.LogResponse;
@@ -39,12 +38,6 @@ public class LogController {
   private final LogService logService;
   private final ThreadService threadService;
 
-  /**
-   * 로깅용 사용자 식별자를 가져옵니다. 인증된 사용자의 경우 이메일을, 인증되지 않은 사용자의 경우 "익명"을 반환합니다.
-   */
-  private String getUserIdentifierForLogging(User user) {
-    return user != null ? user.getEmail() : "익명";
-  }
 
   /**
    * 로그 생성 POST /api/logs
@@ -139,15 +132,15 @@ public class LogController {
       @RequestParam(defaultValue = "20") int size,
       @RequestParam(defaultValue = "createdAt") String sortBy,
       @RequestParam(defaultValue = "desc") String sortDirection,
-      @AuthenticationPrincipal User user) {
+      @AuthenticationPrincipal UserDetails userDetails) {
 
     log.info("로그 스레드 목록 조회 - 로그ID: {}, 사용자: {}",
-        logId, getUserIdentifierForLogging(user));
+        logId, userDetails != null ? userDetails.getUsername() : "익명");
 
     Pageable pageable = PageableUtils.createThreadPageable(page, size, sortBy, sortDirection);
 
     Page<ThreadResponse> response = threadService.getThreadsByLog(logId,
-        user != null ? user.getEmail() : null, pageable);
+        userDetails != null ? userDetails.getUsername() : null, pageable);
 
     return ResponseEntity.ok(ApiResponse.success("로그 스레드 목록 조회가 완료되었습니다.", response));
   }
