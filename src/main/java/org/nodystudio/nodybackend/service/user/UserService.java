@@ -29,10 +29,10 @@ public class UserService {
   public UserDetailResponseDto updateNickname(String userId, UpdateNicknameRequestDto requestDto) {
     User user = findUserById(userId);
 
-        log.info("사용자 닉네임 변경: userId={}", LoggingUtils.maskUserId(userId));
-        log.debug("닉네임 변경 상세: 기존닉네임={}, 새닉네임={}", 
-                LoggingUtils.maskNickname(user.getNickname()), 
-                LoggingUtils.maskNickname(requestDto.getNickname()));
+    log.info("사용자 닉네임 변경: userId={}", LoggingUtils.maskUserId(userId));
+    log.debug("닉네임 변경 상세: 기존닉네임={}, 새닉네임={}",
+        LoggingUtils.maskNickname(user.getNickname()),
+        LoggingUtils.maskNickname(requestDto.getNickname()));
 
     user.updateNickname(requestDto.getNickname());
 
@@ -54,18 +54,18 @@ public class UserService {
       throw new AccountAlreadyDeactivatedException("이미 탈퇴한 계정입니다.");
     }
 
-    log.info("사용자 계정 탈퇴 처리: userId={}, email={}, nickname={}",
-        userId, user.getEmail(), user.getNickname());
+    log.info("사용자 계정 탈퇴 처리: userId={}", LoggingUtils.maskUserId(userId));
+    log.debug("계정 탈퇴 상세: email={}, nickname={}",
+        LoggingUtils.maskEmail(user.getEmail()),
+        LoggingUtils.maskNickname(user.getNickname()));
 
     // 1. 사용자 생성 데이터 삭제 (현재는 User만 존재, 추후 Log/Thread/Comment 추가 시 확장)
     deleteUserGeneratedData(user);
 
-        log.info("사용자 계정 탈퇴 처리: userId={}", LoggingUtils.maskUserId(userId));
-        log.debug("계정 탈퇴 상세: email={}, nickname={}", 
-                LoggingUtils.maskEmail(user.getEmail()), 
-                LoggingUtils.maskNickname(user.getNickname()));
+    // 2. 계정 비활성화
+    user.deactivateAccount();
 
-    log.info("사용자 계정 탈퇴 완료: userId={}", userId);
+    log.info("사용자 계정 탈퇴 완료: userId={}", LoggingUtils.maskUserId(userId));
   }
 
   /**
@@ -74,65 +74,22 @@ public class UserService {
    * @param user 탈퇴하는 사용자
    */
   private void deleteUserGeneratedData(User user) {
-    log.debug("사용자 생성 데이터 비활성화 시작: userId={}", user.getId());
+    log.debug("사용자 생성 데이터 비활성화 시작: userId={}", LoggingUtils.maskUserId(user.getId()));
 
-        log.info("사용자 계정 탈퇴 완료: userId={}", LoggingUtils.maskUserId(userId));
-    }
+    // TODO: 아래 엔티티들이 구현되면 주석 해제
+    // 1. Log 비활성화 (isVisible = false 설정)
+    // logRepository.deactivateByUserId(user.getUserId());
 
-    /**
-     * 사용자가 생성한 모든 데이터를 비활성화합니다. (Soft Delete)
-     * 30일 이내 재활성화 가능하도록 데이터는 보존하되 비공개 처리합니다.
-     * 
-     * @param user 탈퇴하는 사용자
-     */
-    private void deleteUserGeneratedData(User user) {
-        log.debug("사용자 생성 데이터 비활성화 시작: userId={}", LoggingUtils.maskUserId(user.getId()));
-        
-        // TODO: 아래 엔티티들이 구현되면 주석 해제
-        // 1. Log 비활성화 (isVisible = false 설정)
-        // logRepository.deactivateByUserId(user.getUserId());
-        
-        // 2. Thread 비활성화 (isPublic = false로 변경)
-        // threadRepository.deactivateByUserId(user.getUserId());
-        
-        // 3. Comment 비활성화 (soft delete)
-        // commentRepository.deactivateByUserId(user.getUserId());
-        
-        // 4. 좋아요 비활성화 (soft delete)
-        // likeRepository.deactivateByUserId(user.getUserId());
-        
-        log.debug("사용자 생성 데이터 비활성화 완료: userId={}", LoggingUtils.maskUserId(user.getId()));
-    }
+    // 2. Thread 비활성화 (isPublic = false로 변경)
+    // threadRepository.deactivateByUserId(user.getUserId());
 
-    /**
-     * 비활성화된 사용자 데이터를 재활성화합니다.
-     * 탈퇴 취소 시 사용자가 생성한 콘텐츠를 다시 공개 처리합니다.
-     * 
-     * @param user 재활성화할 사용자
-     */
-    public void reactivateUserGeneratedData(User user) {
-        log.debug("사용자 생성 데이터 재활성화 시작: userId={}", LoggingUtils.maskUserId(user.getId()));
-        
-        // TODO: 아래 엔티티들이 구현되면 주석 해제
-        // 1. Log 재활성화 (isVisible = true 설정)
-        // logRepository.reactivateByUserId(user.getUserId());
-        
-        // 2. Thread 재활성화 (원래 공개 설정으로 복원)
-        // threadRepository.reactivateByUserId(user.getUserId());
-        
-        // 3. Comment 재활성화
-        // commentRepository.reactivateByUserId(user.getUserId());
-        
-        // 4. 좋아요 데이터 재활성화
-        // likeRepository.reactivateByUserId(user.getUserId());
-        
-        log.debug("사용자 생성 데이터 재활성화 완료: userId={}", LoggingUtils.maskUserId(user.getId()));
-    }
+    // 3. Comment 비활성화 (soft delete)
+    // commentRepository.deactivateByUserId(user.getUserId());
 
     // 4. 좋아요 비활성화 (soft delete)
     // likeRepository.deactivateByUserId(user.getUserId());
 
-    log.debug("사용자 생성 데이터 비활성화 완료: userId={}", user.getId());
+    log.debug("사용자 생성 데이터 비활성화 완료: userId={}", LoggingUtils.maskUserId(user.getId()));
   }
 
   /**
@@ -141,7 +98,7 @@ public class UserService {
    * @param user 재활성화할 사용자
    */
   public void reactivateUserGeneratedData(User user) {
-    log.debug("사용자 생성 데이터 재활성화 시작: userId={}", user.getId());
+    log.debug("사용자 생성 데이터 재활성화 시작: userId={}", LoggingUtils.maskUserId(user.getId()));
 
     // TODO: 아래 엔티티들이 구현되면 주석 해제
     // 1. Log 재활성화 (isVisible = true 설정)
@@ -156,7 +113,7 @@ public class UserService {
     // 4. 좋아요 데이터 재활성화
     // likeRepository.reactivateByUserId(user.getUserId());
 
-    log.debug("사용자 생성 데이터 재활성화 완료: userId={}", user.getId());
+    log.debug("사용자 생성 데이터 재활성화 완료: userId={}", LoggingUtils.maskUserId(user.getId()));
   }
 
   /**
