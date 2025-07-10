@@ -70,7 +70,7 @@ public class TokenProvider {
    */
   public String createAccessToken(User user) {
     log.info("액세스 토큰 생성 시작: userId={}", LoggingUtils.maskUserId(user.getId()));
-    log.debug("액세스 토큰 생성 상세: userId={}, provider={}",
+    log.debug("액세스 토큰 생성 상세: userId={}, provider={}", 
         LoggingUtils.maskUserId(user.getId()), user.getProvider());
     try {
       Instant now = Instant.now();
@@ -87,7 +87,7 @@ public class TokenProvider {
           .signWith(secretKey, SIGNATURE_ALGORITHM)
           .compact();
     } catch (Exception e) {
-      log.error("액세스 토큰 생성 실패: userId={}, error={}",
+      log.error("액세스 토큰 생성 실패: userId={}, error={}", 
           LoggingUtils.maskUserId(user.getId()), e.getMessage());
       log.debug("액세스 토큰 생성 실패 상세", e);
       throw new UnauthorizedException("토큰 생성 중 오류가 발생했습니다.", ErrorCode.AUTHENTICATION_FAILED, e);
@@ -102,7 +102,7 @@ public class TokenProvider {
    */
   public String createRefreshToken(User user) {
     log.info("리프레시 토큰 생성 시작: userId={}", LoggingUtils.maskUserId(user.getId()));
-    log.debug("리프레시 토큰 생성 상세: userId={}, provider={}",
+    log.debug("리프레시 토큰 생성 상세: userId={}, provider={}", 
         LoggingUtils.maskUserId(user.getId()), user.getProvider());
     try {
       Instant now = Instant.now();
@@ -120,11 +120,10 @@ public class TokenProvider {
           .signWith(secretKey, SIGNATURE_ALGORITHM)
           .compact();
     } catch (Exception e) {
-      log.error("리프레시 토큰 생성 실패: userId={}, error={}",
+      log.error("리프레시 토큰 생성 실패: userId={}, error={}", 
           LoggingUtils.maskUserId(user.getId()), e.getMessage());
       log.debug("리프레시 토큰 생성 실패 상세", e);
-      throw new UnauthorizedException("리프레시 토큰 생성 중 오류가 발생했습니다.", ErrorCode.AUTHENTICATION_FAILED,
-          e);
+      throw new UnauthorizedException("리프레시 토큰 생성 중 오류가 발생했습니다.", ErrorCode.AUTHENTICATION_FAILED, e);
     }
   }
 
