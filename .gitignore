@@ -82,6 +82,11 @@ GEMINI.md
 .claude/
 .mcp.json
 
+# Context Engineering files
+initials/
+examples/
+PRPs/
+
 # Task Master AI files
 .taskmaster/
 tasks.json
