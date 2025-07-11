@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.nodystudio.nodybackend.base.BaseIntegrationTest;
+import org.nodystudio.nodybackend.domain.enums.OAuthProvider;
 import org.nodystudio.nodybackend.domain.user.RoleType;
 import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.dto.user.UpdateNicknameRequestDto;
@@ -40,7 +41,7 @@ class UserApiIntegrationTest extends BaseIntegrationTest {
   @BeforeEach
   void setUp() {
     testUser = userRepository.save(User.builder()
-        .provider("google")
+        .provider(OAuthProvider.GOOGLE)
         .socialId("123456789")
         .email("test@example.com")
         .nickname("테스트닉네임")

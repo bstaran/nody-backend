@@ -15,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.nodystudio.nodybackend.base.BaseIntegrationTest;
+import org.nodystudio.nodybackend.domain.enums.OAuthProvider;
 import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.dto.TokenRefreshRequestDto;
 import org.nodystudio.nodybackend.repository.UserRepository;
@@ -55,7 +56,7 @@ class FrontendLoginScenarioTest extends BaseIntegrationTest {
     userRepository.deleteAll();
 
     testUser = User.builder()
-        .provider("google")
+        .provider(OAuthProvider.GOOGLE)
         .socialId("google_12345")
         .email("user@example.com")
         .nickname("테스트유저")
