@@ -2,6 +2,9 @@ FROM eclipse-temurin:21.0.7_6-jdk-ubi9-minimal
 
 ARG JAR_FILE=build/libs/*.jar
 
+# Update libxml2 to fix security vulnerabilities CVE-2025-49794 and CVE-2025-49796
+RUN microdnf update -y libxml2 && microdnf clean all
+
 RUN useradd --create-home --shell /bin/bash appuser
 
 COPY ${JAR_FILE} app.jar
