@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.nodystudio.nodybackend.domain.enums.OAuthProvider;
 import org.nodystudio.nodybackend.domain.user.RoleType;
 import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.dto.user.UpdateNicknameRequestDto;
@@ -37,7 +38,7 @@ class UserServiceTest {
   void setUp() {
     testUser = User.builder()
         .id(TEST_USER_ID)
-        .provider("google")
+        .provider(OAuthProvider.GOOGLE)
         .socialId("123456789")
         .email("test@example.com")
         .nickname("기존닉네임")
@@ -217,7 +218,7 @@ class UserServiceTest {
     // given
     User deactivatedUser = User.builder()
         .id(TEST_USER_ID)
-        .provider("google")
+        .provider(OAuthProvider.GOOGLE)
         .socialId("123456789")
         .email("test@example.com")
         .nickname("테스트사용자")

@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.nodystudio.nodybackend.domain.enums.SortDirection;
+import org.nodystudio.nodybackend.domain.enums.ThreadSortField;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.context.ActiveProfiles;
@@ -44,7 +46,7 @@ class PageableUtilsTest {
   @DisplayName("Thread 페이지네이션 객체 생성 - 유효한 필드")
   void createThreadPageable_ValidFields_Success() {
     // when
-    Pageable pageable = PageableUtils.createThreadPageable(0, 10, "viewCount", "asc");
+    Pageable pageable = PageableUtils.createThreadPageable(0, 10, ThreadSortField.VIEW_COUNT, SortDirection.ASC);
 
     // then
     assertThat(pageable.getPageNumber()).isEqualTo(0);
@@ -55,17 +57,18 @@ class PageableUtilsTest {
   }
 
   @Test
-  @DisplayName("Thread 페이지네이션 객체 생성 - 유효하지 않은 필드는 기본값 사용")
-  void createThreadPageable_InvalidField_UseDefault() {
-    // when
-    Pageable pageable = PageableUtils.createThreadPageable(0, 10, "invalidField", "asc");
+  @DisplayName("Thread 페이지네이션 객체 생성 - enum 사용으로 유효하지 않은 필드 입력 방지")
+  void createThreadPageable_EnumPreventInvalidField() {
+    // enum 사용으로 유효하지 않은 필드 입력이 컴파일 타임에 방지됨
+    // 기본값 사용 테스트
+    Pageable pageable = PageableUtils.createThreadPageable(0, 10, ThreadSortField.CREATED_AT, SortDirection.ASC);
 
     // then
     assertThat(pageable.getPageNumber()).isEqualTo(0);
     assertThat(pageable.getPageSize()).isEqualTo(10);
     Sort.Order order = pageable.getSort().getOrderFor("createdAt");
     assertThat(order).isNotNull();
-    assertThat(order.getDirection()).isEqualTo(Sort.Direction.DESC);
+    assertThat(order.getDirection()).isEqualTo(Sort.Direction.ASC);
   }
 
   @Test
@@ -112,7 +115,7 @@ class PageableUtilsTest {
   @DisplayName("Thread 정렬 객체 생성 - createdAt")
   void createThreadSort_CreatedAt_Success() {
     // when
-    Sort sort = PageableUtils.createThreadSort("createdAt", "asc");
+    Sort sort = PageableUtils.createThreadSort(ThreadSortField.CREATED_AT, SortDirection.ASC);
 
     // then
     Sort.Order order = sort.getOrderFor("createdAt");
@@ -121,22 +124,22 @@ class PageableUtilsTest {
   }
 
   @Test
-  @DisplayName("Thread 정렬 객체 생성 - updatedAt")
-  void createThreadSort_UpdatedAt_Success() {
+  @DisplayName("Thread 정렬 객체 생성 - viewCount")
+  void createThreadSort_ViewCount_Success() {
     // when
-    Sort sort = PageableUtils.createThreadSort("updatedAt", "desc");
+    Sort sort = PageableUtils.createThreadSort(ThreadSortField.VIEW_COUNT, SortDirection.DESC);
 
     // then
-    Sort.Order order = sort.getOrderFor("updatedAt");
+    Sort.Order order = sort.getOrderFor("viewCount");
     assertThat(order).isNotNull();
     assertThat(order.getDirection()).isEqualTo(Sort.Direction.DESC);
   }
 
   @Test
-  @DisplayName("Thread 정렬 객체 생성 - viewCount")
-  void createThreadSort_ViewCount_Success() {
+  @DisplayName("Thread 정렬 객체 생성 - SortDirection.ASC 테스트")
+  void createThreadSort_SortDirection_ASC_Success() {
     // when
-    Sort sort = PageableUtils.createThreadSort("viewCount", "asc");
+    Sort sort = PageableUtils.createThreadSort(ThreadSortField.VIEW_COUNT, SortDirection.ASC);
 
     // then
     Sort.Order order = sort.getOrderFor("viewCount");
@@ -145,15 +148,32 @@ class PageableUtilsTest {
   }
 
   @Test
-  @DisplayName("Thread 정렬 객체 생성 - 유효하지 않은 필드는 기본값 사용")
-  void createThreadSort_InvalidField_UseDefault() {
+  @DisplayName("Thread 정렬 객체 생성 - SortDirection.DESC 테스트")
+  void createThreadSort_SortDirection_DESC_Success() {
     // when
-    Sort sort = PageableUtils.createThreadSort("invalidField", "asc");
+    Sort sort = PageableUtils.createThreadSort(ThreadSortField.CREATED_AT, SortDirection.DESC);
 
     // then
     Sort.Order order = sort.getOrderFor("createdAt");
     assertThat(order).isNotNull();
     assertThat(order.getDirection()).isEqualTo(Sort.Direction.DESC);
+  }
+
+  @Test
+  @DisplayName("Thread 정렬 객체 생성 - enum 조합 테스트")
+  void createThreadSort_EnumCombination_Success() {
+    // when - 모든 enum 조합 테스트
+    Sort sort1 = PageableUtils.createThreadSort(ThreadSortField.CREATED_AT, SortDirection.ASC);
+    Sort sort2 = PageableUtils.createThreadSort(ThreadSortField.VIEW_COUNT, SortDirection.DESC);
+
+    // then
+    Sort.Order order1 = sort1.getOrderFor("createdAt");
+    assertThat(order1).isNotNull();
+    assertThat(order1.getDirection()).isEqualTo(Sort.Direction.ASC);
+
+    Sort.Order order2 = sort2.getOrderFor("viewCount");
+    assertThat(order2).isNotNull();
+    assertThat(order2.getDirection()).isEqualTo(Sort.Direction.DESC);
   }
 
   @Test

@@ -19,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.nodystudio.nodybackend.domain.enums.OAuthProvider;
 import org.nodystudio.nodybackend.domain.user.RoleType;
 import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.repository.UserRepository;
@@ -42,7 +43,7 @@ class UserCleanupBatchServiceTest {
     // 31일 전에 탈퇴한 사용자
     expiredUser1 = User.builder()
         .id(1L)
-        .provider("google")
+        .provider(OAuthProvider.GOOGLE)
         .socialId("123456789")
         .email("expired1@example.com")
         .nickname("탈퇴사용자1")
@@ -58,7 +59,7 @@ class UserCleanupBatchServiceTest {
     // 32일 전에 탈퇴한 사용자
     expiredUser2 = User.builder()
         .id(2L)
-        .provider("google")
+        .provider(OAuthProvider.GOOGLE)
         .socialId("987654321")
         .email("expired2@example.com")
         .nickname("탈퇴사용자2")

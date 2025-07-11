@@ -19,6 +19,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.nodystudio.nodybackend.domain.enums.OAuthProvider;
+import org.nodystudio.nodybackend.domain.enums.ThreadType;
 import org.nodystudio.nodybackend.domain.log.Log;
 import org.nodystudio.nodybackend.domain.thread.Thread;
 import org.nodystudio.nodybackend.domain.user.RoleType;
@@ -65,7 +67,7 @@ class ThreadServiceTest {
         .id(1L)
         .email("test@example.com")
         .nickname("testuser")
-        .provider("google")
+        .provider(OAuthProvider.GOOGLE)
         .socialId("12345")
         .role(RoleType.USER)
         .build();
@@ -74,7 +76,7 @@ class ThreadServiceTest {
         .id(2L)
         .email("other@example.com")
         .nickname("otheruser")
-        .provider("google")
+        .provider(OAuthProvider.GOOGLE)
         .socialId("67890")
         .role(RoleType.USER)
         .build();
@@ -310,7 +312,7 @@ class ThreadServiceTest {
     ThreadSearchRequest searchRequest = ThreadSearchRequest.builder()
         .page(0)
         .size(10)
-        .threadType("all")
+        .threadType(ThreadType.ALL)
         .build();
 
     Page<Thread> threadPage = new PageImpl<>(List.of(testThread));
@@ -333,7 +335,7 @@ class ThreadServiceTest {
         .page(0)
         .size(10)
         .keyword("검색")
-        .threadType("all")
+        .threadType(ThreadType.ALL)
         .build();
 
     Thread searchThread = Thread.builder()

@@ -22,6 +22,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.nodystudio.nodybackend.domain.enums.LogSortField;
+import org.nodystudio.nodybackend.domain.enums.OAuthProvider;
+import org.nodystudio.nodybackend.domain.enums.SortDirection;
 import org.nodystudio.nodybackend.domain.log.Log;
 import org.nodystudio.nodybackend.domain.user.RoleType;
 import org.nodystudio.nodybackend.domain.user.User;
@@ -61,7 +64,7 @@ class LogServiceTest {
         .id(1L)
         .email("test@example.com")
         .nickname("테스트유저")
-        .provider("google")
+        .provider(OAuthProvider.GOOGLE)
         .socialId("123456")
         .role(RoleType.USER)
         .isActive(true)
@@ -393,8 +396,8 @@ class LogServiceTest {
         .latitude(new BigDecimal("37.5665"))
         .longitude(new BigDecimal("126.9780"))
         .radiusKm(new BigDecimal("10.0"))
-        .sortBy("distance")
-        .sortDirection("asc")
+        .sortBy(LogSortField.DISTANCE)
+        .sortDirection(SortDirection.ASC)
         .page(0)
         .size(20)
         .build();
@@ -435,8 +438,8 @@ class LogServiceTest {
         .latitude(new BigDecimal("37.5665"))
         .longitude(new BigDecimal("126.9780"))
         .radiusKm(new BigDecimal("10.0"))
-        .sortBy("distance")
-        .sortDirection("desc")
+        .sortBy(LogSortField.DISTANCE)
+        .sortDirection(SortDirection.DESC)
         .page(0)
         .size(20)
         .build();
@@ -477,8 +480,8 @@ class LogServiceTest {
         .latitude(new BigDecimal("37.5665"))
         .longitude(new BigDecimal("126.9780"))
         .radiusKm(new BigDecimal("10.0"))
-        .sortBy("distance")
-        .sortDirection("desc")
+        .sortBy(LogSortField.DISTANCE)
+        .sortDirection(SortDirection.DESC)
         .page(0)
         .size(20)
         .build();
@@ -519,7 +522,7 @@ class LogServiceTest {
         null, // isPublic
         0, // page
         20, // size
-        "distance", // sortBy
+        LogSortField.DISTANCE, // sortBy
         null // sortDirection을 명시적으로 null로 설정
     );
 

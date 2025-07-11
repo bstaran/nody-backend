@@ -18,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.nodystudio.nodybackend.domain.enums.OAuthProvider;
 import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.dto.TokenRefreshRequestDto;
 import org.nodystudio.nodybackend.dto.TokenResponseDto;
@@ -55,7 +56,7 @@ class AuthServiceTest {
         .id(1L)
         .email("test@example.com")
         .nickname("testuser")
-        .provider("google")
+        .provider(OAuthProvider.GOOGLE)
         .socialId("google_12345")
         .refreshToken(validRefreshToken)
         .refreshTokenExpiry(validExpiry)

@@ -10,6 +10,9 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.nodystudio.nodybackend.domain.enums.SortDirection;
+import org.nodystudio.nodybackend.domain.enums.ThreadSortField;
+import org.nodystudio.nodybackend.domain.enums.ThreadType;
 import org.springframework.test.context.ActiveProfiles;
 
 @ActiveProfiles("test")
@@ -37,9 +40,9 @@ class ThreadSearchRequestTest {
     assertThat(violations).isEmpty();
     assertThat(request.getPage()).isEqualTo(0);
     assertThat(request.getSize()).isEqualTo(20);
-    assertThat(request.getSortBy()).isEqualTo("createdAt");
-    assertThat(request.getSortDirection()).isEqualTo("desc");
-    assertThat(request.getThreadType()).isEqualTo("all");
+    assertThat(request.getSortBy()).isEqualTo(ThreadSortField.CREATED_AT);
+    assertThat(request.getSortDirection()).isEqualTo(SortDirection.DESC);
+    assertThat(request.getThreadType()).isEqualTo(ThreadType.ALL);
   }
 
   @Test
@@ -49,11 +52,11 @@ class ThreadSearchRequestTest {
     ThreadSearchRequest request = ThreadSearchRequest.builder()
         .page(1)
         .size(10)
-        .sortBy("viewCount")
-        .sortDirection("asc")
+        .sortBy(ThreadSortField.VIEW_COUNT)
+        .sortDirection(SortDirection.ASC)
         .keyword("검색어")
         .logId(123L)
-        .threadType("independent")
+        .threadType(ThreadType.INDEPENDENT)
         .build();
 
     // when
@@ -130,28 +133,11 @@ class ThreadSearchRequestTest {
   }
 
   @Test
-  @DisplayName("정렬 기준이 유효하지 않은 경우 유효성 검증 실패")
-  void validate_InvalidSortBy_ValidationFails() {
+  @DisplayName("정렬 기준 CREATED_AT - 검증 성공")
+  void validate_SortBy_CreatedAt_Success() {
     // given
     ThreadSearchRequest request = ThreadSearchRequest.builder()
-        .sortBy("invalidField")
-        .build();
-
-    // when
-    Set<ConstraintViolation<ThreadSearchRequest>> violations = validator.validate(request);
-
-    // then
-    assertThat(violations).hasSize(1);
-    assertThat(violations.iterator().next().getMessage())
-        .isEqualTo("정렬 기준은 createdAt 또는 viewCount만 가능합니다.");
-  }
-
-  @Test
-  @DisplayName("정렬 기준이 createdAt인 경우 유효성 검증 성공")
-  void validate_SortByCreatedAt_Success() {
-    // given
-    ThreadSearchRequest request = ThreadSearchRequest.builder()
-        .sortBy("createdAt")
+        .sortBy(ThreadSortField.CREATED_AT)
         .build();
 
     // when
@@ -162,11 +148,11 @@ class ThreadSearchRequestTest {
   }
 
   @Test
-  @DisplayName("정렬 기준이 viewCount인 경우 유효성 검증 성공")
-  void validate_SortByViewCount_Success() {
+  @DisplayName("정렬 기준 VIEW_COUNT - 검증 성공")
+  void validate_SortBy_ViewCount_Success() {
     // given
     ThreadSearchRequest request = ThreadSearchRequest.builder()
-        .sortBy("viewCount")
+        .sortBy(ThreadSortField.VIEW_COUNT)
         .build();
 
     // when
@@ -177,28 +163,11 @@ class ThreadSearchRequestTest {
   }
 
   @Test
-  @DisplayName("정렬 방향이 유효하지 않은 경우 유효성 검증 실패")
-  void validate_InvalidSortDirection_ValidationFails() {
+  @DisplayName("정렬 방향 ASC - 검증 성공")
+  void validate_SortDirection_ASC_Success() {
     // given
     ThreadSearchRequest request = ThreadSearchRequest.builder()
-        .sortDirection("invalid")
-        .build();
-
-    // when
-    Set<ConstraintViolation<ThreadSearchRequest>> violations = validator.validate(request);
-
-    // then
-    assertThat(violations).hasSize(1);
-    assertThat(violations.iterator().next().getMessage())
-        .isEqualTo("정렬 방향은 asc 또는 desc만 가능합니다.");
-  }
-
-  @Test
-  @DisplayName("정렬 방향이 asc인 경우 유효성 검증 성공")
-  void validate_SortDirectionAsc_Success() {
-    // given
-    ThreadSearchRequest request = ThreadSearchRequest.builder()
-        .sortDirection("asc")
+        .sortDirection(SortDirection.ASC)
         .build();
 
     // when
@@ -209,11 +178,11 @@ class ThreadSearchRequestTest {
   }
 
   @Test
-  @DisplayName("정렬 방향이 desc인 경우 유효성 검증 성공")
-  void validate_SortDirectionDesc_Success() {
+  @DisplayName("정렬 방향 DESC - 검증 성공")
+  void validate_SortDirection_DESC_Success() {
     // given
     ThreadSearchRequest request = ThreadSearchRequest.builder()
-        .sortDirection("desc")
+        .sortDirection(SortDirection.DESC)
         .build();
 
     // when
@@ -224,28 +193,11 @@ class ThreadSearchRequestTest {
   }
 
   @Test
-  @DisplayName("스레드 타입이 유효하지 않은 경우 유효성 검증 실패")
-  void validate_InvalidThreadType_ValidationFails() {
+  @DisplayName("스레드 타입 ALL - 검증 성공")
+  void validate_ThreadType_ALL_Success() {
     // given
     ThreadSearchRequest request = ThreadSearchRequest.builder()
-        .threadType("invalid")
-        .build();
-
-    // when
-    Set<ConstraintViolation<ThreadSearchRequest>> violations = validator.validate(request);
-
-    // then
-    assertThat(violations).hasSize(1);
-    assertThat(violations.iterator().next().getMessage())
-        .isEqualTo("스레드 타입은 all, independent, linked만 가능합니다.");
-  }
-
-  @Test
-  @DisplayName("스레드 타입이 all인 경우 유효성 검증 성공")
-  void validate_ThreadTypeAll_Success() {
-    // given
-    ThreadSearchRequest request = ThreadSearchRequest.builder()
-        .threadType("all")
+        .threadType(ThreadType.ALL)
         .build();
 
     // when
@@ -256,11 +208,11 @@ class ThreadSearchRequestTest {
   }
 
   @Test
-  @DisplayName("스레드 타입이 independent인 경우 유효성 검증 성공")
-  void validate_ThreadTypeIndependent_Success() {
+  @DisplayName("스레드 타입 INDEPENDENT - 검증 성공")
+  void validate_ThreadType_INDEPENDENT_Success() {
     // given
     ThreadSearchRequest request = ThreadSearchRequest.builder()
-        .threadType("independent")
+        .threadType(ThreadType.INDEPENDENT)
         .build();
 
     // when
@@ -271,11 +223,28 @@ class ThreadSearchRequestTest {
   }
 
   @Test
-  @DisplayName("스레드 타입이 linked인 경우 유효성 검증 성공")
-  void validate_ThreadTypeLinked_Success() {
+  @DisplayName("스레드 타입 LINKED - 검증 성공")
+  void validate_ThreadType_LINKED_Success() {
     // given
     ThreadSearchRequest request = ThreadSearchRequest.builder()
-        .threadType("linked")
+        .threadType(ThreadType.LINKED)
+        .build();
+
+    // when
+    Set<ConstraintViolation<ThreadSearchRequest>> violations = validator.validate(request);
+
+    // then
+    assertThat(violations).isEmpty();
+  }
+
+  @Test
+  @DisplayName("enum 조합 테스트 - 모든 필드 유효한 enum 값 사용")
+  void validate_EnumCombination_AllValid_Success() {
+    // given
+    ThreadSearchRequest request = ThreadSearchRequest.builder()
+        .sortBy(ThreadSortField.VIEW_COUNT)
+        .sortDirection(SortDirection.ASC)
+        .threadType(ThreadType.INDEPENDENT)
         .build();
 
     // when
@@ -331,30 +300,29 @@ class ThreadSearchRequestTest {
   }
 
   @Test
-  @DisplayName("여러 필드에서 유효성 검증 실패")
+  @DisplayName("여러 필드에서 유효성 검증 실패 - enum 사용으로 일부 오류 방지")
   void validate_MultipleFieldsInvalid_ValidationFails() {
     // given
     ThreadSearchRequest request = ThreadSearchRequest.builder()
         .page(-1) // 음수 페이지
         .size(0) // 0 크기
-        .sortBy("invalid") // 유효하지 않은 정렬 기준
-        .sortDirection("wrong") // 유효하지 않은 정렬 방향
-        .threadType("wrong") // 유효하지 않은 스레드 타입
+        // enum 사용으로 인해 유효하지 않은 값들은 컴파일 타임에 방지됨
+        .sortBy(null) // null 값만 가능
+        .sortDirection(null) // null 값만 가능
+        .threadType(null) // null 값만 가능
         .build();
 
     // when
     Set<ConstraintViolation<ThreadSearchRequest>> violations = validator.validate(request);
 
     // then
-    assertThat(violations).hasSize(5);
+    // enum 사용으로 인해 유효성 검증 오류가 줄어듦
+    assertThat(violations).hasSize(2);
     assertThat(violations)
         .extracting(ConstraintViolation::getMessage)
         .containsExactlyInAnyOrder(
             "페이지 번호는 0 이상이어야 합니다.",
-            "페이지 크기는 1 이상이어야 합니다.",
-            "정렬 기준은 createdAt 또는 viewCount만 가능합니다.",
-            "정렬 방향은 asc 또는 desc만 가능합니다.",
-            "스레드 타입은 all, independent, linked만 가능합니다.");
+            "페이지 크기는 1 이상이어야 합니다.");
   }
 
   @Test
