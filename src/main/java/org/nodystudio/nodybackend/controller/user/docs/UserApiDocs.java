@@ -104,7 +104,7 @@ public interface UserApiDocs {
           )
       )
   })
-  ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<Void>> deleteAccount(
+  ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<Void>> deactivateAccount(
       @Parameter(hidden = true) @AuthenticationPrincipal Object currentUser
   );
 }

@@ -80,7 +80,7 @@ public class UserController implements UserApiDocs {
    */
   @Override
   @DeleteMapping(value = "/me")
-  public ResponseEntity<ApiResponse<Void>> deleteAccount(
+  public ResponseEntity<ApiResponse<Void>> deactivateAccount(
       @AuthenticationPrincipal Object user) {
     User currentUser = (User) user;
     userService.deactivateAccount(currentUser.getId().toString());
