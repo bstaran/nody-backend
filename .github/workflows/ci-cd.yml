@@ -60,7 +60,7 @@ jobs:
       - name: Build and Test with Gradle
         env:
           SPRING_PROFILES_ACTIVE: test
-        run: ./gradlew smartDocOpenAPI build --no-daemon
+        run: ./gradlew build --no-daemon
 
       - name: Upload JAR Artifact
         uses: actions/upload-artifact@v4
