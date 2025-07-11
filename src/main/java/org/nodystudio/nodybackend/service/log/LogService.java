@@ -2,6 +2,8 @@ package org.nodystudio.nodybackend.service.log;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.nodystudio.nodybackend.domain.enums.LogSortField;
+import org.nodystudio.nodybackend.domain.enums.SortDirection;
 import org.nodystudio.nodybackend.domain.log.Log;
 import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.dto.log.LogCreateRequest;
@@ -195,19 +197,19 @@ public class LogService {
   /**
    * 정렬 기준과 방향에 따라 Sort 객체를 생성합니다.
    *
-   * @param sortBy        정렬 기준 (createdAt, viewCount, distance)
-   * @param sortDirection 정렬 방향 (asc, desc)
+   * @param sortBy        정렬 기준 (CREATED_AT, VIEW_COUNT, DISTANCE)
+   * @param sortDirection 정렬 방향 (ASC, DESC)
    * @return Sort 객체 (distance의 경우 Repository 쿼리에서 거리 정렬이 이미 처리됨)
    */
-  private Sort createSort(String sortBy, String sortDirection) {
-    Sort.Direction direction = "asc".equalsIgnoreCase(sortDirection)
+  private Sort createSort(LogSortField sortBy, SortDirection sortDirection) {
+    Sort.Direction direction = sortDirection == SortDirection.ASC
         ? Sort.Direction.ASC
         : Sort.Direction.DESC;
 
     return switch (sortBy) {
-      case "createdAt" -> Sort.by(direction, "createdAt");
-      case "viewCount" -> Sort.by(direction, "viewCount");
-      case "distance" -> {
+      case CREATED_AT -> Sort.by(direction, "createdAt");
+      case VIEW_COUNT -> Sort.by(direction, "viewCount");
+      case DISTANCE -> {
         // 거리 정렬은 Repository의 네이티브 쿼리에서 처리됨
         log.info("거리 정렬 요청됨 - Repository 쿼리에서 처리됩니다.");
         yield Sort.unsorted();
@@ -252,10 +254,11 @@ public class LogService {
    * 거리 정렬 방향을 결정합니다.
    */
   private String getDistanceSortDirection(LogSearchRequest searchRequest) {
-    if ("distance".equals(searchRequest.getSortBy()) && searchRequest.getSortDirection() != null) {
-      return searchRequest.getSortDirection().toUpperCase();
+    if (LogSortField.DISTANCE.equals(searchRequest.getSortBy())
+        && searchRequest.getSortDirection() != null) {
+      return searchRequest.getSortDirection().getValue().toUpperCase();
     }
-    return "ASC"; // 기본값
+    return SortDirection.ASC.getValue().toUpperCase(); // 기본값
   }
 
   /**
