@@ -2,11 +2,13 @@ package org.nodystudio.nodybackend.dto.thread;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.nodystudio.nodybackend.domain.enums.SortDirection;
+import org.nodystudio.nodybackend.domain.enums.ThreadSortField;
+import org.nodystudio.nodybackend.domain.enums.ThreadType;
 
 @Getter
 @NoArgsConstructor
@@ -23,19 +25,16 @@ public class ThreadSearchRequest {
   @Builder.Default
   private int size = 20;
 
-  @Pattern(regexp = "^(createdAt|viewCount)$", message = "정렬 기준은 createdAt 또는 viewCount만 가능합니다.")
   @Builder.Default
-  private String sortBy = "createdAt";
+  private ThreadSortField sortBy = ThreadSortField.CREATED_AT;
 
-  @Pattern(regexp = "^(asc|desc)$", message = "정렬 방향은 asc 또는 desc만 가능합니다.")
   @Builder.Default
-  private String sortDirection = "desc";
+  private SortDirection sortDirection = SortDirection.DESC;
 
   private String keyword;
 
   private Long logId;
 
-  @Pattern(regexp = "^(all|independent|linked)$", message = "스레드 타입은 all, independent, linked만 가능합니다.")
   @Builder.Default
-  private String threadType = "all"; // all: 전체, independent: 독립 스레드, linked: 로그 연결 스레드
+  private ThreadType threadType = ThreadType.ALL; // all: 전체, independent: 독립 스레드, linked: 로그 연결 스레드
 }
