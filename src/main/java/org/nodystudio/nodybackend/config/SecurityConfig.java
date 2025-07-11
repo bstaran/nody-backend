@@ -104,8 +104,8 @@ public class SecurityConfig {
         .authorizeHttpRequests(authorize -> authorize
             .requestMatchers("/api/auth/**", "/api/public/**", "/oauth2/**", "/login/**")
             .permitAll()
-            .requestMatchers("/swagger-ui/**", "/api-docs/**").permitAll()
-            .requestMatchers("/openapi.json", "/favicon.ico").permitAll()
+            .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
+            .requestMatchers("/favicon.ico").permitAll()
             .requestMatchers("/actuator/**").permitAll()
             .anyRequest().authenticated())
         .exceptionHandling(exceptions -> exceptions
@@ -137,7 +137,8 @@ public class SecurityConfig {
             .requestMatchers("/api/auth/**", "/api/public/**", "/oauth2/**", "/login/**")
             .permitAll()
             .requestMatchers("/api/admin/**").hasRole("ADMIN")
-            .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/favicon.ico").permitAll()
+            .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
+            .requestMatchers("/favicon.ico").permitAll()
             .requestMatchers("/actuator/**").permitAll()
             .anyRequest().authenticated())
         .exceptionHandling(exceptions -> exceptions

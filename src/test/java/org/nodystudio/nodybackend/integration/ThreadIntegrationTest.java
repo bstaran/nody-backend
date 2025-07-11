@@ -28,7 +28,12 @@ import org.nodystudio.nodybackend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
+import java.util.Collection;
+import java.util.List;
 
 @DisplayName("Thread 통합 테스트")
 class ThreadIntegrationTest extends BaseIntegrationTest {
@@ -84,12 +89,55 @@ class ThreadIntegrationTest extends BaseIntegrationTest {
         .build());
   }
 
+  /**
+   * User 객체를 UserDetails로 변환하는 헬퍼 메서드
+   */
+  private UserDetails createUserDetails(User user) {
+    return new UserDetails() {
+      @Override
+      public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
+      }
+
+      @Override
+      public String getPassword() {
+        return null;
+      }
+
+      @Override
+      public String getUsername() {
+        return user.getEmail();
+      }
+
+      @Override
+      public boolean isAccountNonExpired() {
+        return true;
+      }
+
+      @Override
+      public boolean isAccountNonLocked() {
+        return true;
+      }
+
+      @Override
+      public boolean isCredentialsNonExpired() {
+        return true;
+      }
+
+      @Override
+      public boolean isEnabled() {
+        return user.getIsActive();
+      }
+    };
+  }
+
   @Test
   @DisplayName("독립 스레드 생성 성공")
   void createIndependentThread_Success() throws Exception {
     // given
+    UserDetails userDetails = createUserDetails(testUser);
     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-        testUser, null, testUser.getRoles());
+        userDetails, null, userDetails.getAuthorities());
 
     ThreadCreateRequest request = ThreadCreateRequest.builder()
         .content("독립 스레드 내용")
@@ -113,8 +161,9 @@ class ThreadIntegrationTest extends BaseIntegrationTest {
   @DisplayName("로그 연결 스레드 생성 성공")
   void createLogLinkedThread_Success() throws Exception {
     // given
+    UserDetails userDetails = createUserDetails(testUser);
     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-        testUser, null, testUser.getRoles());
+        userDetails, null, userDetails.getAuthorities());
 
     ThreadCreateRequest request = ThreadCreateRequest.builder()
         .content("로그 연결 스레드 내용")
@@ -139,8 +188,9 @@ class ThreadIntegrationTest extends BaseIntegrationTest {
   @DisplayName("스레드 단건 조회 성공")
   void getThread_Success() throws Exception {
     // given
+    UserDetails userDetails = createUserDetails(testUser);
     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-        testUser, null, testUser.getRoles());
+        userDetails, null, userDetails.getAuthorities());
 
     // 스레드 생성
     ThreadCreateRequest createRequest = ThreadCreateRequest.builder()
@@ -171,8 +221,9 @@ class ThreadIntegrationTest extends BaseIntegrationTest {
   @DisplayName("인증 없이 공개 스레드 조회 성공")
   void getPublicThread_WithoutAuth_Success() throws Exception {
     // given - 공개 스레드 생성
+    UserDetails userDetails = createUserDetails(testUser);
     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-        testUser, null, testUser.getRoles());
+        userDetails, null, userDetails.getAuthorities());
 
     ThreadCreateRequest createRequest = ThreadCreateRequest.builder()
         .content("공개 스레드 내용")
@@ -200,8 +251,9 @@ class ThreadIntegrationTest extends BaseIntegrationTest {
   @DisplayName("스레드 수정 성공")
   void updateThread_Success() throws Exception {
     // given
+    UserDetails userDetails = createUserDetails(testUser);
     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-        testUser, null, testUser.getRoles());
+        userDetails, null, userDetails.getAuthorities());
 
     // 스레드 생성
     ThreadCreateRequest createRequest = ThreadCreateRequest.builder()
@@ -240,8 +292,9 @@ class ThreadIntegrationTest extends BaseIntegrationTest {
   @DisplayName("스레드 삭제 성공")
   void deleteThread_Success() throws Exception {
     // given
+    UserDetails userDetails = createUserDetails(testUser);
     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-        testUser, null, testUser.getRoles());
+        userDetails, null, userDetails.getAuthorities());
 
     // 스레드 생성
     ThreadCreateRequest createRequest = ThreadCreateRequest.builder()
@@ -273,8 +326,9 @@ class ThreadIntegrationTest extends BaseIntegrationTest {
   @DisplayName("다른 사용자의 스레드 수정 시도 - 실패")
   void updateOtherUserThread_Forbidden() throws Exception {
     // given - testUser가 스레드 생성
+    UserDetails testUserDetails = createUserDetails(testUser);
     UsernamePasswordAuthenticationToken testUserAuth = new UsernamePasswordAuthenticationToken(
-        testUser, null, testUser.getRoles());
+        testUserDetails, null, testUserDetails.getAuthorities());
 
     ThreadCreateRequest createRequest = ThreadCreateRequest.builder()
         .content("다른 사용자 스레드 내용")
@@ -291,8 +345,9 @@ class ThreadIntegrationTest extends BaseIntegrationTest {
     Long threadId = savedThread.getId();
 
     // when & then - otherUser가 수정 시도
+    UserDetails otherUserDetails = createUserDetails(otherUser);
     UsernamePasswordAuthenticationToken otherUserAuth = new UsernamePasswordAuthenticationToken(
-        otherUser, null, otherUser.getRoles());
+        otherUserDetails, null, otherUserDetails.getAuthorities());
 
     ThreadUpdateRequest updateRequest = ThreadUpdateRequest.builder()
         .content("악의적 수정")

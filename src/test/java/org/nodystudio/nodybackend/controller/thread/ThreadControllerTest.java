@@ -26,8 +26,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.nodystudio.nodybackend.domain.user.RoleType;
-import org.nodystudio.nodybackend.domain.user.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import java.util.Collection;
+import java.util.List;
 import org.nodystudio.nodybackend.dto.ApiResponse;
 import org.nodystudio.nodybackend.dto.code.ErrorCode;
 import org.nodystudio.nodybackend.dto.thread.ThreadCreateRequest;
@@ -52,7 +55,7 @@ class ThreadControllerTest {
   private ThreadController threadController;
 
   private ThreadResponse threadResponse;
-  private User mockUser;
+  private UserDetails mockUserDetails;
   private Validator validator;
 
   @BeforeEach
@@ -62,16 +65,43 @@ class ThreadControllerTest {
       validator = factory.getValidator();
     }
 
-    // Mock User 생성
-    mockUser = User.builder()
-        .id(1L)
-        .provider("google")
-        .socialId("123456789")
-        .email("test@example.com")
-        .nickname("테스트유저")
-        .role(RoleType.USER)
-        .isActive(true)
-        .build();
+    // Mock UserDetails 생성
+    mockUserDetails = new UserDetails() {
+      @Override
+      public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+      }
+
+      @Override
+      public String getPassword() {
+        return null;
+      }
+
+      @Override
+      public String getUsername() {
+        return "test@example.com";
+      }
+
+      @Override
+      public boolean isAccountNonExpired() {
+        return true;
+      }
+
+      @Override
+      public boolean isAccountNonLocked() {
+        return true;
+      }
+
+      @Override
+      public boolean isCredentialsNonExpired() {
+        return true;
+      }
+
+      @Override
+      public boolean isEnabled() {
+        return true;
+      }
+    };
 
     UserSummaryResponse userResponse = UserSummaryResponse.builder()
         .id(1L)
@@ -121,8 +151,8 @@ class ThreadControllerTest {
         .willReturn(createResponse);
 
     // when
-    ResponseEntity<ApiResponse<ThreadResponse>> response = threadController.createThread(request,
-        mockUser);
+    ResponseEntity<ApiResponse<ThreadResponse>> response = threadController.createThread(
+        mockUserDetails, request);
 
     // then
     assertEquals(201, response.getStatusCode().value());
@@ -140,10 +170,10 @@ class ThreadControllerTest {
   @DisplayName("GET /api/threads/{id} - 스레드 단건 조회 API 테스트")
   void getThread_Success() {
     // given
-    given(threadService.getThread(1L, "test@example.com")).willReturn(threadResponse);
+    given(threadService.getThread(1L, null)).willReturn(threadResponse);
 
     // when
-    ResponseEntity<ApiResponse<ThreadResponse>> response = threadController.getThread(1L, mockUser);
+    ResponseEntity<ApiResponse<ThreadResponse>> response = threadController.getThread(1L);
 
     // then
     assertEquals(200, response.getStatusCode().value());
@@ -154,7 +184,7 @@ class ThreadControllerTest {
     assertEquals("테스트 스레드 내용", body.getData().getContent());
     assertEquals("스레드 조회가 완료되었습니다.", body.getMessage());
 
-    verify(threadService).getThread(1L, "test@example.com");
+    verify(threadService).getThread(1L, null);
   }
 
   @Test
@@ -164,7 +194,7 @@ class ThreadControllerTest {
     given(threadService.getThread(1L, null)).willReturn(threadResponse);
 
     // when
-    ResponseEntity<ApiResponse<ThreadResponse>> response = threadController.getThread(1L, null);
+    ResponseEntity<ApiResponse<ThreadResponse>> response = threadController.getThread(1L);
 
     // then
     assertEquals(200, response.getStatusCode().value());
@@ -183,7 +213,7 @@ class ThreadControllerTest {
     willDoNothing().given(threadService).deleteThread(1L, "test@example.com");
 
     // when
-    ResponseEntity<ApiResponse<Void>> response = threadController.deleteThread(1L, mockUser);
+    ResponseEntity<ApiResponse<Void>> response = threadController.deleteThread(1L, mockUserDetails);
 
     // then
     assertEquals(200, response.getStatusCode().value());

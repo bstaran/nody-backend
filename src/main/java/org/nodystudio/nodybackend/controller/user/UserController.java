@@ -2,6 +2,7 @@ package org.nodystudio.nodybackend.controller.user;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.nodystudio.nodybackend.controller.user.docs.UserApiDocs;
 import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.dto.ApiResponse;
 import org.nodystudio.nodybackend.dto.code.SuccessCode;
@@ -23,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/user")
 @RequiredArgsConstructor
-public class UserController {
+public class UserController implements UserApiDocs {
 
   private final UserService userService;
 
@@ -38,10 +39,12 @@ public class UserController {
    * @param user 인증된 사용자 정보 (Spring Security에 의해 보장됨)
    * @return UserDetailResponseDto 사용자 정보
    */
+  @Override
   @GetMapping(value = "/me")
   public ResponseEntity<ApiResponse<UserDetailResponseDto>> getCurrentUser(
-      @AuthenticationPrincipal User user) {
-    UserDetailResponseDto userDetail = userService.getCurrentUser(user.getId().toString());
+      @AuthenticationPrincipal Object user) {
+    User currentUser = (User) user;
+    UserDetailResponseDto userDetail = userService.getCurrentUser(currentUser.getId().toString());
 
     return ResponseEntity
         .status(SuccessCode.OK.getStatus())
@@ -55,11 +58,13 @@ public class UserController {
    * @param requestDto 닉네임 변경 요청 DTO
    * @return UserDetailResponseDto 변경된 사용자 정보
    */
+  @Override
   @PutMapping(value = "/nickname")
   public ResponseEntity<ApiResponse<UserDetailResponseDto>> updateNickname(
-      @AuthenticationPrincipal User user,
+      @AuthenticationPrincipal Object user,
       @Valid @RequestBody UpdateNicknameRequestDto requestDto) {
-    UserDetailResponseDto updatedUser = userService.updateNickname(user.getId().toString(),
+    User currentUser = (User) user;
+    UserDetailResponseDto updatedUser = userService.updateNickname(currentUser.getId().toString(),
         requestDto);
 
     return ResponseEntity
@@ -73,10 +78,12 @@ public class UserController {
    * @param user 인증된 사용자 정보 (@ignore)
    * @return 탈퇴 처리 결과
    */
+  @Override
   @DeleteMapping(value = "/me")
   public ResponseEntity<ApiResponse<Void>> deactivateAccount(
-      @AuthenticationPrincipal User user) {
-    userService.deactivateAccount(user.getId().toString());
+      @AuthenticationPrincipal Object user) {
+    User currentUser = (User) user;
+    userService.deactivateAccount(currentUser.getId().toString());
 
     return ResponseEntity
         .status(SuccessCode.OK.getStatus())
