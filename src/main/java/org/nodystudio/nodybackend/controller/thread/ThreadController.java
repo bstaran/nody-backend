@@ -45,6 +45,28 @@ public class ThreadController implements ThreadApiDocs {
   }
 
   /**
+   * Pageable을 ThreadSearchRequest로 변환합니다.
+   *
+   * @param pageable 페이지 정보
+   * @param keyword 검색 키워드
+   * @param threadType 스레드 타입
+   * @return 변환된 ThreadSearchRequest
+   */
+  private ThreadSearchRequest createSearchRequestFromPageable(Pageable pageable, String keyword, String threadType) {
+    return ThreadSearchRequest.builder()
+        .page(pageable.getPageNumber())
+        .size(pageable.getPageSize())
+        .sortBy(pageable.getSort().iterator().hasNext() ? pageable.getSort().iterator().next()
+            .getProperty() : "createdAt")
+        .sortDirection(
+            pageable.getSort().iterator().hasNext() && pageable.getSort().iterator().next()
+                .isDescending() ? "desc" : "asc")
+        .keyword(keyword)
+        .threadType(threadType)
+        .build();
+  }
+
+  /**
    * 스레드 생성 POST /api/threads
    */
   @Override
@@ -85,7 +107,7 @@ public class ThreadController implements ThreadApiDocs {
    */
   @Override
   @GetMapping
-  public ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<Page<ThreadResponse>>> getThreads(
+  public ResponseEntity<ApiResponse<Page<ThreadResponse>>> getThreads(
       @Valid @ModelAttribute ThreadSearchRequest searchRequest,
       @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
     UserDetails userDetails = null;
@@ -141,7 +163,7 @@ public class ThreadController implements ThreadApiDocs {
    */
   @Override
   @GetMapping("/independent")
-  public ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<Page<ThreadResponse>>> getIndependentThreads(
+  public ResponseEntity<ApiResponse<Page<ThreadResponse>>> getIndependentThreads(
       @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
     UserDetails userDetails = null;
     String keyword = null;
@@ -149,17 +171,7 @@ public class ThreadController implements ThreadApiDocs {
     log.info("독립 스레드 목록 조회 - 키워드: {}, 사용자: {}", keyword,
         getUserDisplayName(userDetails));
 
-    ThreadSearchRequest searchRequest = ThreadSearchRequest.builder()
-        .page(pageable.getPageNumber())
-        .size(pageable.getPageSize())
-        .sortBy(pageable.getSort().iterator().hasNext() ? pageable.getSort().iterator().next()
-            .getProperty() : "createdAt")
-        .sortDirection(
-            pageable.getSort().iterator().hasNext() && pageable.getSort().iterator().next()
-                .isDescending() ? "desc" : "asc")
-        .keyword(keyword)
-        .threadType("independent")
-        .build();
+    ThreadSearchRequest searchRequest = createSearchRequestFromPageable(pageable, keyword, "independent");
 
     Page<ThreadResponse> response = threadService.searchThreads(searchRequest,
         userDetails != null ? userDetails.getUsername() : null);
@@ -172,7 +184,7 @@ public class ThreadController implements ThreadApiDocs {
    */
   @Override
   @GetMapping("/linked")
-  public ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<Page<ThreadResponse>>> getLinkedThreads(
+  public ResponseEntity<ApiResponse<Page<ThreadResponse>>> getLinkedThreads(
       @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
     UserDetails userDetails = null;
     String keyword = null;
@@ -180,17 +192,7 @@ public class ThreadController implements ThreadApiDocs {
     log.info("로그 연결 스레드 목록 조회 - 키워드: {}, 사용자: {}", keyword,
         getUserDisplayName(userDetails));
 
-    ThreadSearchRequest searchRequest = ThreadSearchRequest.builder()
-        .page(pageable.getPageNumber())
-        .size(pageable.getPageSize())
-        .sortBy(pageable.getSort().iterator().hasNext() ? pageable.getSort().iterator().next()
-            .getProperty() : "createdAt")
-        .sortDirection(
-            pageable.getSort().iterator().hasNext() && pageable.getSort().iterator().next()
-                .isDescending() ? "desc" : "asc")
-        .keyword(keyword)
-        .threadType("linked")
-        .build();
+    ThreadSearchRequest searchRequest = createSearchRequestFromPageable(pageable, keyword, "linked");
 
     Page<ThreadResponse> response = threadService.searchThreads(searchRequest,
         userDetails != null ? userDetails.getUsername() : null);
