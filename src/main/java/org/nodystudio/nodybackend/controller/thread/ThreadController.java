@@ -4,6 +4,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.nodystudio.nodybackend.controller.thread.docs.ThreadApiDocs;
+import org.nodystudio.nodybackend.domain.enums.SortDirection;
+import org.nodystudio.nodybackend.domain.enums.ThreadSortField;
+import org.nodystudio.nodybackend.domain.enums.ThreadType;
 import org.nodystudio.nodybackend.dto.ApiResponse;
 import org.nodystudio.nodybackend.dto.thread.ThreadCreateRequest;
 import org.nodystudio.nodybackend.dto.thread.ThreadResponse;
@@ -47,20 +50,22 @@ public class ThreadController implements ThreadApiDocs {
   /**
    * Pageable을 ThreadSearchRequest로 변환합니다.
    *
-   * @param pageable 페이지 정보
-   * @param keyword 검색 키워드
+   * @param pageable   페이지 정보
+   * @param keyword    검색 키워드
    * @param threadType 스레드 타입
    * @return 변환된 ThreadSearchRequest
    */
-  private ThreadSearchRequest createSearchRequestFromPageable(Pageable pageable, String keyword, String threadType) {
+  private ThreadSearchRequest createSearchRequestFromPageable(Pageable pageable, String keyword,
+      ThreadType threadType) {
     return ThreadSearchRequest.builder()
         .page(pageable.getPageNumber())
         .size(pageable.getPageSize())
-        .sortBy(pageable.getSort().iterator().hasNext() ? pageable.getSort().iterator().next()
-            .getProperty() : "createdAt")
+        .sortBy(pageable.getSort().iterator().hasNext() ?
+            ThreadSortField.fromValueOrNull(pageable.getSort().iterator().next().getProperty()) :
+            ThreadSortField.CREATED_AT)
         .sortDirection(
             pageable.getSort().iterator().hasNext() && pageable.getSort().iterator().next()
-                .isDescending() ? "desc" : "asc")
+                .isDescending() ? SortDirection.DESC : SortDirection.ASC)
         .keyword(keyword)
         .threadType(threadType)
         .build();
@@ -146,7 +151,7 @@ public class ThreadController implements ThreadApiDocs {
    */
   @Override
   @DeleteMapping("/{id}")
-  public ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<Void>> deleteThread(
+  public ResponseEntity<ApiResponse<Void>> deleteThread(
       @PathVariable Long id,
       @AuthenticationPrincipal UserDetails userDetails) {
 
@@ -171,7 +176,8 @@ public class ThreadController implements ThreadApiDocs {
     log.info("독립 스레드 목록 조회 - 키워드: {}, 사용자: {}", keyword,
         getUserDisplayName(userDetails));
 
-    ThreadSearchRequest searchRequest = createSearchRequestFromPageable(pageable, keyword, "independent");
+    ThreadSearchRequest searchRequest = createSearchRequestFromPageable(pageable, keyword,
+        ThreadType.INDEPENDENT);
 
     Page<ThreadResponse> response = threadService.searchThreads(searchRequest,
         userDetails != null ? userDetails.getUsername() : null);
@@ -192,7 +198,8 @@ public class ThreadController implements ThreadApiDocs {
     log.info("로그 연결 스레드 목록 조회 - 키워드: {}, 사용자: {}", keyword,
         getUserDisplayName(userDetails));
 
-    ThreadSearchRequest searchRequest = createSearchRequestFromPageable(pageable, keyword, "linked");
+    ThreadSearchRequest searchRequest = createSearchRequestFromPageable(pageable, keyword,
+        ThreadType.LINKED);
 
     Page<ThreadResponse> response = threadService.searchThreads(searchRequest,
         userDetails != null ? userDetails.getUsername() : null);

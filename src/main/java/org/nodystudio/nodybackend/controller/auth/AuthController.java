@@ -2,6 +2,7 @@ package org.nodystudio.nodybackend.controller.auth;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.nodystudio.nodybackend.controller.auth.docs.AuthApiDocs;
 import org.nodystudio.nodybackend.dto.ApiResponse;
 import org.nodystudio.nodybackend.dto.TokenRefreshRequestDto;
 import org.nodystudio.nodybackend.dto.TokenResponseDto;
@@ -19,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-public class AuthController implements org.nodystudio.nodybackend.controller.auth.docs.AuthApiDocs {
+public class AuthController implements AuthApiDocs {
 
   private final AuthService authService;
 
@@ -31,7 +32,7 @@ public class AuthController implements org.nodystudio.nodybackend.controller.aut
    */
   @Override
   @PostMapping(value = "/refresh")
-  public ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<TokenResponseDto>> refreshAccessToken(
+  public ResponseEntity<ApiResponse<TokenResponseDto>> refreshAccessToken(
       @Valid @RequestBody TokenRefreshRequestDto requestDto) {
     TokenResponseDto tokenData = authService.refreshAccessToken(requestDto);
     return ResponseEntity

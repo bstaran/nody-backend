@@ -44,7 +44,7 @@ public class LogController implements LogApiDocs {
    */
   @Override
   @PostMapping
-  public ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<LogResponse>> createLog(
+  public ResponseEntity<ApiResponse<LogResponse>> createLog(
       @AuthenticationPrincipal UserDetails userDetails,
       @Valid @RequestBody LogCreateRequest request) {
 
@@ -61,7 +61,7 @@ public class LogController implements LogApiDocs {
    */
   @Override
   @GetMapping("/{id}")
-  public ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<LogResponse>> getLog(
+  public ResponseEntity<ApiResponse<LogResponse>> getLog(
       @PathVariable Long id) {
     UserDetails userDetails = null;
 
@@ -79,7 +79,7 @@ public class LogController implements LogApiDocs {
    */
   @Override
   @GetMapping
-  public ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<Page<LogResponse>>> getLogs(
+  public ResponseEntity<ApiResponse<Page<LogResponse>>> getLogs(
       @Valid @ModelAttribute LogSearchRequest searchRequest,
       @PageableDefault(size = 20) Pageable pageable) {
     UserDetails userDetails = null;
@@ -100,7 +100,7 @@ public class LogController implements LogApiDocs {
    */
   @Override
   @PutMapping("/{id}")
-  public ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<LogResponse>> updateLog(
+  public ResponseEntity<ApiResponse<LogResponse>> updateLog(
       @PathVariable Long id,
       @AuthenticationPrincipal UserDetails userDetails,
       @Valid @RequestBody LogUpdateRequest request) {
@@ -117,7 +117,7 @@ public class LogController implements LogApiDocs {
    */
   @Override
   @DeleteMapping("/{id}")
-  public ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<Void>> deleteLog(
+  public ResponseEntity<ApiResponse<Void>> deleteLog(
       @PathVariable Long id,
       @AuthenticationPrincipal UserDetails userDetails) {
 
@@ -133,7 +133,7 @@ public class LogController implements LogApiDocs {
    */
   @Override
   @GetMapping("/{logId}/threads")
-  public ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<Page<ThreadResponse>>> getLogThreads(
+  public ResponseEntity<ApiResponse<Page<ThreadResponse>>> getLogThreads(
       @PathVariable Long logId,
       @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
 

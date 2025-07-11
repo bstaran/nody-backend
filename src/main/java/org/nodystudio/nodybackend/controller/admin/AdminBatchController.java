@@ -33,7 +33,7 @@ public class AdminBatchController implements AdminBatchApiDocs {
   @Override
   @PostMapping("/user-cleanup")
   @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<Map<String, Object>>> runUserCleanupBatch() {
+  public ResponseEntity<ApiResponse<Map<String, Object>>> runUserCleanupBatch() {
     int deletedCount = userCleanupBatchService.manualCleanupExpiredUsers();
 
     Map<String, Object> result = Map.of(
@@ -57,12 +57,8 @@ public class AdminBatchController implements AdminBatchApiDocs {
   @Override
   @GetMapping("/user-cleanup/count")
   @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<Long>> getExpiredUsersCount() {
+  public ResponseEntity<ApiResponse<Long>> getExpiredUsersCount() {
     int days = 0;
-
-    if (days < 0 || days > 30) {
-      days = 0; // 유효하지 않은 값은 기본값으로 설정
-    }
 
     long userCount = userCleanupBatchService.countUsersToBeDeleted(days);
 
@@ -79,7 +75,7 @@ public class AdminBatchController implements AdminBatchApiDocs {
   @Override
   @GetMapping("/user-cleanup/status")
   @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<Map<String, Object>>> getBatchStatus() {
+  public ResponseEntity<ApiResponse<Map<String, Object>>> getBatchStatus() {
     long immediateCount = userCleanupBatchService.countUsersToBeDeleted(0);
     long weekCount = userCleanupBatchService.countUsersToBeDeleted(7);
     long monthCount = userCleanupBatchService.countUsersToBeDeleted(30);
