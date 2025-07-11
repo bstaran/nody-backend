@@ -23,6 +23,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.nodystudio.nodybackend.domain.enums.OAuthProvider;
 import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.repository.UserRepository;
 import org.nodystudio.nodybackend.security.jwt.TokenProvider;
@@ -66,7 +67,7 @@ class OAuth2LoginSuccessHandlerTest {
 
     testUser = User.builder()
         .id(1L)
-        .provider("google")
+        .provider(OAuthProvider.GOOGLE)
         .socialId("google_12345")
         .email("test@example.com")
         .nickname("Test User")
@@ -81,7 +82,7 @@ class OAuth2LoginSuccessHandlerTest {
         Collections.singleton(new OAuth2UserAuthority(attributes)), attributes, "sub");
 
     ClientRegistration clientRegistration = ClientRegistration
-        .withRegistrationId("google")
+        .withRegistrationId(OAuthProvider.GOOGLE.getValue())
         .clientId("test-client-id")
         .clientSecret("test-client-secret")
         .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
@@ -104,7 +105,7 @@ class OAuth2LoginSuccessHandlerTest {
     ReflectionTestUtils.setField(successHandler, "cookieDomain", "localhost");
     ReflectionTestUtils.setField(successHandler, "cookieSameSite", "Strict");
 
-    given(clientRegistrationRepository.findByRegistrationId("google")).willReturn(
+    given(clientRegistrationRepository.findByRegistrationId(OAuthProvider.GOOGLE.getValue())).willReturn(
         clientRegistration);
   }
 
@@ -113,7 +114,7 @@ class OAuth2LoginSuccessHandlerTest {
   void onAuthenticationSuccess_shouldGenerateTokensUpdateDbAndRedirect_whenLoginIsSuccessful()
       throws ServletException, IOException {
     // given
-    given(userRepository.findByProviderAndSocialId("google", "google_12345"))
+    given(userRepository.findByProviderAndSocialId(OAuthProvider.GOOGLE, "google_12345"))
         .willReturn(Optional.of(testUser));
     given(tokenProvider.createAccessToken(testUser)).willReturn(accessToken);
     given(tokenProvider.createRefreshToken(testUser)).willReturn(refreshToken);
@@ -172,7 +173,7 @@ class OAuth2LoginSuccessHandlerTest {
   void onAuthenticationSuccess_shouldRedirectToErrorPage_whenUserNotFoundAfterLogin()
       throws ServletException, IOException {
     // given
-    given(userRepository.findByProviderAndSocialId("google", "google_12345"))
+    given(userRepository.findByProviderAndSocialId(OAuthProvider.GOOGLE, "google_12345"))
         .willReturn(Optional.empty());
 
     // when
@@ -194,7 +195,7 @@ class OAuth2LoginSuccessHandlerTest {
   void onAuthenticationSuccess_shouldRedirectToErrorPage_whenInvalidRedirectUrl()
       throws IOException {
     // given
-    given(userRepository.findByProviderAndSocialId("google", "google_12345")).willReturn(
+    given(userRepository.findByProviderAndSocialId(OAuthProvider.GOOGLE, "google_12345")).willReturn(
         Optional.of(testUser));
     given(tokenProvider.createAccessToken(testUser)).willReturn(accessToken);
     given(tokenProvider.createRefreshToken(testUser)).willReturn(refreshToken);
