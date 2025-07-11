@@ -8,6 +8,7 @@ import java.util.function.Function;
 import org.nodystudio.nodybackend.domain.log.Log;
 import org.nodystudio.nodybackend.domain.thread.Thread;
 import org.nodystudio.nodybackend.domain.user.RoleType;
+import org.nodystudio.nodybackend.domain.enums.OAuthProvider;
 import org.nodystudio.nodybackend.domain.user.User;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
@@ -332,7 +333,7 @@ public class ThreadRepositoryTestDataHelper {
       for (int i = existingUserCount; i < userCustomizers.size(); i++) {
         Function<User.UserBuilder, User.UserBuilder> customizer = userCustomizers.get(i);
         User.UserBuilder builder = User.builder()
-            .provider("google")
+            .provider(OAuthProvider.GOOGLE)
             .role(RoleType.USER);
 
         User user = customizer.apply(builder).build();

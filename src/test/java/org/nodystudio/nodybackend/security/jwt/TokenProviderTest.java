@@ -15,6 +15,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.nodystudio.nodybackend.domain.user.User;
+import org.nodystudio.nodybackend.domain.user.RoleType;
+import org.nodystudio.nodybackend.domain.enums.OAuthProvider;
 import org.nodystudio.nodybackend.dto.code.ErrorCode;
 import org.nodystudio.nodybackend.exception.custom.InvalidTokenException;
 
@@ -41,8 +43,9 @@ class TokenProviderTest {
         .id(1L)
         .email("test@example.com")
         .nickname("testuser")
-        .provider("google")
+        .provider(OAuthProvider.GOOGLE)
         .socialId("google_12345")
+        .role(RoleType.USER)
         .build();
   }
 
@@ -65,7 +68,7 @@ class TokenProviderTest {
     assertThat(claims.getSubject()).isEqualTo(testUser.getSocialId());
     assertThat(claims.get("userId", Long.class)).isEqualTo(testUser.getId());
     assertThat(claims.get("email", String.class)).isEqualTo(testUser.getEmail());
-    assertThat(claims.get("provider", String.class)).isEqualTo(testUser.getProvider());
+    assertThat(claims.get("provider", String.class)).isEqualTo(OAuthProvider.GOOGLE.getValue());
     assertThat(claims.getExpiration()).isAfter(new Date());
   }
 

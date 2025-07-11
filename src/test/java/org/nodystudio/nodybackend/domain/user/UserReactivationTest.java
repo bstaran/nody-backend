@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.nodystudio.nodybackend.domain.enums.OAuthProvider;
 import org.nodystudio.nodybackend.exception.custom.AccountAlreadyActivatedException;
 
 @DisplayName("사용자 계정 재활성화 테스트")
@@ -17,7 +18,7 @@ class UserReactivationTest {
   void setUp() {
     deactivatedUser = User.builder()
         .id(1L)
-        .provider("google")
+        .provider(OAuthProvider.GOOGLE)
         .socialId("123456789")
         .email("test@example.com")
         .nickname("기존닉네임")
@@ -58,7 +59,7 @@ class UserReactivationTest {
     // given
     User activeUser = User.builder()
         .id(2L)
-        .provider("google")
+        .provider(OAuthProvider.GOOGLE)
         .socialId("987654321")
         .email("active@example.com")
         .nickname("활성사용자")
@@ -78,7 +79,7 @@ class UserReactivationTest {
     // given
     String originalNickname = "원래닉네임";
     String originalEmail = "original@test.com";
-    String originalProvider = "google";
+    OAuthProvider originalProvider = OAuthProvider.GOOGLE;
     String originalSocialId = "123456789";
     RoleType originalRole = RoleType.USER;
 

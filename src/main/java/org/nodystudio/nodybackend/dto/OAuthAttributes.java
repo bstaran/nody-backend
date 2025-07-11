@@ -4,6 +4,7 @@ import java.util.Map;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.nodystudio.nodybackend.domain.enums.OAuthProvider;
 import org.nodystudio.nodybackend.domain.user.User;
 
 /**
@@ -13,9 +14,6 @@ import org.nodystudio.nodybackend.domain.user.User;
 @Getter
 public class OAuthAttributes {
 
-  public static final String PROVIDER_GOOGLE = "google";
-  public static final String PROVIDER_KAKAO = "kakao";
-
   private static final String FIELD_NAME = "name";
   private static final String FIELD_EMAIL = "email";
 
@@ -23,12 +21,12 @@ public class OAuthAttributes {
   private final String nameAttributeKey;
   private final String name;
   private final String email;
-  private final String provider;
+  private final OAuthProvider provider;
   private final String providerId;
 
   @Builder
   public OAuthAttributes(Map<String, Object> attributes, String nameAttributeKey, String name,
-      String email, String provider, String providerId) {
+      String email, OAuthProvider provider, String providerId) {
     this.attributes = attributes;
     this.nameAttributeKey = nameAttributeKey;
     this.name = name;
@@ -50,7 +48,7 @@ public class OAuthAttributes {
       Map<String, Object> attributes) {
     log.debug("OAuth 속성 변환 시작 - 제공자: {}", registrationId);
 
-    if (PROVIDER_GOOGLE.equals(registrationId)) {
+    if (OAuthProvider.GOOGLE.getValue().equals(registrationId)) {
       return ofGoogle(userNameAttributeName, attributes);
     }
     // TODO: "naver", "kakao" 등 다른 소셜 로그인 제공자 구현 추가 필요
@@ -84,7 +82,7 @@ public class OAuthAttributes {
         userNameAttributeName,
         name,
         email,
-        PROVIDER_GOOGLE,
+        OAuthProvider.GOOGLE,
         providerId
     );
   }
@@ -97,7 +95,7 @@ public class OAuthAttributes {
       String nameAttributeKey,
       String name,
       String email,
-      String provider,
+      OAuthProvider provider,
       String providerId) {
 
     return OAuthAttributes.builder()

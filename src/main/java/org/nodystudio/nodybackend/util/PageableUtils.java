@@ -1,5 +1,7 @@
 package org.nodystudio.nodybackend.util;
 
+import org.nodystudio.nodybackend.domain.enums.SortDirection;
+import org.nodystudio.nodybackend.domain.enums.ThreadSortField;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -33,11 +35,11 @@ public final class PageableUtils {
    * @param page          페이지 번호 (0부터 시작)
    * @param size          페이지 크기
    * @param sortBy        정렬 필드
-   * @param sortDirection 정렬 방향 ("asc" 또는 "desc")
+   * @param sortDirection 정렬 방향 (ASC 또는 DESC)
    * @return Pageable 객체
    */
-  public static Pageable createThreadPageable(int page, int size, String sortBy,
-      String sortDirection) {
+  public static Pageable createThreadPageable(int page, int size, ThreadSortField sortBy,
+      SortDirection sortDirection) {
     Sort sort = createThreadSort(sortBy, sortDirection);
     return PageRequest.of(page, size, sort);
   }
@@ -58,16 +60,17 @@ public final class PageableUtils {
    * Thread 엔티티에 최적화된 정렬 객체를 생성합니다. 유효하지 않은 정렬 필드의 경우 기본값(createdAt DESC)을 사용합니다.
    *
    * @param sortBy        정렬 필드
-   * @param sortDirection 정렬 방향 ("asc" 또는 "desc")
+   * @param sortDirection 정렬 방향 (ASC 또는 DESC)
    * @return Sort 객체
    */
-  public static Sort createThreadSort(String sortBy, String sortDirection) {
-    Sort.Direction direction = getSortDirection(sortDirection);
+  public static Sort createThreadSort(ThreadSortField sortBy, SortDirection sortDirection) {
+    Sort.Direction direction = sortDirection == SortDirection.ASC
+        ? Sort.Direction.ASC
+        : Sort.Direction.DESC;
 
     return switch (sortBy) {
-      case "createdAt" -> Sort.by(direction, "createdAt");
-      case "updatedAt" -> Sort.by(direction, "updatedAt");
-      case "viewCount" -> Sort.by(direction, "viewCount");
+      case CREATED_AT -> Sort.by(direction, "createdAt");
+      case VIEW_COUNT -> Sort.by(direction, "viewCount");
       default -> Sort.by(Sort.Direction.DESC, "createdAt"); // 기본값
     };
   }

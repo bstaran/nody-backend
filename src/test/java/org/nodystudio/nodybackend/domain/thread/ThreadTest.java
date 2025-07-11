@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.nodystudio.nodybackend.domain.enums.OAuthProvider;
 import org.nodystudio.nodybackend.domain.log.Log;
 import org.nodystudio.nodybackend.domain.user.RoleType;
 import org.nodystudio.nodybackend.domain.user.User;
@@ -26,7 +27,7 @@ class ThreadTest {
         .id(1L)
         .email("test@example.com")
         .nickname("testuser")
-        .provider("google")
+        .provider(OAuthProvider.GOOGLE)
         .socialId("12345")
         .role(RoleType.USER)
         .build();
@@ -35,7 +36,7 @@ class ThreadTest {
         .id(2L)
         .email("other@example.com")
         .nickname("otheruser")
-        .provider("google")
+        .provider(OAuthProvider.GOOGLE)
         .socialId("67890")
         .role(RoleType.USER)
         .build();

@@ -250,10 +250,10 @@ public class ThreadService {
 
     // 스레드 타입별 검색
     return switch (searchRequest.getThreadType()) {
-      case "independent" -> viewer != null
+      case INDEPENDENT -> viewer != null
           ? threadRepository.findIndependentThreadsWithUser(viewer.getId(), pageable)
           : threadRepository.findIndependentPublicThreadsOrderByCreatedAtDesc(pageable);
-      case "linked" -> viewer != null
+      case LINKED -> viewer != null
           ? threadRepository.findLinkedThreadsWithUser(viewer.getId(), pageable)
           : threadRepository.findLinkedPublicThreadsOrderByCreatedAtDesc(pageable);
       default -> viewer != null

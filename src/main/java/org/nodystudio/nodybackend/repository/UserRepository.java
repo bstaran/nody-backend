@@ -3,6 +3,7 @@ package org.nodystudio.nodybackend.repository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import org.nodystudio.nodybackend.domain.enums.OAuthProvider;
 import org.nodystudio.nodybackend.domain.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -11,11 +12,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
   /**
    * 소셜 로그인 제공자와 소셜 ID로 사용자를 찾습니다.
    *
-   * @param provider 소셜 로그인 제공자 (e.g., "google")
+   * @param provider 소셜 로그인 제공자 (e.g., OAuthProvider.GOOGLE)
    * @param socialId 소셜 ID
    * @return Optional<User>
    */
-  Optional<User> findByProviderAndSocialId(String provider, String socialId);
+  Optional<User> findByProviderAndSocialId(OAuthProvider provider, String socialId);
 
   /**
    * Refresh Token으로 사용자를 찾습니다. Refresh Token은 고유하거나, 특정 사용자와 1:1 매핑된다고 가정합니다. (만약 한 사용자가 여러 기기에서
@@ -57,7 +58,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
    * @param socialId 소셜 ID
    * @return Optional<User>
    */
-  Optional<User> findByProviderAndSocialIdAndIsActiveTrue(String provider, String socialId);
+  Optional<User> findByProviderAndSocialIdAndIsActiveTrue(OAuthProvider provider, String socialId);
 
   /**
    * 특정 시점 이전에 탈퇴한 비활성 사용자들을 조회합니다. (배치 삭제용)

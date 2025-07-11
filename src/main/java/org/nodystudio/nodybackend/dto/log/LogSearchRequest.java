@@ -5,12 +5,13 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import java.math.BigDecimal;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.nodystudio.nodybackend.domain.enums.LogSortField;
+import org.nodystudio.nodybackend.domain.enums.SortDirection;
 
 /**
  * 로그 검색을 위한 요청 DTO 클래스
@@ -72,26 +73,24 @@ public class LogSearchRequest {
   /**
    * 정렬 기준
    * <p>
-   * 가능한 값: createdAt, viewCount, distance
+   * 가능한 값: CREATED_AT, VIEW_COUNT, DISTANCE
    * </p>
    * <p>
-   * 기본값: createdAt
+   * 기본값: CREATED_AT
    * </p>
    */
-  @Pattern(regexp = "^(createdAt|viewCount|distance)$", message = "정렬 기준은 createdAt, viewCount, distance 중 하나여야 합니다.")
   @Builder.Default
-  private String sortBy = "createdAt";
+  private LogSortField sortBy = LogSortField.CREATED_AT;
 
   /**
    * 정렬 방향
    * <p>
-   * 가능한 값: asc, desc
+   * 가능한 값: ASC, DESC
    * </p>
    * <p>
-   * 기본값: desc
+   * 기본값: DESC
    * </p>
    */
-  @Pattern(regexp = "^(asc|desc)$", message = "정렬 방향은 asc 또는 desc여야 합니다.")
   @Builder.Default
-  private String sortDirection = "desc";
+  private SortDirection sortDirection = SortDirection.DESC;
 }

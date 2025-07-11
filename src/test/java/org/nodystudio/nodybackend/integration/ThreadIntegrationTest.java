@@ -16,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.nodystudio.nodybackend.base.BaseIntegrationTest;
+import org.nodystudio.nodybackend.domain.enums.OAuthProvider;
 import org.nodystudio.nodybackend.domain.log.Log;
 import org.nodystudio.nodybackend.domain.thread.Thread;
 import org.nodystudio.nodybackend.domain.user.RoleType;
@@ -61,7 +62,7 @@ class ThreadIntegrationTest extends BaseIntegrationTest {
   void setUp() {
     // 테스트 사용자 생성
     testUser = userRepository.save(User.builder()
-        .provider("google")
+        .provider(OAuthProvider.GOOGLE)
         .socialId("123456789")
         .email("test@example.com")
         .nickname("테스트유저")
@@ -70,7 +71,7 @@ class ThreadIntegrationTest extends BaseIntegrationTest {
         .build());
 
     otherUser = userRepository.save(User.builder()
-        .provider("google")
+        .provider(OAuthProvider.GOOGLE)
         .socialId("987654321")
         .email("other@example.com")
         .nickname("다른유저")

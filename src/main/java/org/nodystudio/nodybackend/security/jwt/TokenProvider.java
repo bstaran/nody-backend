@@ -81,7 +81,7 @@ public class TokenProvider {
           .subject(user.getSocialId())
           .claim(CLAIM_USER_ID, user.getId())
           .claim(CLAIM_EMAIL, user.getEmail())
-          .claim(CLAIM_PROVIDER, user.getProvider())
+          .claim(CLAIM_PROVIDER, user.getProvider().getValue())
           .issuedAt(Date.from(now))
           .expiration(expirationDate)
           .signWith(secretKey, SIGNATURE_ALGORITHM)
