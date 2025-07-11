@@ -20,6 +20,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 import org.nodystudio.nodybackend.domain.BaseTimeEntity;
+import org.nodystudio.nodybackend.domain.enums.OAuthProvider;
 import org.nodystudio.nodybackend.exception.custom.AccountAlreadyActivatedException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -42,8 +43,9 @@ public class User extends BaseTimeEntity {
   @Column(name = "user_id")
   private Long id;
 
+  @Enumerated(EnumType.STRING)
   @Column(name = "provider", nullable = false, length = 50)
-  private String provider;
+  private OAuthProvider provider;
 
   @Column(name = "social_id", nullable = false)
   private String socialId;
