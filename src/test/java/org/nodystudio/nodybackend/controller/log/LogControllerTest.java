@@ -12,6 +12,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.verify;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -33,13 +34,14 @@ import org.nodystudio.nodybackend.dto.log.LogUpdateRequest;
 import org.nodystudio.nodybackend.dto.thread.ThreadResponse;
 import org.nodystudio.nodybackend.dto.user.UserSummaryResponse;
 import org.nodystudio.nodybackend.service.log.LogService;
+import org.nodystudio.nodybackend.domain.user.User;
+import org.nodystudio.nodybackend.security.userdetails.CustomUserDetails;
 import org.nodystudio.nodybackend.service.thread.ThreadService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UserDetails;
 
 /**
  * - 로그 CRUD 기능 테스트 - 위치 기반 검색 테스트 - 권한 검증 테스트 - 공개/비공개 필터링 테스트
@@ -58,13 +60,16 @@ class LogControllerTest {
   private LogController logController;
 
   private LogResponse testLogResponse;
-  private UserDetails mockUserDetails;
+  private CustomUserDetails mockUserDetails;
 
   @BeforeEach
   void setUp() {
-    // Mock UserDetails 생성 (lenient를 사용하여 불필요한 stubbing 경고 방지)
-    mockUserDetails = org.mockito.Mockito.mock(UserDetails.class);
-    lenient().when(mockUserDetails.getUsername()).thenReturn("test@example.com");
+    // Mock User와 CustomUserDetails 생성
+    User mockUser = mock(User.class);
+    lenient().when(mockUser.getId()).thenReturn(1L);
+    lenient().when(mockUser.getEmail()).thenReturn("test@example.com");
+    
+    mockUserDetails = new CustomUserDetails(mockUser);
 
     UserSummaryResponse author = UserSummaryResponse.builder()
         .id(1L)
