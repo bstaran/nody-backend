@@ -13,6 +13,7 @@ import org.nodystudio.nodybackend.dto.thread.ThreadCreateRequest;
 import org.nodystudio.nodybackend.dto.thread.ThreadResponse;
 import org.nodystudio.nodybackend.dto.thread.ThreadSearchRequest;
 import org.nodystudio.nodybackend.dto.thread.ThreadUpdateRequest;
+import org.nodystudio.nodybackend.security.userdetails.CustomUserDetails;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -58,7 +59,7 @@ public interface ThreadApiDocs {
       )
   })
   ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<ThreadResponse>> createThread(
-      @Parameter(hidden = true) @AuthenticationPrincipal UserDetails userDetails,
+      @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
       @Valid @RequestBody ThreadCreateRequest request
   );
 
@@ -146,7 +147,7 @@ public interface ThreadApiDocs {
   })
   ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<ThreadResponse>> updateThread(
       @Parameter(description = "스레드 ID") @PathVariable Long id,
-      @Parameter(hidden = true) @AuthenticationPrincipal UserDetails userDetails,
+      @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
       @Valid @RequestBody ThreadUpdateRequest request
   );
 
@@ -179,7 +180,7 @@ public interface ThreadApiDocs {
   })
   ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<Void>> deleteThread(
       @Parameter(description = "스레드 ID") @PathVariable Long id,
-      @Parameter(hidden = true) @AuthenticationPrincipal UserDetails userDetails
+      @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails
   );
 
   @Operation(

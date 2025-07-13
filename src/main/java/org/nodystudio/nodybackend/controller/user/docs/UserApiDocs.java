@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.nodystudio.nodybackend.dto.user.UpdateNicknameRequestDto;
 import org.nodystudio.nodybackend.dto.user.UserDetailResponseDto;
+import org.nodystudio.nodybackend.security.userdetails.CustomUserDetails;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -42,7 +43,7 @@ public interface UserApiDocs {
       )
   })
   ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<UserDetailResponseDto>> getCurrentUser(
-      @Parameter(hidden = true) @AuthenticationPrincipal Object currentUser
+      @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails currentUser
   );
 
   @Operation(
@@ -81,7 +82,7 @@ public interface UserApiDocs {
       )
   })
   ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<UserDetailResponseDto>> updateNickname(
-      @Parameter(hidden = true) @AuthenticationPrincipal Object currentUser,
+      @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails currentUser,
       @Valid @RequestBody UpdateNicknameRequestDto requestDto
   );
 
@@ -105,6 +106,6 @@ public interface UserApiDocs {
       )
   })
   ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<Void>> deactivateAccount(
-      @Parameter(hidden = true) @AuthenticationPrincipal Object currentUser
+      @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails currentUser
   );
 }

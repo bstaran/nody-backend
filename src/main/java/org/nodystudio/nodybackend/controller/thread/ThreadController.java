@@ -12,6 +12,7 @@ import org.nodystudio.nodybackend.dto.thread.ThreadCreateRequest;
 import org.nodystudio.nodybackend.dto.thread.ThreadResponse;
 import org.nodystudio.nodybackend.dto.thread.ThreadSearchRequest;
 import org.nodystudio.nodybackend.dto.thread.ThreadUpdateRequest;
+import org.nodystudio.nodybackend.security.userdetails.CustomUserDetails;
 import org.nodystudio.nodybackend.service.thread.ThreadService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -43,8 +44,8 @@ public class ThreadController implements ThreadApiDocs {
   /**
    * 로그에 표시할 사용자 정보를 안전하게 가져옵니다. 인증되지 않은 사용자의 경우 "익명"을 반환합니다.
    */
-  private String getUserDisplayName(UserDetails userDetails) {
-    return userDetails != null ? userDetails.getUsername() : "익명";
+  private String getUserDisplayName(CustomUserDetails userDetails) {
+    return userDetails != null ? userDetails.getEmail() : "익명";
   }
 
   /**
@@ -77,13 +78,13 @@ public class ThreadController implements ThreadApiDocs {
   @Override
   @PostMapping
   public ResponseEntity<ApiResponse<ThreadResponse>> createThread(
-      @AuthenticationPrincipal UserDetails userDetails,
+      @AuthenticationPrincipal CustomUserDetails userDetails,
       @Valid @RequestBody ThreadCreateRequest request) {
 
     log.info("스레드 생성 요청 - 사용자: {}",
         getUserDisplayName(userDetails));
 
-    ThreadResponse response = threadService.createThread(request, userDetails.getUsername());
+    ThreadResponse response = threadService.createThread(request, userDetails.getEmail());
 
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiResponse.success("스레드가 성공적으로 생성되었습니다.", response));
@@ -96,13 +97,13 @@ public class ThreadController implements ThreadApiDocs {
   @GetMapping("/{id}")
   public ResponseEntity<ApiResponse<ThreadResponse>> getThread(
       @PathVariable Long id) {
-    UserDetails userDetails = null;
+    CustomUserDetails userDetails = null;
 
     log.info("스레드 단건 조회 - ID: {}, 사용자: {}",
         id, getUserDisplayName(userDetails));
 
     ThreadResponse response = threadService.getThread(
-        id, userDetails != null ? userDetails.getUsername() : null);
+        id, userDetails != null ? userDetails.getEmail() : null);
 
     return ResponseEntity.ok(ApiResponse.success("스레드 조회가 완료되었습니다.", response));
   }
@@ -115,7 +116,7 @@ public class ThreadController implements ThreadApiDocs {
   public ResponseEntity<ApiResponse<Page<ThreadResponse>>> getThreads(
       @Valid @ModelAttribute ThreadSearchRequest searchRequest,
       @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
-    UserDetails userDetails = null;
+    CustomUserDetails userDetails = null;
 
     log.info("스레드 목록 조회 - 키워드: {}, 타입: {}, 로그ID: {}, 사용자: {}",
         searchRequest.getKeyword(),
@@ -124,7 +125,7 @@ public class ThreadController implements ThreadApiDocs {
         getUserDisplayName(userDetails));
 
     Page<ThreadResponse> response = threadService.searchThreads(searchRequest,
-        userDetails != null ? userDetails.getUsername() : null);
+        userDetails != null ? userDetails.getEmail() : null);
 
     return ResponseEntity.ok(ApiResponse.success("스레드 목록 조회가 완료되었습니다.", response));
   }
@@ -136,12 +137,12 @@ public class ThreadController implements ThreadApiDocs {
   @PutMapping("/{id}")
   public ResponseEntity<ApiResponse<ThreadResponse>> updateThread(
       @PathVariable Long id,
-      @AuthenticationPrincipal UserDetails userDetails,
+      @AuthenticationPrincipal CustomUserDetails userDetails,
       @Valid @RequestBody ThreadUpdateRequest request) {
 
     log.info("스레드 수정 요청 - ID: {}, 사용자: {}", id, getUserDisplayName(userDetails));
 
-    ThreadResponse response = threadService.updateThread(id, request, userDetails.getUsername());
+    ThreadResponse response = threadService.updateThread(id, request, userDetails.getEmail());
 
     return ResponseEntity.ok(ApiResponse.success("스레드가 성공적으로 수정되었습니다.", response));
   }
@@ -153,11 +154,11 @@ public class ThreadController implements ThreadApiDocs {
   @DeleteMapping("/{id}")
   public ResponseEntity<ApiResponse<Void>> deleteThread(
       @PathVariable Long id,
-      @AuthenticationPrincipal UserDetails userDetails) {
+      @AuthenticationPrincipal CustomUserDetails userDetails) {
 
     log.info("스레드 삭제 요청 - ID: {}, 사용자: {}", id, getUserDisplayName(userDetails));
 
-    threadService.deleteThread(id, userDetails.getUsername());
+    threadService.deleteThread(id, userDetails.getEmail());
 
     return ResponseEntity.ok(ApiResponse.success("스레드가 성공적으로 삭제되었습니다.", null));
   }
@@ -170,7 +171,7 @@ public class ThreadController implements ThreadApiDocs {
   @GetMapping("/independent")
   public ResponseEntity<ApiResponse<Page<ThreadResponse>>> getIndependentThreads(
       @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
-    UserDetails userDetails = null;
+    CustomUserDetails userDetails = null;
     String keyword = null;
 
     log.info("독립 스레드 목록 조회 - 키워드: {}, 사용자: {}", keyword,
@@ -180,7 +181,7 @@ public class ThreadController implements ThreadApiDocs {
         ThreadType.INDEPENDENT);
 
     Page<ThreadResponse> response = threadService.searchThreads(searchRequest,
-        userDetails != null ? userDetails.getUsername() : null);
+        userDetails != null ? userDetails.getEmail() : null);
 
     return ResponseEntity.ok(ApiResponse.success("독립 스레드 목록 조회가 완료되었습니다.", response));
   }
@@ -192,7 +193,7 @@ public class ThreadController implements ThreadApiDocs {
   @GetMapping("/linked")
   public ResponseEntity<ApiResponse<Page<ThreadResponse>>> getLinkedThreads(
       @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
-    UserDetails userDetails = null;
+    CustomUserDetails userDetails = null;
     String keyword = null;
 
     log.info("로그 연결 스레드 목록 조회 - 키워드: {}, 사용자: {}", keyword,
@@ -202,7 +203,7 @@ public class ThreadController implements ThreadApiDocs {
         ThreadType.LINKED);
 
     Page<ThreadResponse> response = threadService.searchThreads(searchRequest,
-        userDetails != null ? userDetails.getUsername() : null);
+        userDetails != null ? userDetails.getEmail() : null);
 
     return ResponseEntity.ok(ApiResponse.success("로그 연결 스레드 목록 조회가 완료되었습니다.", response));
   }
