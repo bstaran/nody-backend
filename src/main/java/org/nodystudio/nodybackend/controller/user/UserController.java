@@ -43,7 +43,8 @@ public class UserController implements UserApiDocs {
   @GetMapping(value = "/me")
   public ResponseEntity<ApiResponse<UserDetailResponseDto>> getCurrentUser(
       @AuthenticationPrincipal CustomUserDetails userDetails) {
-    UserDetailResponseDto userDetail = userService.getCurrentUser(userDetails.getUser().getId().toString());
+    UserDetailResponseDto userDetail = userService.getCurrentUser(
+        userDetails.getUser().getId().toString());
 
     return ResponseEntity
         .status(SuccessCode.OK.getStatus())
@@ -54,7 +55,7 @@ public class UserController implements UserApiDocs {
    * 사용자의 닉네임을 변경
    *
    * @param userDetails 인증된 사용자 정보 (@ignore)
-   * @param requestDto 닉네임 변경 요청 DTO
+   * @param requestDto  닉네임 변경 요청 DTO
    * @return UserDetailResponseDto 변경된 사용자 정보
    */
   @Override
@@ -62,7 +63,8 @@ public class UserController implements UserApiDocs {
   public ResponseEntity<ApiResponse<UserDetailResponseDto>> updateNickname(
       @AuthenticationPrincipal CustomUserDetails userDetails,
       @Valid @RequestBody UpdateNicknameRequestDto requestDto) {
-    UserDetailResponseDto updatedUser = userService.updateNickname(userDetails.getUser().getId().toString(),
+    UserDetailResponseDto updatedUser = userService.updateNickname(
+        userDetails.getUser().getId().toString(),
         requestDto);
 
     return ResponseEntity

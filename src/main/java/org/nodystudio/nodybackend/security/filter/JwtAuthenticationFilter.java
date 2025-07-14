@@ -141,8 +141,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
           });
 
       CustomUserDetails userDetails = new CustomUserDetails(user);
-      
-      return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+
+      return new UsernamePasswordAuthenticationToken(userDetails, null,
+          userDetails.getAuthorities());
     } catch (DisabledException e) {
       throw e;
     } catch (Exception e) {
