@@ -26,6 +26,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.dto.ApiResponse;
 import org.nodystudio.nodybackend.dto.log.LogCreateRequest;
 import org.nodystudio.nodybackend.dto.log.LogResponse;
@@ -33,9 +34,8 @@ import org.nodystudio.nodybackend.dto.log.LogSearchRequest;
 import org.nodystudio.nodybackend.dto.log.LogUpdateRequest;
 import org.nodystudio.nodybackend.dto.thread.ThreadResponse;
 import org.nodystudio.nodybackend.dto.user.UserSummaryResponse;
-import org.nodystudio.nodybackend.service.log.LogService;
-import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.security.userdetails.CustomUserDetails;
+import org.nodystudio.nodybackend.service.log.LogService;
 import org.nodystudio.nodybackend.service.thread.ThreadService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -68,7 +68,7 @@ class LogControllerTest {
     User mockUser = mock(User.class);
     lenient().when(mockUser.getId()).thenReturn(1L);
     lenient().when(mockUser.getEmail()).thenReturn("test@example.com");
-    
+
     mockUserDetails = new CustomUserDetails(mockUser);
 
     UserSummaryResponse author = UserSummaryResponse.builder()
@@ -128,7 +128,7 @@ class LogControllerTest {
     given(logService.getLog(1L, null)).willReturn(testLogResponse);
 
     // when
-    ResponseEntity<ApiResponse<LogResponse>> response = logController.getLog(1L);
+    ResponseEntity<ApiResponse<LogResponse>> response = logController.getLog(1L, null);
 
     // then
     assertEquals(200, response.getStatusCode().value());
@@ -150,7 +150,7 @@ class LogControllerTest {
     given(logService.getLog(1L, null)).willReturn(testLogResponse);
 
     // when
-    ResponseEntity<ApiResponse<LogResponse>> response = logController.getLog(1L);
+    ResponseEntity<ApiResponse<LogResponse>> response = logController.getLog(1L, null);
 
     // then
     assertEquals(200, response.getStatusCode().value());
@@ -181,7 +181,7 @@ class LogControllerTest {
     // when
     Pageable pageable = PageRequest.of(0, 20);
     ResponseEntity<ApiResponse<Page<LogResponse>>> response = logController.getLogs(searchRequest,
-        pageable);
+        pageable, null);
 
     // then
     assertEquals(200, response.getStatusCode().value());
@@ -222,7 +222,8 @@ class LogControllerTest {
         .willReturn(updatedResponse);
 
     // when
-    ResponseEntity<ApiResponse<LogResponse>> response = logController.updateLog(1L, mockUserDetails, request);
+    ResponseEntity<ApiResponse<LogResponse>> response = logController.updateLog(1L, mockUserDetails,
+        request);
 
     // then
     assertEquals(200, response.getStatusCode().value());
@@ -270,7 +271,7 @@ class LogControllerTest {
 
     // when
     ResponseEntity<ApiResponse<Page<LogResponse>>> response = logController.getLogs(searchRequest,
-        null);
+        null, null);
 
     // then
     assertEquals(200, response.getStatusCode().value());
@@ -308,7 +309,7 @@ class LogControllerTest {
     // when
     Pageable pageable = PageRequest.of(0, 20);
     ResponseEntity<ApiResponse<Page<ThreadResponse>>> response = logController.getLogThreads(
-        logId, pageable);
+        logId, pageable, null);
 
     // then
     assertEquals(200, response.getStatusCode().value());
@@ -348,7 +349,7 @@ class LogControllerTest {
     // when
     Pageable pageable = PageRequest.of(0, 20);
     ResponseEntity<ApiResponse<Page<ThreadResponse>>> response = logController.getLogThreads(
-        logId, pageable);
+        logId, pageable, null);
 
     // then
     assertEquals(200, response.getStatusCode().value());
@@ -373,7 +374,7 @@ class LogControllerTest {
     // when
     Pageable pageable = PageRequest.of(0, 20);
     ResponseEntity<ApiResponse<Page<ThreadResponse>>> response = logController.getLogThreads(
-        logId, pageable);
+        logId, pageable, null);
 
     // then
     assertEquals(200, response.getStatusCode().value());
