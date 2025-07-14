@@ -19,8 +19,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -96,8 +96,8 @@ public class ThreadController implements ThreadApiDocs {
   @Override
   @GetMapping("/{id}")
   public ResponseEntity<ApiResponse<ThreadResponse>> getThread(
-      @PathVariable Long id) {
-    CustomUserDetails userDetails = null;
+      @PathVariable Long id,
+      @Nullable @AuthenticationPrincipal CustomUserDetails userDetails) {
 
     log.info("스레드 단건 조회 - ID: {}, 사용자: {}",
         id, getUserDisplayName(userDetails));
@@ -115,8 +115,8 @@ public class ThreadController implements ThreadApiDocs {
   @GetMapping
   public ResponseEntity<ApiResponse<Page<ThreadResponse>>> getThreads(
       @Valid @ModelAttribute ThreadSearchRequest searchRequest,
-      @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
-    CustomUserDetails userDetails = null;
+      @PageableDefault(size = 20, sort = "createdAt") Pageable pageable,
+      @Nullable @AuthenticationPrincipal CustomUserDetails userDetails) {
 
     log.info("스레드 목록 조회 - 키워드: {}, 타입: {}, 로그ID: {}, 사용자: {}",
         searchRequest.getKeyword(),
@@ -170,8 +170,8 @@ public class ThreadController implements ThreadApiDocs {
   @Override
   @GetMapping("/independent")
   public ResponseEntity<ApiResponse<Page<ThreadResponse>>> getIndependentThreads(
-      @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
-    CustomUserDetails userDetails = null;
+      @PageableDefault(size = 20, sort = "createdAt") Pageable pageable,
+      @Nullable @AuthenticationPrincipal CustomUserDetails userDetails) {
     String keyword = null;
 
     log.info("독립 스레드 목록 조회 - 키워드: {}, 사용자: {}", keyword,
@@ -192,8 +192,8 @@ public class ThreadController implements ThreadApiDocs {
   @Override
   @GetMapping("/linked")
   public ResponseEntity<ApiResponse<Page<ThreadResponse>>> getLinkedThreads(
-      @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
-    CustomUserDetails userDetails = null;
+      @PageableDefault(size = 20, sort = "createdAt") Pageable pageable,
+      @Nullable @AuthenticationPrincipal CustomUserDetails userDetails) {
     String keyword = null;
 
     log.info("로그 연결 스레드 목록 조회 - 키워드: {}, 사용자: {}", keyword,
