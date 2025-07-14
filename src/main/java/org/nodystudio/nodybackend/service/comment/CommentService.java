@@ -5,15 +5,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.nodystudio.nodybackend.domain.comment.Comment;
 import org.nodystudio.nodybackend.domain.thread.Thread;
 import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.dto.comment.CommentCreateRequest;
 import org.nodystudio.nodybackend.dto.comment.CommentResponse;
 import org.nodystudio.nodybackend.dto.comment.CommentUpdateRequest;
-// TODO: Issue #80 - 멘션 기능 구현 시 활성화
-// import org.nodystudio.nodybackend.event.CommentMentionEvent;
 import org.nodystudio.nodybackend.exception.custom.BadRequestException;
 import org.nodystudio.nodybackend.exception.custom.ResourceNotFoundException;
 import org.nodystudio.nodybackend.exception.custom.UnauthorizedException;
@@ -26,20 +25,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-// TODO: Issue #80 - 멘션 기능 구현 시 활성화
-// import java.util.regex.Matcher;
-// import java.util.regex.Pattern;
-// TODO: Issue #80 - 멘션 기능 구현 시 활성화
-// import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
 /**
  * 댓글 관리 서비스
  *
  * <p>
- * 스레드에 대한 댓글 생성, 조회, 수정, 삭제 기능을 제공합니다. 사용자 멘션 기능을 지원하며, 멘션 알림은 비동기 이벤트로 처리됩니다.
- * 계층형 댓글 구조를 지원하여 대댓글
+ * 스레드에 대한 댓글 생성, 조회, 수정, 삭제 기능을 제공합니다. 사용자 멘션 기능을 지원하며, 멘션 알림은 비동기 이벤트로 처리됩니다. 계층형 댓글 구조를 지원하여 대댓글
  * 작성이 가능합니다.
  * </p>
  */

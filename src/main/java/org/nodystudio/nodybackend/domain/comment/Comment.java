@@ -47,16 +47,14 @@ import org.nodystudio.nodybackend.domain.user.User;
 @SQLRestriction("deleted_at IS NULL")
 public class Comment extends BaseTimeEntity {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "comment_id")
-  private Long id;
-
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "thread_id", nullable = false)
   @NotNull(message = "스레드는 필수입니다.")
   Thread thread;
-
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "comment_id")
+  private Long id;
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "author_id", nullable = false)
   @NotNull(message = "작성자는 필수입니다.")

@@ -13,8 +13,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-// TODO: Issue #80 - 멘션 기능 구현 시 활성화
-// import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -29,8 +27,6 @@ import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.dto.comment.CommentCreateRequest;
 import org.nodystudio.nodybackend.dto.comment.CommentResponse;
 import org.nodystudio.nodybackend.dto.comment.CommentUpdateRequest;
-// TODO: Issue #80 - 멘션 기능 구현 시 활성화
-// import org.nodystudio.nodybackend.event.CommentMentionEvent;
 import org.nodystudio.nodybackend.exception.custom.BadRequestException;
 import org.nodystudio.nodybackend.exception.custom.ResourceNotFoundException;
 import org.nodystudio.nodybackend.exception.custom.UserNotFoundException;
