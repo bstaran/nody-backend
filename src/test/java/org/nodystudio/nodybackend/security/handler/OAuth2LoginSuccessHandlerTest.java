@@ -105,7 +105,8 @@ class OAuth2LoginSuccessHandlerTest {
     ReflectionTestUtils.setField(successHandler, "cookieDomain", "localhost");
     ReflectionTestUtils.setField(successHandler, "cookieSameSite", "Strict");
 
-    given(clientRegistrationRepository.findByRegistrationId(OAuthProvider.GOOGLE.getValue())).willReturn(
+    given(clientRegistrationRepository.findByRegistrationId(
+        OAuthProvider.GOOGLE.getValue())).willReturn(
         clientRegistration);
   }
 
@@ -195,7 +196,8 @@ class OAuth2LoginSuccessHandlerTest {
   void onAuthenticationSuccess_shouldRedirectToErrorPage_whenInvalidRedirectUrl()
       throws IOException {
     // given
-    given(userRepository.findByProviderAndSocialId(OAuthProvider.GOOGLE, "google_12345")).willReturn(
+    given(
+        userRepository.findByProviderAndSocialId(OAuthProvider.GOOGLE, "google_12345")).willReturn(
         Optional.of(testUser));
     given(tokenProvider.createAccessToken(testUser)).willReturn(accessToken);
     given(tokenProvider.createRefreshToken(testUser)).willReturn(refreshToken);

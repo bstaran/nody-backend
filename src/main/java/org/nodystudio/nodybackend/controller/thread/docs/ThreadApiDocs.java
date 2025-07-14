@@ -19,7 +19,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -83,7 +82,8 @@ public interface ThreadApiDocs {
       )
   })
   ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<ThreadResponse>> getThread(
-      @Parameter(description = "스레드 ID") @PathVariable Long id
+      @Parameter(description = "스레드 ID") @PathVariable Long id,
+      @Parameter(hidden = true) CustomUserDetails userDetails
   );
 
   @Operation(
@@ -107,7 +107,8 @@ public interface ThreadApiDocs {
   })
   ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<Page<ThreadResponse>>> getThreads(
       @Valid @ModelAttribute ThreadSearchRequest searchRequest,
-      @Parameter(hidden = true) @PageableDefault(size = 20, sort = "createdAt") Pageable pageable
+      @Parameter(hidden = true) @PageableDefault(size = 20, sort = "createdAt") Pageable pageable,
+      @Parameter(hidden = true) CustomUserDetails userDetails
   );
 
   @Operation(
@@ -195,7 +196,8 @@ public interface ThreadApiDocs {
       )
   })
   ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<Page<ThreadResponse>>> getIndependentThreads(
-      @Parameter(hidden = true) @PageableDefault(size = 20, sort = "createdAt") Pageable pageable
+      @Parameter(hidden = true) @PageableDefault(size = 20, sort = "createdAt") Pageable pageable,
+      @Parameter(hidden = true) CustomUserDetails userDetails
   );
 
   @Operation(
@@ -210,6 +212,7 @@ public interface ThreadApiDocs {
       )
   })
   ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<Page<ThreadResponse>>> getLinkedThreads(
-      @Parameter(hidden = true) @PageableDefault(size = 20, sort = "createdAt") Pageable pageable
+      @Parameter(hidden = true) @PageableDefault(size = 20, sort = "createdAt") Pageable pageable,
+      @Parameter(hidden = true) CustomUserDetails userDetails
   );
 }

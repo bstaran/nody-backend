@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -113,7 +112,8 @@ class CustomOAuth2UserServiceTest {
     given(userRepository.findByEmailAndDeletedAtAfter(anyString(),
         any(LocalDateTime.class))).willReturn(
         Optional.empty());
-    given(userRepository.findByProviderAndSocialId(OAuthProvider.GOOGLE, "google_12345")).willReturn(
+    given(
+        userRepository.findByProviderAndSocialId(OAuthProvider.GOOGLE, "google_12345")).willReturn(
         Optional.empty());
     given(userRepository.saveAndFlush(any(User.class))).willAnswer(invocation -> {
       User userToSave = invocation.getArgument(0);
@@ -156,7 +156,8 @@ class CustomOAuth2UserServiceTest {
     given(userInfoEndpoint.getUserNameAttributeName()).willReturn(userNameAttributeName);
     given(delegateUserService.loadUser(userRequest)).willReturn(mockOAuth2User);
     given(mockOAuth2User.getAttributes()).willReturn(googleAttributes);
-    given(userRepository.findByProviderAndSocialIdAndIsActiveTrue(OAuthProvider.GOOGLE, "google_12345"))
+    given(userRepository.findByProviderAndSocialIdAndIsActiveTrue(OAuthProvider.GOOGLE,
+        "google_12345"))
         .willReturn(Optional.of(existingUser));
 
     // when
@@ -196,7 +197,8 @@ class CustomOAuth2UserServiceTest {
         });
 
     assertThat(actualException).isSameAs(expectedException);
-    then(userRepository).should(never()).findByProviderAndSocialId(any(OAuthProvider.class), anyString());
+    then(userRepository).should(never())
+        .findByProviderAndSocialId(any(OAuthProvider.class), anyString());
     then(userRepository).should(never()).saveAndFlush(any(User.class));
   }
 
@@ -231,7 +233,8 @@ class CustomOAuth2UserServiceTest {
     given(mockOAuth2User.getAttributes()).willReturn(googleAttributes);
 
     // 활성 사용자 없음
-    given(userRepository.findByProviderAndSocialIdAndIsActiveTrue(OAuthProvider.GOOGLE, "google_12345"))
+    given(userRepository.findByProviderAndSocialIdAndIsActiveTrue(OAuthProvider.GOOGLE,
+        "google_12345"))
         .willReturn(Optional.empty());
 
     // 30일 이내 탈퇴한 사용자 존재
@@ -272,7 +275,8 @@ class CustomOAuth2UserServiceTest {
     given(mockOAuth2User.getAttributes()).willReturn(googleAttributes);
 
     // 활성 사용자 없음
-    given(userRepository.findByProviderAndSocialIdAndIsActiveTrue(OAuthProvider.GOOGLE, "google_12345"))
+    given(userRepository.findByProviderAndSocialIdAndIsActiveTrue(OAuthProvider.GOOGLE,
+        "google_12345"))
         .willReturn(Optional.empty());
 
     // 재가입 제한 없음 (30일 지남)
@@ -302,7 +306,8 @@ class CustomOAuth2UserServiceTest {
         .findByProviderAndSocialIdAndIsActiveTrue(OAuthProvider.GOOGLE, "google_12345");
     then(userRepository).should(times(1))
         .findByEmailAndDeletedAtAfter(eq("test@example.com"), any(LocalDateTime.class));
-    then(userRepository).should(times(1)).findByProviderAndSocialId(OAuthProvider.GOOGLE, "google_12345");
+    then(userRepository).should(times(1))
+        .findByProviderAndSocialId(OAuthProvider.GOOGLE, "google_12345");
     then(userRepository).should(never()).saveAndFlush(any(User.class));
 
     // 계정이 재활성화되었는지 확인 (30일 유예기간 완전 복구)

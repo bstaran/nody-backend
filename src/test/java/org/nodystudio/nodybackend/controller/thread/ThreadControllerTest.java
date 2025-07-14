@@ -18,6 +18,7 @@ import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -29,19 +30,18 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.nodystudio.nodybackend.domain.user.User;
-import org.nodystudio.nodybackend.security.userdetails.CustomUserDetails;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import java.util.List;
 import org.nodystudio.nodybackend.dto.ApiResponse;
 import org.nodystudio.nodybackend.dto.code.ErrorCode;
 import org.nodystudio.nodybackend.dto.thread.ThreadCreateRequest;
 import org.nodystudio.nodybackend.dto.thread.ThreadResponse;
 import org.nodystudio.nodybackend.dto.thread.ThreadSearchRequest;
 import org.nodystudio.nodybackend.dto.user.UserSummaryResponse;
+import org.nodystudio.nodybackend.security.userdetails.CustomUserDetails;
 import org.nodystudio.nodybackend.service.thread.ThreadService;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -93,7 +93,8 @@ class ThreadControllerTest {
     User mockUser = mock(User.class);
     lenient().when(mockUser.getId()).thenReturn(1L);
     lenient().when(mockUser.getEmail()).thenReturn("test@example.com");
-    lenient().when(mockUser.getRoles()).thenReturn(List.of(new SimpleGrantedAuthority("ROLE_USER")));
+    lenient().when(mockUser.getRoles())
+        .thenReturn(List.of(new SimpleGrantedAuthority("ROLE_USER")));
     lenient().when(mockUser.getIsActive()).thenReturn(true);
 
     return new CustomUserDetails(mockUser);
@@ -151,7 +152,7 @@ class ThreadControllerTest {
     given(threadService.getThread(1L, null)).willReturn(threadResponse);
 
     // when
-    ResponseEntity<ApiResponse<ThreadResponse>> response = threadController.getThread(1L);
+    ResponseEntity<ApiResponse<ThreadResponse>> response = threadController.getThread(1L, null);
 
     // then
     assertEquals(200, response.getStatusCode().value());
@@ -172,7 +173,7 @@ class ThreadControllerTest {
     given(threadService.getThread(1L, null)).willReturn(threadResponse);
 
     // when
-    ResponseEntity<ApiResponse<ThreadResponse>> response = threadController.getThread(1L);
+    ResponseEntity<ApiResponse<ThreadResponse>> response = threadController.getThread(1L, null);
 
     // then
     assertEquals(200, response.getStatusCode().value());

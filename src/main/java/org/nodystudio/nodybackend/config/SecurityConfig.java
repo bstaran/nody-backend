@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -104,6 +105,9 @@ public class SecurityConfig {
         .authorizeHttpRequests(authorize -> authorize
             .requestMatchers("/api/auth/**", "/api/public/**", "/oauth2/**", "/login/**")
             .permitAll()
+            // 공개 조회 API 허용 (비로그인 사용자도 접근 가능)
+            .requestMatchers(HttpMethod.GET, "/api/threads/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/logs/**").permitAll()
             .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
             .requestMatchers("/favicon.ico").permitAll()
             .requestMatchers("/actuator/**").permitAll()
@@ -137,6 +141,9 @@ public class SecurityConfig {
             .requestMatchers("/api/auth/**", "/api/public/**", "/oauth2/**", "/login/**")
             .permitAll()
             .requestMatchers("/api/admin/**").hasRole("ADMIN")
+            // 공개 조회 API 허용 (비로그인 사용자도 접근 가능)
+            .requestMatchers(HttpMethod.GET, "/api/threads/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/logs/**").permitAll()
             .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
             .requestMatchers("/favicon.ico").permitAll()
             .requestMatchers("/actuator/**").permitAll()

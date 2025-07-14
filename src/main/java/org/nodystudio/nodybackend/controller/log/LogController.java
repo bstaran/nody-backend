@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,6 +39,12 @@ public class LogController implements LogApiDocs {
   private final LogService logService;
   private final ThreadService threadService;
 
+  /**
+   * 로그에 표시할 사용자 정보를 안전하게 가져옵니다. 인증되지 않은 사용자의 경우 "익명"을 반환합니다.
+   */
+  private String getUserDisplayName(CustomUserDetails userDetails) {
+    return userDetails != null ? userDetails.getEmail() : "익명";
+  }
 
   /**
    * 로그 생성 POST /api/logs
@@ -62,11 +69,11 @@ public class LogController implements LogApiDocs {
   @Override
   @GetMapping("/{id}")
   public ResponseEntity<ApiResponse<LogResponse>> getLog(
-      @PathVariable Long id) {
-    CustomUserDetails userDetails = null;
+      @PathVariable Long id,
+      @Nullable @AuthenticationPrincipal CustomUserDetails userDetails) {
 
     log.info("로그 단건 조회 - ID: {}, 사용자: {}", id,
-        userDetails != null ? userDetails.getUser().getId() : "익명");
+        getUserDisplayName(userDetails));
 
     LogResponse response = logService.getLog(id,
         userDetails != null ? userDetails.getEmail() : null);
@@ -81,13 +88,13 @@ public class LogController implements LogApiDocs {
   @GetMapping
   public ResponseEntity<ApiResponse<Page<LogResponse>>> getLogs(
       @Valid @ModelAttribute LogSearchRequest searchRequest,
-      @PageableDefault(size = 20) Pageable pageable) {
-    CustomUserDetails userDetails = null;
+      @PageableDefault(size = 20) Pageable pageable,
+      @Nullable @AuthenticationPrincipal CustomUserDetails userDetails) {
 
     log.info("로그 목록 조회 - 위치: ({}, {}), 반경: {}km, 사용자: {}",
         searchRequest.getLatitude(), searchRequest.getLongitude(),
         searchRequest.getRadiusKm(),
-        userDetails != null ? userDetails.getUser().getId() : "익명");
+        getUserDisplayName(userDetails));
 
     Page<LogResponse> response = logService.searchLogs(searchRequest,
         userDetails != null ? userDetails.getEmail() : null);
@@ -135,11 +142,11 @@ public class LogController implements LogApiDocs {
   @GetMapping("/{logId}/threads")
   public ResponseEntity<ApiResponse<Page<ThreadResponse>>> getLogThreads(
       @PathVariable Long logId,
-      @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
+      @PageableDefault(size = 20, sort = "createdAt") Pageable pageable,
+      @Nullable @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-    CustomUserDetails userDetails = null;
     log.info("로그 스레드 목록 조회 - 로그ID: {}, 사용자: {}",
-        logId, userDetails != null ? userDetails.getUser().getId() : "익명");
+        logId, getUserDisplayName(userDetails));
 
     Page<ThreadResponse> response = threadService.getThreadsByLog(logId,
         userDetails != null ? userDetails.getEmail() : null, pageable);

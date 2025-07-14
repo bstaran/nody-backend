@@ -32,7 +32,7 @@ class CustomUserDetailsTest {
         .isActive(true)
         .role(RoleType.USER)
         .build();
-    
+
     userDetails = new CustomUserDetails(user);
   }
 
