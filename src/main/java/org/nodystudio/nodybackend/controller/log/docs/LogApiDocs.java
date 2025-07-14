@@ -83,7 +83,8 @@ public interface LogApiDocs {
       )
   })
   ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<LogResponse>> getLog(
-      @Parameter(description = "로그 ID") @PathVariable Long id
+      @Parameter(description = "로그 ID") @PathVariable Long id,
+      @Parameter(hidden = true) CustomUserDetails userDetails
   );
 
   @Operation(
@@ -107,7 +108,8 @@ public interface LogApiDocs {
   })
   ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<Page<LogResponse>>> getLogs(
       @Valid @ModelAttribute LogSearchRequest searchRequest,
-      @Parameter(hidden = true) @PageableDefault(size = 20) Pageable pageable
+      @Parameter(hidden = true) @PageableDefault(size = 20) Pageable pageable,
+      @Parameter(hidden = true) CustomUserDetails userDetails
   );
 
   @Operation(
@@ -204,6 +206,7 @@ public interface LogApiDocs {
   })
   ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<Page<ThreadResponse>>> getLogThreads(
       @Parameter(description = "로그 ID") @PathVariable Long logId,
-      @Parameter(hidden = true) @PageableDefault(size = 20, sort = "createdAt") Pageable pageable
+      @Parameter(hidden = true) @PageableDefault(size = 20, sort = "createdAt") Pageable pageable,
+      @Parameter(hidden = true) CustomUserDetails userDetails
   );
 }
