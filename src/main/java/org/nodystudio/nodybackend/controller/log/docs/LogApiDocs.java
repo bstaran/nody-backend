@@ -14,12 +14,12 @@ import org.nodystudio.nodybackend.dto.log.LogResponse;
 import org.nodystudio.nodybackend.dto.log.LogSearchRequest;
 import org.nodystudio.nodybackend.dto.log.LogUpdateRequest;
 import org.nodystudio.nodybackend.dto.thread.ThreadResponse;
+import org.nodystudio.nodybackend.security.userdetails.CustomUserDetails;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -59,7 +59,7 @@ public interface LogApiDocs {
       )
   })
   ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<LogResponse>> createLog(
-      @Parameter(hidden = true) @AuthenticationPrincipal UserDetails userDetails,
+      @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
       @Valid @RequestBody LogCreateRequest request
   );
 
@@ -147,7 +147,7 @@ public interface LogApiDocs {
   })
   ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<LogResponse>> updateLog(
       @Parameter(description = "로그 ID") @PathVariable Long id,
-      @Parameter(hidden = true) @AuthenticationPrincipal UserDetails userDetails,
+      @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
       @Valid @RequestBody LogUpdateRequest request
   );
 
@@ -180,7 +180,7 @@ public interface LogApiDocs {
   })
   ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<Void>> deleteLog(
       @Parameter(description = "로그 ID") @PathVariable Long id,
-      @Parameter(hidden = true) @AuthenticationPrincipal UserDetails userDetails
+      @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails
   );
 
   @Operation(

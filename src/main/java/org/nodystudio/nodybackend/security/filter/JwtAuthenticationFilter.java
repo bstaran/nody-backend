@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.repository.UserRepository;
 import org.nodystudio.nodybackend.security.jwt.TokenProvider;
+import org.nodystudio.nodybackend.security.userdetails.CustomUserDetails;
 import org.nodystudio.nodybackend.util.LoggingUtils;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -18,7 +19,6 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
@@ -140,9 +140,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return new DisabledException("비활성화되었거나 존재하지 않는 사용자 계정입니다");
           });
 
-      List<GrantedAuthority> authorities = user.getRoles();
-
-      return new UsernamePasswordAuthenticationToken(user, null, authorities);
+      CustomUserDetails userDetails = new CustomUserDetails(user);
+      
+      return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
     } catch (DisabledException e) {
       throw e;
     } catch (Exception e) {

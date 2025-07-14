@@ -9,6 +9,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import jakarta.validation.ConstraintViolation;
@@ -26,10 +28,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.GrantedAuthority;
+import org.nodystudio.nodybackend.domain.user.User;
+import org.nodystudio.nodybackend.security.userdetails.CustomUserDetails;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import java.util.Collection;
 import java.util.List;
 import org.nodystudio.nodybackend.dto.ApiResponse;
 import org.nodystudio.nodybackend.dto.code.ErrorCode;
@@ -55,7 +56,6 @@ class ThreadControllerTest {
   private ThreadController threadController;
 
   private ThreadResponse threadResponse;
-  private UserDetails mockUserDetails;
   private Validator validator;
 
   @BeforeEach
@@ -64,44 +64,6 @@ class ThreadControllerTest {
     try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
       validator = factory.getValidator();
     }
-
-    // Mock UserDetails 생성
-    mockUserDetails = new UserDetails() {
-      @Override
-      public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_USER"));
-      }
-
-      @Override
-      public String getPassword() {
-        return null;
-      }
-
-      @Override
-      public String getUsername() {
-        return "test@example.com";
-      }
-
-      @Override
-      public boolean isAccountNonExpired() {
-        return true;
-      }
-
-      @Override
-      public boolean isAccountNonLocked() {
-        return true;
-      }
-
-      @Override
-      public boolean isCredentialsNonExpired() {
-        return true;
-      }
-
-      @Override
-      public boolean isEnabled() {
-        return true;
-      }
-    };
 
     UserSummaryResponse userResponse = UserSummaryResponse.builder()
         .id(1L)
@@ -120,6 +82,21 @@ class ThreadControllerTest {
         .isLinkedToLog(false)
         .isIndependent(true)
         .build();
+  }
+
+  /**
+   * 테스트용 CustomUserDetails 객체를 생성합니다.
+   *
+   * @return 설정된 CustomUserDetails 객체
+   */
+  private CustomUserDetails createMockUserDetails() {
+    User mockUser = mock(User.class);
+    lenient().when(mockUser.getId()).thenReturn(1L);
+    lenient().when(mockUser.getEmail()).thenReturn("test@example.com");
+    lenient().when(mockUser.getRoles()).thenReturn(List.of(new SimpleGrantedAuthority("ROLE_USER")));
+    lenient().when(mockUser.getIsActive()).thenReturn(true);
+
+    return new CustomUserDetails(mockUser);
   }
 
   @Test
@@ -151,8 +128,9 @@ class ThreadControllerTest {
         .willReturn(createResponse);
 
     // when
+    CustomUserDetails userDetails = createMockUserDetails();
     ResponseEntity<ApiResponse<ThreadResponse>> response = threadController.createThread(
-        mockUserDetails, request);
+        userDetails, request);
 
     // then
     assertEquals(201, response.getStatusCode().value());
@@ -213,7 +191,8 @@ class ThreadControllerTest {
     willDoNothing().given(threadService).deleteThread(1L, "test@example.com");
 
     // when
-    ResponseEntity<ApiResponse<Void>> response = threadController.deleteThread(1L, mockUserDetails);
+    CustomUserDetails userDetails = createMockUserDetails();
+    ResponseEntity<ApiResponse<Void>> response = threadController.deleteThread(1L, userDetails);
 
     // then
     assertEquals(200, response.getStatusCode().value());

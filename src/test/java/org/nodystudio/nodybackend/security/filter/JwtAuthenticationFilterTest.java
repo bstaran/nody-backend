@@ -26,6 +26,7 @@ import org.nodystudio.nodybackend.domain.user.RoleType;
 import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.repository.UserRepository;
 import org.nodystudio.nodybackend.security.jwt.TokenProvider;
+import org.nodystudio.nodybackend.security.userdetails.CustomUserDetails;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.Authentication;
@@ -123,7 +124,9 @@ class JwtAuthenticationFilterTest {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     assertThat(authentication).isNotNull();
     assertThat(authentication.isAuthenticated()).isTrue();
-    assertThat(authentication.getPrincipal()).isEqualTo(mockUser);
+    assertThat(authentication.getPrincipal()).isInstanceOf(CustomUserDetails.class);
+    CustomUserDetails principal = (CustomUserDetails) authentication.getPrincipal();
+    assertThat(principal.getUser()).isEqualTo(mockUser);
     assertThat(authentication.getAuthorities()).extracting("authority")
         .containsExactly("ROLE_USER");
 

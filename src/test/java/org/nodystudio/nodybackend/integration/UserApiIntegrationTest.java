@@ -19,6 +19,7 @@ import org.nodystudio.nodybackend.domain.user.RoleType;
 import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.dto.user.UpdateNicknameRequestDto;
 import org.nodystudio.nodybackend.repository.UserRepository;
+import org.nodystudio.nodybackend.security.userdetails.CustomUserDetails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -53,9 +54,10 @@ class UserApiIntegrationTest extends BaseIntegrationTest {
   @Test
   @DisplayName("현재 사용자 정보 조회 - 성공")
   void getCurrentUser_success() throws Exception {
+    CustomUserDetails userDetails = new CustomUserDetails(testUser);
     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-        testUser, null,
-        testUser.getRoles());
+        userDetails, null,
+        userDetails.getAuthorities());
 
     mockMvc.perform(get("/api/user/me")
             .with(authentication(authentication))
@@ -83,9 +85,10 @@ class UserApiIntegrationTest extends BaseIntegrationTest {
     // given
     String newNickname = "새로운닉네임";
     UpdateNicknameRequestDto requestDto = new UpdateNicknameRequestDto(newNickname);
+    CustomUserDetails userDetails = new CustomUserDetails(testUser);
     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-        testUser, null,
-        testUser.getRoles());
+        userDetails, null,
+        userDetails.getAuthorities());
 
     // when & then
     mockMvc.perform(put("/api/user/nickname")
@@ -106,9 +109,10 @@ class UserApiIntegrationTest extends BaseIntegrationTest {
   void updateNickname_validationFail_blankNickname() throws Exception {
     // given
     UpdateNicknameRequestDto requestDto = new UpdateNicknameRequestDto("");
+    CustomUserDetails userDetails = new CustomUserDetails(testUser);
     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-        testUser, null,
-        testUser.getRoles());
+        userDetails, null,
+        userDetails.getAuthorities());
 
     // when & then
     mockMvc.perform(put("/api/user/nickname")
@@ -139,9 +143,10 @@ class UserApiIntegrationTest extends BaseIntegrationTest {
   @DisplayName("계정 탈퇴 - 성공")
   void deactivateAccount_success() throws Exception {
     // given
+    CustomUserDetails userDetails = new CustomUserDetails(testUser);
     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-        testUser, null,
-        testUser.getRoles());
+        userDetails, null,
+        userDetails.getAuthorities());
 
     // when & then
     mockMvc.perform(delete("/api/user/me")
@@ -176,9 +181,10 @@ class UserApiIntegrationTest extends BaseIntegrationTest {
     testUser.deactivateAccount();
     userRepository.save(testUser);
 
+    CustomUserDetails userDetails = new CustomUserDetails(testUser);
     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-        testUser, null,
-        testUser.getRoles());
+        userDetails, null,
+        userDetails.getAuthorities());
 
     // when & then - 탈퇴한 계정으로는 API 접근 불가 (활성 사용자만 조회)
     mockMvc.perform(delete("/api/user/me")
