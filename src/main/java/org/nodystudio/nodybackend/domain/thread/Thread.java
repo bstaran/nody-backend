@@ -1,5 +1,6 @@
 package org.nodystudio.nodybackend.domain.thread;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -9,9 +10,12 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,6 +23,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 import org.nodystudio.nodybackend.domain.BaseTimeEntity;
+import org.nodystudio.nodybackend.domain.comment.Comment;
 import org.nodystudio.nodybackend.domain.log.Log;
 import org.nodystudio.nodybackend.domain.user.User;
 
@@ -63,6 +68,10 @@ public class Thread extends BaseTimeEntity {
   @ColumnDefault("0")
   @Builder.Default
   private Long viewCount = 0L;
+
+  @OneToMany(mappedBy = "thread", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+  @Builder.Default
+  private List<Comment> comments = new ArrayList<>();
 
   /**
    * 스레드 내용을 업데이트합니다.
@@ -144,5 +153,27 @@ public class Thread extends BaseTimeEntity {
       return true;
     }
     return this.log.isOwnedBy(this.user);
+  }
+
+  /**
+   * 연관관계 편의 메서드 - 댓글 추가
+   */
+  public void addComment(Comment comment) {
+    this.comments.add(comment);
+    // 양방향 연관관계 설정
+    if (comment.getThread() != this) {
+      comment.setThread(this);
+    }
+  }
+
+  /**
+   * 연관관계 편의 메서드 - 댓글 제거
+   */
+  public void removeComment(Comment comment) {
+    this.comments.remove(comment);
+    // 양방향 연관관계 해제
+    if (comment.getThread() == this) {
+      comment.setThread(null);
+    }
   }
 }
