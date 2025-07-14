@@ -4,9 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.math.BigDecimal;
+import java.util.HashSet;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.nodystudio.nodybackend.domain.comment.Comment;
 import org.nodystudio.nodybackend.domain.enums.OAuthProvider;
 import org.nodystudio.nodybackend.domain.log.Log;
 import org.nodystudio.nodybackend.domain.user.RoleType;
@@ -379,5 +381,91 @@ class ThreadTest {
     assertThat(threadWithDefaults.getViewCount()).isZero();
     assertThat(threadWithDefaults.getContent()).isEqualTo("기본값 테스트");
     assertThat(threadWithDefaults.getLog()).isNull();
+  }
+
+  @Test
+  @DisplayName("댓글 추가 시 양방향 연관관계가 올바르게 설정된다")
+  void addComment_SetsUpBidirectionalRelationship() {
+    // given
+    Comment comment = Comment.builder()
+        .id(1L)
+        .content("테스트 댓글")
+        .author(testUser)
+        .mentionedUsers(new HashSet<>())
+        .build();
+
+    // when
+    thread.addComment(comment);
+
+    // then
+    assertThat(thread.getComments()).contains(comment);
+    assertThat(comment.getThread()).isEqualTo(thread);
+  }
+
+  @Test
+  @DisplayName("댓글 제거 시 양방향 연관관계가 올바르게 해제된다")
+  void removeComment_ClearsBidirectionalRelationship() {
+    // given
+    Comment comment = Comment.builder()
+        .id(1L)
+        .content("테스트 댓글")
+        .author(testUser)
+        .thread(thread)
+        .mentionedUsers(new HashSet<>())
+        .build();
+    thread.addComment(comment);
+
+    // when
+    thread.removeComment(comment);
+
+    // then
+    assertThat(thread.getComments()).doesNotContain(comment);
+    assertThat(comment.getThread()).isNull();
+  }
+
+  @Test
+  @DisplayName("이미 올바른 스레드에 속한 댓글을 추가할 때 중복 설정을 피한다")
+  void addComment_AlreadyLinked_DoesNotDuplicateSetup() {
+    // given
+    Comment comment = Comment.builder()
+        .id(1L)
+        .content("테스트 댓글")
+        .author(testUser)
+        .thread(thread)
+        .mentionedUsers(new HashSet<>())
+        .build();
+
+    // when
+    thread.addComment(comment);
+
+    // then
+    assertThat(thread.getComments()).contains(comment);
+    assertThat(comment.getThread()).isEqualTo(thread);
+  }
+
+  @Test
+  @DisplayName("다른 스레드에 속한 댓글을 제거할 때는 스레드 설정을 변경하지 않는다")
+  void removeComment_DifferentThread_DoesNotClearThread() {
+    // given
+    Thread otherThread = Thread.builder()
+        .id(2L)
+        .user(testUser)
+        .content("다른 스레드")
+        .build();
+
+    Comment comment = Comment.builder()
+        .id(1L)
+        .content("테스트 댓글")
+        .author(testUser)
+        .thread(otherThread)
+        .mentionedUsers(new HashSet<>())
+        .build();
+
+    // when
+    thread.removeComment(comment);
+
+    // then
+    assertThat(thread.getComments()).doesNotContain(comment);
+    assertThat(comment.getThread()).isEqualTo(otherThread); // 다른 스레드 유지
   }
 }
