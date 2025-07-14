@@ -26,15 +26,11 @@ import org.nodystudio.nodybackend.dto.thread.ThreadUpdateRequest;
 import org.nodystudio.nodybackend.repository.LogRepository;
 import org.nodystudio.nodybackend.repository.ThreadRepository;
 import org.nodystudio.nodybackend.repository.UserRepository;
+import org.nodystudio.nodybackend.security.userdetails.CustomUserDetails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.nodystudio.nodybackend.security.userdetails.CustomUserDetails;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
-import java.util.Collection;
-import java.util.List;
 
 
 @DisplayName("Thread 통합 테스트")

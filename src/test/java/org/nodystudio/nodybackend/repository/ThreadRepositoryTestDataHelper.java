@@ -5,10 +5,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+import org.nodystudio.nodybackend.domain.enums.OAuthProvider;
 import org.nodystudio.nodybackend.domain.log.Log;
 import org.nodystudio.nodybackend.domain.thread.Thread;
 import org.nodystudio.nodybackend.domain.user.RoleType;
-import org.nodystudio.nodybackend.domain.enums.OAuthProvider;
 import org.nodystudio.nodybackend.domain.user.User;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
@@ -66,13 +66,13 @@ public class ThreadRepositoryTestDataHelper {
    *
    *                      <h3>사용 예시:</h3>
    *                      <pre>{@code
-   *                                           // 스레드들의 생성일시를 5분 간격으로 설정
-   *                                           LocalDateTime baseTime = LocalDateTime.of(2024, 1, 1, 10, 0, 0);
-   *                                           for (int i = 0; i < threads.size(); i++) {
-   *                                               updateThreadCreatedAt(entityManager, threads.get(i).getId(),
-   *                                                                    baseTime.plusMinutes(i * 5));
-   *                                           }
-   *                                           }</pre>
+   *                                                                // 스레드들의 생성일시를 5분 간격으로 설정
+   *                                                                LocalDateTime baseTime = LocalDateTime.of(2024, 1, 1, 10, 0, 0);
+   *                                                                for (int i = 0; i < threads.size(); i++) {
+   *                                                                    updateThreadCreatedAt(entityManager, threads.get(i).getId(),
+   *                                                                                         baseTime.plusMinutes(i * 5));
+   *                                                                }
+   *                                                                }</pre>
    */
   public static void updateThreadCreatedAt(TestEntityManager entityManager, Long threadId,
       LocalDateTime createdAt) {

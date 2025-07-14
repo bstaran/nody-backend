@@ -14,9 +14,9 @@ import javax.crypto.SecretKey;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.nodystudio.nodybackend.domain.user.User;
-import org.nodystudio.nodybackend.domain.user.RoleType;
 import org.nodystudio.nodybackend.domain.enums.OAuthProvider;
+import org.nodystudio.nodybackend.domain.user.RoleType;
+import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.dto.code.ErrorCode;
 import org.nodystudio.nodybackend.exception.custom.InvalidTokenException;
 

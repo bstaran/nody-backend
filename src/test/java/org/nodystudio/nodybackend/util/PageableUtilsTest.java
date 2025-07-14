@@ -46,7 +46,8 @@ class PageableUtilsTest {
   @DisplayName("Thread 페이지네이션 객체 생성 - 유효한 필드")
   void createThreadPageable_ValidFields_Success() {
     // when
-    Pageable pageable = PageableUtils.createThreadPageable(0, 10, ThreadSortField.VIEW_COUNT, SortDirection.ASC);
+    Pageable pageable = PageableUtils.createThreadPageable(0, 10, ThreadSortField.VIEW_COUNT,
+        SortDirection.ASC);
 
     // then
     assertThat(pageable.getPageNumber()).isEqualTo(0);
@@ -61,7 +62,8 @@ class PageableUtilsTest {
   void createThreadPageable_EnumPreventInvalidField() {
     // enum 사용으로 유효하지 않은 필드 입력이 컴파일 타임에 방지됨
     // 기본값 사용 테스트
-    Pageable pageable = PageableUtils.createThreadPageable(0, 10, ThreadSortField.CREATED_AT, SortDirection.ASC);
+    Pageable pageable = PageableUtils.createThreadPageable(0, 10, ThreadSortField.CREATED_AT,
+        SortDirection.ASC);
 
     // then
     assertThat(pageable.getPageNumber()).isEqualTo(0);
