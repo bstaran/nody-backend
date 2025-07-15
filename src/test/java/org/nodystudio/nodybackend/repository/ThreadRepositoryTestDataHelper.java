@@ -16,8 +16,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
  * ThreadRepository 테스트들을 위한 공통 테스트 데이터 생성 유틸리티입니다.
  *
  * <p>
- * 이 클래스는 Builder 패턴을 사용하여 테스트에 필요한 User, Log, Thread 엔티티를
- * 유연하고 일관된 방식으로 생성할 수 있도록 도와줍니다.
+ * 이 클래스는 Builder 패턴을 사용하여 테스트에 필요한 User, Log, Thread 엔티티를 유연하고 일관된 방식으로 생성할 수 있도록 도와줍니다.
  * </p>
  *
  * <h3>주요 특징:</h3>
@@ -29,7 +28,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
  * </ul>
  *
  * <h3>사용 예시:</h3>
- * 
+ *
  * <pre>{@code
  * // 기본 사용법
  * TestDataContainer testData = new TestDataBuilder(entityManager)
@@ -68,17 +67,18 @@ public class ThreadRepositoryTestDataHelper {
    * @param entityManager JPA 테스트용 EntityManager
    * @param threadId      업데이트할 스레드 ID
    * @param createdAt     새로운 생성일시
+   * @since 2025.07
    *
-   *                      <h3>사용 예시:</h3>
-   * 
-   *                      <pre>{@code
-   *                              // 스레드들의 생성일시를 5분 간격으로 설정
-   *                              LocalDateTime baseTime = LocalDateTime.of(2024, 1, 1, 10, 0, 0);
-   *                              for (int i = 0; i < threads.size(); i++) {
-   *                                  updateThreadCreatedAt(entityManager, threads.get(i).getId(),
-   *                                       baseTime.plusMinutes(i * 5));
-   *                              }
-   *                           }</pre>
+   * <h3>사용 예시:</h3>
+   *
+   * <pre>{@code
+   * // 스레드들의 생성일시를 5분 간격으로 설정
+   * LocalDateTime baseTime = LocalDateTime.of(2024, 1, 1, 10, 0, 0);
+   * for (int i = 0; i < threads.size(); i++) {
+   *    updateThreadCreatedAt(entityManager, threads.get(i).getId(),
+   *    baseTime.plusMinutes(i * 5));
+   * }
+   * }</pre>
    */
   public static void updateThreadCreatedAt(TestEntityManager entityManager, Long threadId,
       LocalDateTime createdAt) {
@@ -98,7 +98,7 @@ public class ThreadRepositoryTestDataHelper {
    * </p>
    *
    * <h3>사용 예시:</h3>
-   * 
+   *
    * <pre>{@code
    * TestDataContainer data = builder.finalizeWithTimestamps();
    *
@@ -153,7 +153,7 @@ public class ThreadRepositoryTestDataHelper {
    * </ol>
    *
    * <h3>사용 패턴:</h3>
-   * 
+   *
    * <pre>{@code
    * TestDataBuilder builder = new TestDataBuilder(entityManager)
    *     .withTimestamps(baseTime, 5)
@@ -227,9 +227,9 @@ public class ThreadRepositoryTestDataHelper {
      * @param intervalMinutes 스레드 간 생성일시 간격(분)
      * @return 이 빌더 인스턴스
      *
-     *         <h3>사용 예시:</h3>
-     * 
-     *         <pre>{@code
+     * <h3>사용 예시:</h3>
+     *
+     * <pre>{@code
      * // 2024년 1월 1일 10시부터 5분 간격으로 설정
      * builder.withTimestamps(LocalDateTime.of(2024, 1, 1, 10, 0, 0), 5);
      *
@@ -256,14 +256,14 @@ public class ThreadRepositoryTestDataHelper {
      * @param customizer 사용자 빌더를 커스터마이징하는 함수
      * @return 이 빌더 인스턴스
      *
-     *         <h3>자동 설정되는 필드:</h3>
+     * <h3>자동 설정되는 필드:</h3>
      *         <ul>
      *         <li>provider: "google"</li>
      *         <li>role: RoleType.USER</li>
      *         </ul>
      *
      *         <h3>사용 예시:</h3>
-     * 
+     *
      *         <pre>{@code
      * builder
      *     .withCustomUser(u -> u
@@ -292,7 +292,7 @@ public class ThreadRepositoryTestDataHelper {
      * @param customizer 로그 빌더를 커스터마이징하는 함수
      * @return 이 빌더 인스턴스
      *
-     *         <h3>자동 설정되는 필드:</h3>
+     * <h3>자동 설정되는 필드:</h3>
      *         <ul>
      *         <li>latitude: 37.5665 (서울 시청)</li>
      *         <li>longitude: 126.9780 (서울 시청)</li>
@@ -304,7 +304,7 @@ public class ThreadRepositoryTestDataHelper {
      *         </ul>
      *
      *         <h3>사용 예시:</h3>
-     * 
+     *
      *         <pre>{@code
      * builder
      *     .withCustomLog(l -> l
@@ -334,9 +334,9 @@ public class ThreadRepositoryTestDataHelper {
      *
      * @return 이 빌더 인스턴스
      *
-     *         <h3>사용 예시:</h3>
-     * 
-     *         <pre>{@code
+     * <h3>사용 예시:</h3>
+     *
+     * <pre>{@code
      * TestDataBuilder builder = new TestDataBuilder(entityManager)
      *     .withCustomUser(u -> u.email("user@test.com"))
      *     .withCustomLog(l -> l.content("로그"))
@@ -401,9 +401,9 @@ public class ThreadRepositoryTestDataHelper {
      * @param customizer 스레드 빌더를 커스터마이징하는 함수
      * @return 이 빌더 인스턴스
      *
-     *         <h3>사용 예시:</h3>
-     * 
-     *         <pre>{@code
+     * <h3>사용 예시:</h3>
+     *
+     * <pre>{@code
      * Log log = builder.getCurrentData().logs.get(0);
      *
      * builder
@@ -417,7 +417,6 @@ public class ThreadRepositoryTestDataHelper {
      *         .isPublic(false)
      *         .viewCount(0L));  // 로그 연결 없음
      * }</pre>
-     * 
      * @see #buildUsersAndLogs()
      */
     public TestDataBuilder addThread(
@@ -453,9 +452,9 @@ public class ThreadRepositoryTestDataHelper {
      *
      * @return 완성된 테스트 데이터 컨테이너
      *
-     *         <h3>사용 예시:</h3>
-     * 
-     *         <pre>{@code
+     * <h3>사용 예시:</h3>
+     *
+     * <pre>{@code
      * TestDataContainer data = builder
      *     .withTimestamps(LocalDateTime.of(2024, 1, 1, 10, 0, 0), 5)
      *     .addThread(t -> t.content("스레드 1"))  // 10:00:00
