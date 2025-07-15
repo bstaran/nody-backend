@@ -504,7 +504,7 @@ class CommentServiceTest {
       // when & then
       assertThatThrownBy(() -> commentService.updateComment(commentId, request, userEmail))
           .isInstanceOf(ResourceNotFoundException.class)
-          .hasMessageContaining("수정 권한이 없거나 댓글을 찾을 수 없습니다");
+          .hasMessageContaining("댓글을 찾을 수 없습니다");
     }
 
     @Test
@@ -581,7 +581,7 @@ class CommentServiceTest {
       // when & then
       assertThatThrownBy(() -> commentService.deleteComment(commentId, userEmail))
           .isInstanceOf(ResourceNotFoundException.class)
-          .hasMessageContaining("수정 권한이 없거나 댓글을 찾을 수 없습니다");
+          .hasMessageContaining("댓글을 찾을 수 없습니다");
     }
 
     @Test
