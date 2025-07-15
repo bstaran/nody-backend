@@ -63,6 +63,8 @@ public class CommentResponse {
    * 자식 댓글을 추가합니다. 서비스 레이어에서 계층 구조를 구성할 때 사용합니다.
    */
   public void addChild(CommentResponse child) {
-    this.children.add(child);
+    if (child != null) {
+      this.children.add(child);
+    }
   }
 }

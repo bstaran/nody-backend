@@ -20,7 +20,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
           SELECT c FROM Comment c 
           LEFT JOIN FETCH c.author 
           LEFT JOIN FETCH c.mentionedUsers 
-          WHERE c.thread.id = :threadId 
+          WHERE c.thread.id = :threadId AND c.deletedAt IS NULL
           ORDER BY c.createdAt ASC
       """)
   List<Comment> findByThreadIdWithAuthorAndMentions(@Param("threadId") Long threadId);
@@ -31,7 +31,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
   @Query("""
           SELECT c FROM Comment c 
           LEFT JOIN FETCH c.author 
-          WHERE c.thread.id = :threadId 
+          WHERE c.thread.id = :threadId AND c.deletedAt IS NULL
           ORDER BY c.createdAt ASC
       """)
   Page<Comment> findByThreadIdWithAuthor(@Param("threadId") Long threadId, Pageable pageable);
@@ -47,7 +47,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
   @Query("""
           SELECT c FROM Comment c 
           JOIN c.mentionedUsers m 
-          WHERE m.id = :userId 
+          WHERE m.id = :userId AND c.deletedAt IS NULL
           ORDER BY c.createdAt DESC
       """)
   Page<Comment> findByMentionedUserId(@Param("userId") Long userId, Pageable pageable);
@@ -81,7 +81,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
   @Query("""
           SELECT c FROM Comment c 
           LEFT JOIN FETCH c.author 
-          WHERE c.thread.id = :threadId AND c.parent IS NULL 
+          WHERE c.thread.id = :threadId AND c.parent IS NULL AND c.deletedAt IS NULL
           ORDER BY c.createdAt ASC
       """)
   List<Comment> findRootCommentsByThreadId(@Param("threadId") Long threadId);
@@ -92,7 +92,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
   @Query("""
           SELECT c FROM Comment c 
           LEFT JOIN FETCH c.author 
-          WHERE c.parent.id = :parentId 
+          WHERE c.parent.id = :parentId AND c.deletedAt IS NULL
           ORDER BY c.createdAt ASC
       """)
   List<Comment> findChildCommentsByParentId(@Param("parentId") Long parentId);
@@ -102,7 +102,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
    */
   @Query("""
           SELECT c FROM Comment c 
-          WHERE c.thread.id = :threadId AND c.author.id = :authorId 
+          WHERE c.thread.id = :threadId AND c.author.id = :authorId AND c.deletedAt IS NULL
           ORDER BY c.createdAt DESC
       """)
   List<Comment> findByThreadIdAndAuthorId(@Param("threadId") Long threadId,
