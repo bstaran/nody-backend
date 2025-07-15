@@ -253,7 +253,7 @@ public class CommentService {
 
   private Comment findUserOwnedComment(Long commentId, Long userId) {
     return commentRepository.findByIdAndAuthorId(commentId, userId)
-        .orElseThrow(() -> new ResourceNotFoundException("수정 권한이 없거나 댓글을 찾을 수 없습니다."));
+        .orElseThrow(() -> new ResourceNotFoundException("댓글을 찾을 수 없습니다. (ID: " + commentId + ")"));
   }
 
   private Comment validateAndGetParentComment(Long parentId, Long threadId) {

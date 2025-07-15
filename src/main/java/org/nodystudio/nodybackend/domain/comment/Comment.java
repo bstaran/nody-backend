@@ -50,7 +50,7 @@ public class Comment extends BaseTimeEntity {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "thread_id", nullable = false)
   @NotNull(message = "스레드는 필수입니다.")
-  Thread thread;
+  private Thread thread;
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "comment_id")
@@ -74,14 +74,10 @@ public class Comment extends BaseTimeEntity {
   private List<Comment> children = new ArrayList<>();
 
   @ManyToMany(fetch = FetchType.LAZY)
-  @JoinTable(
-      name = "comment_mentions",
-      joinColumns = @JoinColumn(name = "comment_id"),
-      inverseJoinColumns = @JoinColumn(name = "user_id"),
-      indexes = {
-          @Index(name = "idx_comment_mentions_comment_id", columnList = "comment_id"),
-          @Index(name = "idx_comment_mentions_user_id", columnList = "user_id")
-      })
+  @JoinTable(name = "comment_mentions", joinColumns = @JoinColumn(name = "comment_id"), inverseJoinColumns = @JoinColumn(name = "user_id"), indexes = {
+      @Index(name = "idx_comment_mentions_comment_id", columnList = "comment_id"),
+      @Index(name = "idx_comment_mentions_user_id", columnList = "user_id")
+  })
   @Builder.Default
   private Set<User> mentionedUsers = new HashSet<>();
 
