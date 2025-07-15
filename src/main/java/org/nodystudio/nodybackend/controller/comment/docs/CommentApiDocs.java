@@ -127,4 +127,20 @@ public interface CommentApiDocs {
       @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
       @Parameter(description = "페이징 정보") Pageable pageable
   );
+
+  @Operation(
+      summary = "스레드의 댓글 개수 조회",
+      description = "특정 스레드의 활성 댓글 개수를 조회합니다. 삭제된 댓글은 개수에 포함되지 않습니다."
+  )
+  @ApiResponses({
+      @ApiResponse(
+          responseCode = "200",
+          description = "댓글 개수 조회 성공",
+          content = @Content(schema = @Schema(implementation = Long.class))
+      ),
+      @ApiResponse(responseCode = "404", description = "스레드를 찾을 수 없음")
+  })
+  ResponseEntity<org.nodystudio.nodybackend.dto.ApiResponse<Long>> getCommentCount(
+      @Parameter(description = "스레드 ID", required = true) @PathVariable Long threadId
+  );
 }

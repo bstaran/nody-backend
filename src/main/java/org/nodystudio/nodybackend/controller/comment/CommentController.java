@@ -140,6 +140,7 @@ public class CommentController implements CommentApiDocs {
   /**
    * 스레드의 댓글 개수 조회 GET /api/threads/{threadId}/comments/count
    */
+  @Override
   @GetMapping("/threads/{threadId}/comments/count")
   public ResponseEntity<ApiResponse<Long>> getCommentCount(@PathVariable Long threadId) {
 
