@@ -19,19 +19,32 @@ public interface LikeRepository extends JpaRepository<Like, Long> {
 
   /**
    * 원자적 좋아요 토글 연산을 수행합니다.
-   * 존재하지 않으면 생성하고, 존재하면 상태를 토글합니다.
+   * 
+   * <p>
+   * 존재하지 않으면 새로운 활성 좋아요를 생성하고, 존재하면 상태를 토글합니다.
+   * MySQL의 ON DUPLICATE KEY UPDATE 문법을 사용하여 동시성 안전성을 보장합니다.
+   * </p>
+   * 
+   * <p>
+   * <strong>개선 사항:</strong> 기존 "NOT is_active" 대신 "IF(is_active = 1, 0, 1)"을 사용하여 
+   * MySQL 버전별 호환성과 NULL 값 처리 안정성을 개선했습니다.
+   * </p>
+   * 
+   * <p>
+   * <strong>주의:</strong> 이 메서드는 MySQL 전용입니다. H2 테스트 환경에서는 지원되지 않습니다.
+   * </p>
    *
    * @param userId     사용자 ID
-   * @param targetType 대상 타입
+   * @param targetType 대상 타입 (THREAD, LOG)
    * @param targetId   대상 ID
-   * @return 영향받은 행 수
+   * @return 영향받은 행 수 (항상 1)
    */
   @Modifying
   @Query(value = """
       INSERT INTO likes (user_id, target_type, target_id, is_active, created_at, updated_at)
-      VALUES (:userId, :targetType, :targetId, true, NOW(), NOW())
+      VALUES (:userId, :targetType, :targetId, 1, NOW(), NOW())
       ON DUPLICATE KEY UPDATE
-          is_active = NOT is_active,
+          is_active = IF(is_active = 1, 0, 1),
           updated_at = NOW()
       """, nativeQuery = true)
   int atomicToggleLike(@Param("userId") Long userId,
