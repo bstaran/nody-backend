@@ -3,7 +3,6 @@ package org.nodystudio.nodybackend.service.like;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.nodystudio.nodybackend.domain.enums.TargetType;
-import org.nodystudio.nodybackend.domain.like.Like;
 import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.dto.like.LikeRequest;
 import org.nodystudio.nodybackend.dto.like.LikeStatusResponse;
@@ -45,8 +44,8 @@ public class LikeService {
    * @param userEmail 사용자 이메일
    * @return 좋아요 상태 정보
    * @throws AnonymousUserLikeNotAllowedException 익명 사용자가 좋아요를 시도한 경우
-   * @throws UserNotFoundException     사용자를 찾을 수 없는 경우
-   * @throws ResourceNotFoundException 대상을 찾을 수 없는 경우
+   * @throws UserNotFoundException                사용자를 찾을 수 없는 경우
+   * @throws ResourceNotFoundException            대상을 찾을 수 없는 경우
    */
   @Transactional
   public LikeStatusResponse toggleLike(LikeRequest request, String userEmail) {
@@ -67,8 +66,8 @@ public class LikeService {
 
     // 원자적 토글 연산 실행
     int affectedRows = likeRepository.atomicToggleLike(
-        user.getId(), 
-        request.getTargetType().name(), 
+        user.getId(),
+        request.getTargetType().name(),
         request.getTargetId()
     );
 
@@ -78,7 +77,7 @@ public class LikeService {
     // 결과 조회
     boolean isLiked = likeRepository.existsByUserIdAndTargetTypeAndTargetIdAndIsActiveTrue(
         user.getId(), request.getTargetType(), request.getTargetId());
-    
+
     long likeCount = likeRepository.countByTargetTypeAndTargetIdAndIsActiveTrue(
         request.getTargetType(), request.getTargetId());
 
@@ -106,7 +105,8 @@ public class LikeService {
     validateTargetExists(targetType, targetId);
 
     // 활성 좋아요 개수 조회
-    long likeCount = likeRepository.countByTargetTypeAndTargetIdAndIsActiveTrue(targetType, targetId);
+    long likeCount = likeRepository.countByTargetTypeAndTargetIdAndIsActiveTrue(targetType,
+        targetId);
 
     boolean isLiked = false;
     if (userEmail != null) {

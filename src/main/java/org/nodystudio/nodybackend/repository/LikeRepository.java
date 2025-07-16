@@ -1,10 +1,10 @@
 package org.nodystudio.nodybackend.repository;
 
+import jakarta.persistence.LockModeType;
 import java.util.Optional;
 import org.nodystudio.nodybackend.domain.enums.TargetType;
 import org.nodystudio.nodybackend.domain.like.Like;
 import org.springframework.data.jpa.repository.JpaRepository;
-import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

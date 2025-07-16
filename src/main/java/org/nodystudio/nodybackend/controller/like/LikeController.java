@@ -9,9 +9,9 @@ import org.nodystudio.nodybackend.dto.ApiResponse;
 import org.nodystudio.nodybackend.dto.code.SuccessCode;
 import org.nodystudio.nodybackend.dto.like.LikeRequest;
 import org.nodystudio.nodybackend.dto.like.LikeStatusResponse;
-import org.springframework.security.core.Authentication;
 import org.nodystudio.nodybackend.service.like.LikeService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -48,7 +48,7 @@ public class LikeController implements LikeApiDocs {
     }
 
     String userEmail = authentication.getName();
-    
+
     log.info("좋아요 토글 요청 - email: {}, targetType: {}, targetId: {}",
         userEmail, request.getTargetType(), request.getTargetId());
 

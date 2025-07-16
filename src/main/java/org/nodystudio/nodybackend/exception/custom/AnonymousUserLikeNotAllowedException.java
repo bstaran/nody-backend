@@ -4,7 +4,7 @@ import org.nodystudio.nodybackend.dto.code.ErrorCode;
 
 /**
  * 익명 사용자 좋아요 시도 예외
- * 
+ *
  * <p>
  * 익명 사용자가 좋아요를 누르려고 할 때 발생하는 예외입니다.
  * 좋아요 기능은 인증된 사용자만 사용할 수 있습니다.

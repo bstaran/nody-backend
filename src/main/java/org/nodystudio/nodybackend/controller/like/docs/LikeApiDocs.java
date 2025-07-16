@@ -9,8 +9,8 @@ import jakarta.validation.Valid;
 import org.nodystudio.nodybackend.domain.enums.TargetType;
 import org.nodystudio.nodybackend.dto.like.LikeRequest;
 import org.nodystudio.nodybackend.dto.like.LikeStatusResponse;
-import org.springframework.security.core.Authentication;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
