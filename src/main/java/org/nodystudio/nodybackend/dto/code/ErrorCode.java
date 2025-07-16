@@ -42,7 +42,12 @@ public enum ErrorCode {
   VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "V001", "입력 값 유효성 검사에 실패했습니다."),
 
   // Location Errors
-  INVALID_COORDINATE(HttpStatus.BAD_REQUEST, "L001", "유효하지 않은 좌표 값입니다.");
+  INVALID_COORDINATE(HttpStatus.BAD_REQUEST, "L001", "유효하지 않은 좌표 값입니다."),
+
+  // Like Errors
+  LIKE_TARGET_NOT_FOUND(HttpStatus.NOT_FOUND, "LK001", "좋아요 대상을 찾을 수 없습니다."),
+  INVALID_LIKE_TARGET_TYPE(HttpStatus.BAD_REQUEST, "LK002", "지원하지 않는 좋아요 대상 타입입니다."),
+  ANONYMOUS_USER_LIKE_NOT_ALLOWED(HttpStatus.UNAUTHORIZED, "LK003", "익명 사용자는 좋아요를 누를 수 없습니다.");
 
   private final HttpStatus status;
   private final String code;
