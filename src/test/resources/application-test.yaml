@@ -13,8 +13,7 @@ spring:
     password:
   sql:
     init:
-      schema-locations: classpath:schema.sql
-      mode: always
+      mode: never
   jpa:
     hibernate:
       ddl-auto: create-drop
