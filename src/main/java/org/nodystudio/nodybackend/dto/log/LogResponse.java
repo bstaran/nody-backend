@@ -33,6 +33,9 @@ public class LogResponse {
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
   private LocalDateTime updatedAt;
 
+  private Long likeCount;
+  private Boolean isLiked;
+
   public static LogResponse from(Log log) {
     return LogResponse.builder()
         .id(log.getId())
@@ -46,6 +49,33 @@ public class LogResponse {
         .viewCount(log.getViewCount())
         .createdAt(log.getCreatedAt())
         .updatedAt(log.getUpdatedAt())
+        .likeCount(0L)
+        .isLiked(false)
+        .build();
+  }
+
+  /**
+   * 좋아요 정보를 설정한 LogResponse를 반환합니다.
+   *
+   * @param likeCount 좋아요 개수
+   * @param isLiked   사용자의 좋아요 여부
+   * @return 좋아요 정보가 설정된 LogResponse
+   */
+  public LogResponse withLikeInfo(Long likeCount, Boolean isLiked) {
+    return LogResponse.builder()
+        .id(this.id)
+        .author(this.author)
+        .content(this.content)
+        .latitude(this.latitude)
+        .longitude(this.longitude)
+        .address(this.address)
+        .mediaUrls(this.mediaUrls)
+        .isPublic(this.isPublic)
+        .viewCount(this.viewCount)
+        .createdAt(this.createdAt)
+        .updatedAt(this.updatedAt)
+        .likeCount(likeCount)
+        .isLiked(isLiked)
         .build();
   }
 }
