@@ -84,4 +84,29 @@ public interface UserRepository extends JpaRepository<User, Long> {
    * @return 해당 조건에 맞는 사용자 수
    */
   long countByIsActiveFalseAndDeletedAtBefore(LocalDateTime cutoffTime);
+
+  /**
+   * 닉네임으로 활성 사용자를 조회합니다. (멘션 기능용)
+   *
+   * @param nickname 사용자 닉네임
+   * @return Optional<User>
+   */
+  Optional<User> findByNicknameAndIsActiveTrue(String nickname);
+
+  /**
+   * 닉네임 존재 여부를 확인합니다. (활성 사용자만)
+   *
+   * @param nickname 확인할 닉네임
+   * @return 닉네임 존재 여부
+   */
+  boolean existsByNicknameAndIsActiveTrue(String nickname);
+
+  /**
+   * 특정 사용자를 제외하고 닉네임 중복 여부를 확인합니다. (닉네임 변경 시 사용)
+   *
+   * @param nickname 확인할 닉네임
+   * @param userId   제외할 사용자 ID
+   * @return 닉네임 중복 여부
+   */
+  boolean existsByNicknameAndIdNotAndIsActiveTrue(String nickname, Long userId);
 }

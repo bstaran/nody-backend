@@ -177,7 +177,8 @@ class LikeRepositoryTest {
       entityManager.persistAndFlush(like);
 
       // When
-      long count = likeRepository.countByTargetTypeAndTargetIdAndIsActiveTrue(TargetType.LOG, testLog.getId());
+      long count = likeRepository.countByTargetTypeAndTargetIdAndIsActiveTrue(TargetType.LOG,
+          testLog.getId());
 
       // Then
       assertThat(count).isEqualTo(1L);
