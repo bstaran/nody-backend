@@ -132,14 +132,6 @@ class LikeServiceTest {
     return log;
   }
 
-  private Like createLike(User user, TargetType targetType, Long targetId) {
-    return Like.builder()
-        .user(user)
-        .targetType(targetType)
-        .targetId(targetId)
-        .build();
-  }
-
   @Nested
   @DisplayName("좋아요 토글 테스트")
   class ToggleLikeTest {

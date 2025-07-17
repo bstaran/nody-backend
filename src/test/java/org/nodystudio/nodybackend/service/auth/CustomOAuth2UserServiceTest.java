@@ -2,7 +2,6 @@ package org.nodystudio.nodybackend.service.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -191,12 +190,9 @@ class CustomOAuth2UserServiceTest {
     given(delegateUserService.loadUser(userRequest)).willThrow(expectedException);
 
     // when and then
-    OAuth2AuthenticationException actualException = assertThrows(
-        OAuth2AuthenticationException.class, () -> {
-          customOAuth2UserService.loadUser(userRequest);
-        });
-
-    assertThat(actualException).isSameAs(expectedException);
+    assertThatThrownBy(() -> customOAuth2UserService.loadUser(userRequest))
+        .isInstanceOf(OAuth2AuthenticationException.class)
+        .isSameAs(expectedException);
     then(userRepository).should(never())
         .findByProviderAndSocialId(any(OAuthProvider.class), anyString());
     then(userRepository).should(never()).saveAndFlush(any(User.class));
@@ -210,13 +206,14 @@ class CustomOAuth2UserServiceTest {
     given(delegateUserService.loadUser(userRequest)).willThrow(expectedCause);
 
     // when and then
-    OAuth2AuthenticationException actualException = assertThrows(
-        OAuth2AuthenticationException.class, () -> {
-          customOAuth2UserService.loadUser(userRequest);
-        });
-
-    assertThat(actualException.getError().getErrorCode()).isEqualTo("user_loading_failed");
-    assertThat(actualException.getCause()).isSameAs(expectedCause);
+    assertThatThrownBy(() -> customOAuth2UserService.loadUser(userRequest))
+        .isInstanceOf(OAuth2AuthenticationException.class)
+        .extracting("error.errorCode")
+        .isEqualTo("user_loading_failed");
+    
+    assertThatThrownBy(() -> customOAuth2UserService.loadUser(userRequest))
+        .isInstanceOf(OAuth2AuthenticationException.class)
+        .hasCause(expectedCause);
     then(userRepository).should(never())
         .findByProviderAndSocialIdAndIsActiveTrue(any(OAuthProvider.class), anyString());
     then(userRepository).should(never()).saveAndFlush(any(User.class));

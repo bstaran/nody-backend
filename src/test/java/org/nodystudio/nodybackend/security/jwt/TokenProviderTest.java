@@ -2,7 +2,6 @@ package org.nodystudio.nodybackend.security.jwt;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -113,11 +112,14 @@ class TokenProviderTest {
     String expiredToken = shortLivedTokenProvider.createAccessToken(testUser);
 
     // when and then
-    InvalidTokenException exception = assertThrows(InvalidTokenException.class, () -> {
-      tokenProvider.validateToken(expiredToken);
-    });
-    assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.EXPIRED_TOKEN);
-    assertThat(exception.getCause()).isInstanceOf(ExpiredJwtException.class);
+    assertThatThrownBy(() -> tokenProvider.validateToken(expiredToken))
+        .isInstanceOf(InvalidTokenException.class)
+        .extracting("errorCode")
+        .isEqualTo(ErrorCode.EXPIRED_TOKEN);
+    
+    assertThatThrownBy(() -> tokenProvider.validateToken(expiredToken))
+        .isInstanceOf(InvalidTokenException.class)
+        .hasCauseInstanceOf(ExpiredJwtException.class);
   }
 
   @Test
@@ -128,13 +130,14 @@ class TokenProviderTest {
     String tamperedToken = token.substring(0, token.length() - 5) + "abcde";
 
     // when and then
-    InvalidTokenException exception = assertThrows(InvalidTokenException.class, () -> {
-      tokenProvider.validateToken(tamperedToken);
-    });
-    assertThat(exception.getMessage()).isEqualTo("유효하지 않은 토큰 서명입니다.");
-    assertThat(exception.getCause()).isInstanceOfAny(
-        io.jsonwebtoken.security.SecurityException.class,
-        io.jsonwebtoken.MalformedJwtException.class);
+    assertThatThrownBy(() -> tokenProvider.validateToken(tamperedToken))
+        .isInstanceOf(InvalidTokenException.class)
+        .hasMessage("유효하지 않은 토큰 서명입니다.")
+        .satisfies(exception -> {
+          assertThat(exception.getCause()).isInstanceOfAny(
+              io.jsonwebtoken.security.SecurityException.class,
+              io.jsonwebtoken.MalformedJwtException.class);
+        });
   }
 
   @Test
@@ -144,11 +147,10 @@ class TokenProviderTest {
     String malformedToken = "this.is.not.a.jwt";
 
     // when and then
-    InvalidTokenException exception = assertThrows(InvalidTokenException.class, () -> {
-      tokenProvider.validateToken(malformedToken);
-    });
-    assertThat(exception.getMessage()).isEqualTo("유효하지 않은 토큰 서명입니다.");
-    assertThat(exception.getCause()).isInstanceOf(io.jsonwebtoken.MalformedJwtException.class);
+    assertThatThrownBy(() -> tokenProvider.validateToken(malformedToken))
+        .isInstanceOf(InvalidTokenException.class)
+        .hasMessage("유효하지 않은 토큰 서명입니다.")
+        .hasCauseInstanceOf(io.jsonwebtoken.MalformedJwtException.class);
   }
 
   @Test

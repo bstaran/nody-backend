@@ -1,10 +1,6 @@
 package org.nodystudio.nodybackend.controller.log;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -110,13 +106,13 @@ class LogControllerTest {
         request);
 
     // then
-    assertEquals(201, response.getStatusCode().value());
-    assertNotNull(response.getBody());
+    assertThat(response.getStatusCode().value()).isEqualTo(201);
+    assertThat(response.getBody()).isNotNull();
     ApiResponse<LogResponse> body = Objects.requireNonNull(response.getBody());
-    assertEquals(200, body.getStatus()); // ApiResponse.success()는 200을 반환
-    assertEquals(1L, body.getData().getId());
-    assertEquals("테스트 로그 내용", body.getData().getContent());
-    assertEquals("로그가 성공적으로 생성되었습니다.", body.getMessage());
+    assertThat(body.getStatus()).isEqualTo(200); // ApiResponse.success()는 200을 반환
+    assertThat(body.getData().getId()).isEqualTo(1L);
+    assertThat(body.getData().getContent()).isEqualTo("테스트 로그 내용");
+    assertThat(body.getMessage()).isEqualTo("로그가 성공적으로 생성되었습니다.");
 
     verify(logService).createLog(any(LogCreateRequest.class), eq("test@example.com"));
   }
@@ -131,14 +127,14 @@ class LogControllerTest {
     ResponseEntity<ApiResponse<LogResponse>> response = logController.getLog(1L, null);
 
     // then
-    assertEquals(200, response.getStatusCode().value());
-    assertNotNull(response.getBody());
+    assertThat(response.getStatusCode().value()).isEqualTo(200);
+    assertThat(response.getBody()).isNotNull();
     ApiResponse<LogResponse> body = Objects.requireNonNull(response.getBody());
-    assertEquals(200, body.getStatus());
-    assertEquals(1L, body.getData().getId());
-    assertEquals("테스트 로그 내용", body.getData().getContent());
-    assertEquals(1L, body.getData().getViewCount());
-    assertEquals("로그 조회가 완료되었습니다.", body.getMessage());
+    assertThat(body.getStatus()).isEqualTo(200);
+    assertThat(body.getData().getId()).isEqualTo(1L);
+    assertThat(body.getData().getContent()).isEqualTo("테스트 로그 내용");
+    assertThat(body.getData().getViewCount()).isEqualTo(1L);
+    assertThat(body.getMessage()).isEqualTo("로그 조회가 완료되었습니다.");
 
     verify(logService).getLog(1L, null);
   }
@@ -153,11 +149,11 @@ class LogControllerTest {
     ResponseEntity<ApiResponse<LogResponse>> response = logController.getLog(1L, null);
 
     // then
-    assertEquals(200, response.getStatusCode().value());
-    assertNotNull(response.getBody());
+    assertThat(response.getStatusCode().value()).isEqualTo(200);
+    assertThat(response.getBody()).isNotNull();
     ApiResponse<LogResponse> body = Objects.requireNonNull(response.getBody());
-    assertEquals(200, body.getStatus());
-    assertTrue(body.getData().getIsPublic());
+    assertThat(body.getStatus()).isEqualTo(200);
+    assertThat(body.getData().getIsPublic()).isTrue();
 
     verify(logService).getLog(1L, null);
   }
@@ -184,14 +180,14 @@ class LogControllerTest {
         pageable, null);
 
     // then
-    assertEquals(200, response.getStatusCode().value());
-    assertNotNull(response.getBody());
+    assertThat(response.getStatusCode().value()).isEqualTo(200);
+    assertThat(response.getBody()).isNotNull();
     ApiResponse<Page<LogResponse>> body = Objects.requireNonNull(response.getBody());
-    assertEquals(200, body.getStatus());
-    assertNotNull(body.getData().getContent());
-    assertEquals(1, body.getData().getContent().size());
-    assertEquals(1L, body.getData().getContent().get(0).getId());
-    assertEquals("로그 목록 조회가 완료되었습니다.", body.getMessage());
+    assertThat(body.getStatus()).isEqualTo(200);
+    assertThat(body.getData().getContent()).isNotNull();
+    assertThat(body.getData().getContent().size()).isEqualTo(1);
+    assertThat(body.getData().getContent().get(0).getId()).isEqualTo(1L);
+    assertThat(body.getMessage()).isEqualTo("로그 목록 조회가 완료되었습니다.");
 
     verify(logService).searchLogs(any(LogSearchRequest.class), eq(null));
   }
@@ -226,13 +222,13 @@ class LogControllerTest {
         request);
 
     // then
-    assertEquals(200, response.getStatusCode().value());
-    assertNotNull(response.getBody());
+    assertThat(response.getStatusCode().value()).isEqualTo(200);
+    assertThat(response.getBody()).isNotNull();
     ApiResponse<LogResponse> body = Objects.requireNonNull(response.getBody());
-    assertEquals(200, body.getStatus());
-    assertEquals("수정된 로그 내용", body.getData().getContent());
-    assertFalse(body.getData().getIsPublic());
-    assertEquals("로그가 성공적으로 수정되었습니다.", body.getMessage());
+    assertThat(body.getStatus()).isEqualTo(200);
+    assertThat(body.getData().getContent()).isEqualTo("수정된 로그 내용");
+    assertThat(body.getData().getIsPublic()).isFalse();
+    assertThat(body.getMessage()).isEqualTo("로그가 성공적으로 수정되었습니다.");
 
     verify(logService).updateLog(eq(1L), any(LogUpdateRequest.class), eq("test@example.com"));
   }
@@ -247,12 +243,12 @@ class LogControllerTest {
     ResponseEntity<ApiResponse<Void>> response = logController.deleteLog(1L, mockUserDetails);
 
     // then
-    assertEquals(200, response.getStatusCode().value());
-    assertNotNull(response.getBody());
+    assertThat(response.getStatusCode().value()).isEqualTo(200);
+    assertThat(response.getBody()).isNotNull();
     ApiResponse<Void> body = Objects.requireNonNull(response.getBody());
-    assertEquals(200, body.getStatus());
-    assertNull(body.getData());
-    assertEquals("로그가 성공적으로 삭제되었습니다.", body.getMessage());
+    assertThat(body.getStatus()).isEqualTo(200);
+    assertThat(body.getData()).isNull();
+    assertThat(body.getMessage()).isEqualTo("로그가 성공적으로 삭제되었습니다.");
 
     verify(logService).deleteLog(1L, "test@example.com");
   }
@@ -274,11 +270,11 @@ class LogControllerTest {
         null, null);
 
     // then
-    assertEquals(200, response.getStatusCode().value());
-    assertNotNull(response.getBody());
+    assertThat(response.getStatusCode().value()).isEqualTo(200);
+    assertThat(response.getBody()).isNotNull();
     ApiResponse<Page<LogResponse>> body = Objects.requireNonNull(response.getBody());
-    assertEquals(200, body.getStatus());
-    assertTrue(body.getData().getContent().isEmpty());
+    assertThat(body.getStatus()).isEqualTo(200);
+    assertThat(body.getData().getContent()).isEmpty();
 
     verify(logService).searchLogs(any(LogSearchRequest.class), isNull());
   }
@@ -312,13 +308,13 @@ class LogControllerTest {
         logId, pageable, null);
 
     // then
-    assertEquals(200, response.getStatusCode().value());
-    assertNotNull(response.getBody());
+    assertThat(response.getStatusCode().value()).isEqualTo(200);
+    assertThat(response.getBody()).isNotNull();
     ApiResponse<Page<ThreadResponse>> body = Objects.requireNonNull(response.getBody());
-    assertEquals(200, body.getStatus());
-    assertEquals(1, body.getData().getContent().size());
-    assertEquals("테스트 스레드 내용", body.getData().getContent().get(0).getContent());
-    assertEquals("로그 스레드 목록 조회가 완료되었습니다.", body.getMessage());
+    assertThat(body.getStatus()).isEqualTo(200);
+    assertThat(body.getData().getContent().size()).isEqualTo(1);
+    assertThat(body.getData().getContent().get(0).getContent()).isEqualTo("테스트 스레드 내용");
+    assertThat(body.getMessage()).isEqualTo("로그 스레드 목록 조회가 완료되었습니다.");
 
     verify(threadService).getThreadsByLog(eq(logId), eq(null), any());
   }
@@ -352,13 +348,13 @@ class LogControllerTest {
         logId, pageable, null);
 
     // then
-    assertEquals(200, response.getStatusCode().value());
-    assertNotNull(response.getBody());
+    assertThat(response.getStatusCode().value()).isEqualTo(200);
+    assertThat(response.getBody()).isNotNull();
     ApiResponse<Page<ThreadResponse>> body = Objects.requireNonNull(response.getBody());
-    assertEquals(200, body.getStatus());
-    assertEquals(1, body.getData().getContent().size());
-    assertEquals("공개 스레드 내용", body.getData().getContent().get(0).getContent());
-    assertEquals("로그 스레드 목록 조회가 완료되었습니다.", body.getMessage());
+    assertThat(body.getStatus()).isEqualTo(200);
+    assertThat(body.getData().getContent().size()).isEqualTo(1);
+    assertThat(body.getData().getContent().get(0).getContent()).isEqualTo("공개 스레드 내용");
+    assertThat(body.getMessage()).isEqualTo("로그 스레드 목록 조회가 완료되었습니다.");
 
     verify(threadService).getThreadsByLog(eq(logId), isNull(), any());
   }
@@ -377,12 +373,12 @@ class LogControllerTest {
         logId, pageable, null);
 
     // then
-    assertEquals(200, response.getStatusCode().value());
-    assertNotNull(response.getBody());
+    assertThat(response.getStatusCode().value()).isEqualTo(200);
+    assertThat(response.getBody()).isNotNull();
     ApiResponse<Page<ThreadResponse>> body = Objects.requireNonNull(response.getBody());
-    assertEquals(200, body.getStatus());
-    assertTrue(body.getData().getContent().isEmpty());
-    assertEquals("로그 스레드 목록 조회가 완료되었습니다.", body.getMessage());
+    assertThat(body.getStatus()).isEqualTo(200);
+    assertThat(body.getData().getContent()).isEmpty();
+    assertThat(body.getMessage()).isEqualTo("로그 스레드 목록 조회가 완료되었습니다.");
 
     verify(threadService).getThreadsByLog(eq(logId), eq(null), any());
   }
