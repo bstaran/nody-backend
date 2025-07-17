@@ -46,8 +46,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class CommentService {
 
-  // 멘션 패턴: @username 형식
-  private static final Pattern MENTION_PATTERN = Pattern.compile("@([a-zA-Z0-9가-힣_]+)");
+  private static final Pattern MENTION_PATTERN = Pattern.compile("@([a-zA-Z가-힣_][a-zA-Z0-9가-힣_]*)");
 
   private final CommentRepository commentRepository;
   private final ThreadRepository threadRepository;

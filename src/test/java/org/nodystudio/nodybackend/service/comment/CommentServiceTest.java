@@ -603,6 +603,80 @@ class CommentServiceTest {
       CommentMentionEvent event = eventCaptor.getValue();
       assertThat(event.getMentionedUserIds()).contains(2L);
     }
+
+    @Test
+    @DisplayName("성공: 숫자로 시작하는 멘션은 무효한 멘션으로 무시된다")
+    void createComment_WithNumericStartMention_ShouldIgnoreAndCreateComment() {
+      // given
+      Long threadId = 1L;
+      String userEmail = "testuser@example.com";
+      CommentCreateRequest request = CommentCreateRequest.builder()
+          .content("@123username @456 @789abc 안녕하세요!")
+          .build();
+
+      User mockUser = createMockUser(1L, userEmail, "testuser");
+      Thread mockThread = createMockThread(threadId, "테스트 스레드");
+      Comment mockComment = createMockComment(1L, request.getContent(), mockUser, mockThread);
+
+      given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
+      given(threadRepository.findById(threadId)).willReturn(Optional.of(mockThread));
+      given(commentRepository.save(any(Comment.class))).willReturn(mockComment);
+
+      // when
+      CommentResponse result = commentService.createComment(threadId, request, userEmail);
+
+      // then
+      assertThat(result).isNotNull();
+      assertThat(result.getContent()).isEqualTo("@123username @456 @789abc 안녕하세요!");
+
+      // 숫자로 시작하는 멘션은 모두 무효하므로 이벤트가 발행되지 않아야 함
+      then(eventPublisher).should(never()).publishEvent(any(CommentMentionEvent.class));
+    }
+
+    @Test
+    @DisplayName("성공: 유효한 멘션과 숫자 시작 무효 멘션이 혼재할 때 유효한 것만 처리된다")
+    void createComment_WithMixedValidAndNumericMentions_ShouldProcessOnlyValid() {
+      // given
+      Long threadId = 1L;
+      String userEmail = "testuser@example.com";
+      CommentCreateRequest request = CommentCreateRequest.builder()
+          .content("@john @123 @alice @456def 안녕하세요!")
+          .build();
+
+      User mockUser = createMockUser(1L, userEmail, "testuser");
+      User johnUser = createMockUser(2L, "john@example.com", "john");
+      User aliceUser = createMockUser(3L, "alice@example.com", "alice");
+      Thread mockThread = createMockThread(threadId, "테스트 스레드");
+
+      Comment mockComment = Comment.builder()
+          .id(1L)
+          .content(request.getContent())
+          .author(mockUser)
+          .thread(mockThread)
+          .mentionedUsers(Set.of(johnUser, aliceUser)) // 유효한 사용자만
+          .build();
+
+      given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
+      given(threadRepository.findById(threadId)).willReturn(Optional.of(mockThread));
+      given(userRepository.findByNicknameAndIsActiveTrue("john")).willReturn(Optional.of(johnUser));
+      given(userRepository.findByNicknameAndIsActiveTrue("alice")).willReturn(Optional.of(aliceUser));
+      given(commentRepository.save(any(Comment.class))).willReturn(mockComment);
+
+      // when
+      commentService.createComment(threadId, request, userEmail);
+
+      // then
+      ArgumentCaptor<CommentMentionEvent> eventCaptor = ArgumentCaptor.forClass(CommentMentionEvent.class);
+      then(eventPublisher).should().publishEvent(eventCaptor.capture());
+
+      CommentMentionEvent event = eventCaptor.getValue();
+      assertThat(event.getMentionedUserIds()).hasSize(2); // john, alice만
+      assertThat(event.getMentionedUserIds()).containsExactlyInAnyOrder(2L, 3L);
+      
+      // 숫자로 시작하는 멘션에 대한 조회가 시도되지 않았는지 확인
+      then(userRepository).should(never()).findByNicknameAndIsActiveTrue("123");
+      then(userRepository).should(never()).findByNicknameAndIsActiveTrue("456def");
+    }
   }
 
   @Nested
