@@ -1,10 +1,6 @@
 package org.nodystudio.nodybackend.controller.thread;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -134,13 +130,13 @@ class ThreadControllerTest {
         userDetails, request);
 
     // then
-    assertEquals(201, response.getStatusCode().value());
-    assertNotNull(response.getBody());
+    assertThat(response.getStatusCode().value()).isEqualTo(201);
+    assertThat(response.getBody()).isNotNull();
     ApiResponse<ThreadResponse> body = Objects.requireNonNull(response.getBody());
-    assertEquals(200, body.getStatus());
-    assertEquals(1L, body.getData().getId());
-    assertEquals("새 스레드 내용", body.getData().getContent());
-    assertEquals("스레드가 성공적으로 생성되었습니다.", body.getMessage());
+    assertThat(body.getStatus()).isEqualTo(200);
+    assertThat(body.getData().getId()).isEqualTo(1L);
+    assertThat(body.getData().getContent()).isEqualTo("새 스레드 내용");
+    assertThat(body.getMessage()).isEqualTo("스레드가 성공적으로 생성되었습니다.");
 
     verify(threadService).createThread(any(ThreadCreateRequest.class), eq("test@example.com"));
   }
@@ -155,13 +151,13 @@ class ThreadControllerTest {
     ResponseEntity<ApiResponse<ThreadResponse>> response = threadController.getThread(1L, null);
 
     // then
-    assertEquals(200, response.getStatusCode().value());
-    assertNotNull(response.getBody());
+    assertThat(response.getStatusCode().value()).isEqualTo(200);
+    assertThat(response.getBody()).isNotNull();
     ApiResponse<ThreadResponse> body = Objects.requireNonNull(response.getBody());
-    assertEquals(200, body.getStatus());
-    assertEquals(1L, body.getData().getId());
-    assertEquals("테스트 스레드 내용", body.getData().getContent());
-    assertEquals("스레드 조회가 완료되었습니다.", body.getMessage());
+    assertThat(body.getStatus()).isEqualTo(200);
+    assertThat(body.getData().getId()).isEqualTo(1L);
+    assertThat(body.getData().getContent()).isEqualTo("테스트 스레드 내용");
+    assertThat(body.getMessage()).isEqualTo("스레드 조회가 완료되었습니다.");
 
     verify(threadService).getThread(1L, null);
   }
@@ -176,11 +172,11 @@ class ThreadControllerTest {
     ResponseEntity<ApiResponse<ThreadResponse>> response = threadController.getThread(1L, null);
 
     // then
-    assertEquals(200, response.getStatusCode().value());
-    assertNotNull(response.getBody());
+    assertThat(response.getStatusCode().value()).isEqualTo(200);
+    assertThat(response.getBody()).isNotNull();
     ApiResponse<ThreadResponse> body = Objects.requireNonNull(response.getBody());
-    assertEquals(200, body.getStatus());
-    assertTrue(body.getData().getIsPublic());
+    assertThat(body.getStatus()).isEqualTo(200);
+    assertThat(body.getData().getIsPublic()).isTrue();
 
     verify(threadService).getThread(1L, null);
   }
@@ -196,12 +192,12 @@ class ThreadControllerTest {
     ResponseEntity<ApiResponse<Void>> response = threadController.deleteThread(1L, userDetails);
 
     // then
-    assertEquals(200, response.getStatusCode().value());
-    assertNotNull(response.getBody());
+    assertThat(response.getStatusCode().value()).isEqualTo(200);
+    assertThat(response.getBody()).isNotNull();
     ApiResponse<Void> body = Objects.requireNonNull(response.getBody());
-    assertEquals(200, body.getStatus());
-    assertNull(body.getData());
-    assertEquals("스레드가 성공적으로 삭제되었습니다.", body.getMessage());
+    assertThat(body.getStatus()).isEqualTo(200);
+    assertThat(body.getData()).isNull();
+    assertThat(body.getMessage()).isEqualTo("스레드가 성공적으로 삭제되었습니다.");
 
     verify(threadService).deleteThread(1L, "test@example.com");
   }
@@ -219,9 +215,8 @@ class ThreadControllerTest {
     Set<ConstraintViolation<ThreadSearchRequest>> violations = validator.validate(request);
 
     // then
-    assertFalse(violations.isEmpty());
-    assertTrue(violations.stream()
-        .anyMatch(v -> v.getMessage().contains("100 이하여야 합니다")));
+    assertThat(violations).isNotEmpty();
+    assertThat(violations).anyMatch(v -> v.getMessage().contains("100 이하여야 합니다"));
   }
 
   @Test
@@ -237,9 +232,8 @@ class ThreadControllerTest {
     Set<ConstraintViolation<ThreadSearchRequest>> violations = validator.validate(request);
 
     // then
-    assertFalse(violations.isEmpty());
-    assertTrue(violations.stream()
-        .anyMatch(v -> v.getMessage().contains("1 이상이어야 합니다")));
+    assertThat(violations).isNotEmpty();
+    assertThat(violations).anyMatch(v -> v.getMessage().contains("1 이상이어야 합니다"));
   }
 
   @Test
@@ -255,7 +249,7 @@ class ThreadControllerTest {
     Set<ConstraintViolation<ThreadSearchRequest>> violations = validator.validate(request);
 
     // then
-    assertTrue(violations.isEmpty());
+    assertThat(violations).isEmpty();
   }
 
   @RestControllerAdvice
