@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.Mockito.never;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -13,6 +14,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -27,6 +29,7 @@ import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.dto.comment.CommentCreateRequest;
 import org.nodystudio.nodybackend.dto.comment.CommentResponse;
 import org.nodystudio.nodybackend.dto.comment.CommentUpdateRequest;
+import org.nodystudio.nodybackend.event.CommentMentionEvent;
 import org.nodystudio.nodybackend.exception.custom.BadRequestException;
 import org.nodystudio.nodybackend.exception.custom.ResourceNotFoundException;
 import org.nodystudio.nodybackend.exception.custom.UserNotFoundException;
@@ -157,49 +160,48 @@ class CommentServiceTest {
       assertThat(savedComment.getParent()).isEqualTo(parentComment);
     }
 
-    // TODO: Issue #80 - 멘션 기능 구현 시 활성화
-    // @Test
-    // @DisplayName("성공: 멘션이 포함된 댓글을 생성하고 이벤트를 발행한다")
-    // void createCommentWithMention_Success() {
-    //   // given
-    //   Long threadId = 1L;
-    //   String userEmail = "testuser@example.com";
-    //   CommentCreateRequest request = CommentCreateRequest.builder()
-    //       .content("@mentioneduser 안녕하세요!")
-    //       .build();
+    @Test
+    @DisplayName("성공: 멘션이 포함된 댓글을 생성하고 이벤트를 발행한다")
+    void createCommentWithMention_Success() {
+      // given
+      Long threadId = 1L;
+      String userEmail = "testuser@example.com";
+      CommentCreateRequest request = CommentCreateRequest.builder()
+          .content("@mentioneduser 안녕하세요!")
+          .build();
 
-    //   User mockUser = createMockUser(1L, userEmail, "testuser");
-    //   User mentionedUser = createMockUser(2L, "mentioneduser@example.com", "mentioneduser");
-    //   Thread mockThread = createMockThread(threadId, "테스트 스레드");
+      User mockUser = createMockUser(1L, userEmail, "testuser");
+      User mentionedUser = createMockUser(2L, "mentioneduser@example.com", "mentioneduser");
+      Thread mockThread = createMockThread(threadId, "테스트 스레드");
 
-    //   Comment mockComment = Comment.builder()
-    //       .id(1L)
-    //       .content(request.getContent())
-    //       .author(mockUser)
-    //       .thread(mockThread)
-    //       .mentionedUsers(Set.of(mentionedUser))
-    //       .build();
+      Comment mockComment = Comment.builder()
+          .id(1L)
+          .content(request.getContent())
+          .author(mockUser)
+          .thread(mockThread)
+          .mentionedUsers(Set.of(mentionedUser))
+          .build();
 
-    //   given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
-    //   given(threadRepository.findById(threadId)).willReturn(Optional.of(mockThread));
-    //   given(userRepository.findByEmail("mentioneduser@example.com")).willReturn(
-    //       Optional.of(mentionedUser));
-    //   given(commentRepository.save(any(Comment.class))).willReturn(mockComment);
+      given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
+      given(threadRepository.findById(threadId)).willReturn(Optional.of(mockThread));
+      given(userRepository.findByNicknameAndIsActiveTrue("mentioneduser")).willReturn(
+          Optional.of(mentionedUser));
+      given(commentRepository.save(any(Comment.class))).willReturn(mockComment);
 
-    //   // when
-    //   commentService.createComment(threadId, request, userEmail);
+      // when
+      commentService.createComment(threadId, request, userEmail);
 
-    //   // then
-    //   ArgumentCaptor<CommentMentionEvent> eventCaptor = ArgumentCaptor.forClass(
-    //       CommentMentionEvent.class);
-    //   then(eventPublisher).should().publishEvent(eventCaptor.capture());
+      // then
+      ArgumentCaptor<CommentMentionEvent> eventCaptor = ArgumentCaptor.forClass(
+          CommentMentionEvent.class);
+      then(eventPublisher).should().publishEvent(eventCaptor.capture());
 
-    //   CommentMentionEvent event = eventCaptor.getValue();
-    //   assertThat(event.getCommentId()).isEqualTo(1L);
-    //   assertThat(event.getAuthorId()).isEqualTo(1L);
-    //   assertThat(event.getThreadId()).isEqualTo(threadId);
-    //   assertThat(event.getMentionedUserIds()).contains(2L);
-    // }
+      CommentMentionEvent event = eventCaptor.getValue();
+      assertThat(event.getCommentId()).isEqualTo(1L);
+      assertThat(event.getAuthorId()).isEqualTo(1L);
+      assertThat(event.getThreadId()).isEqualTo(threadId);
+      assertThat(event.getMentionedUserIds()).contains(2L);
+    }
 
     @Test
     @DisplayName("실패: 존재하지 않는 사용자는 UserNotFoundException을 던진다")
@@ -323,6 +325,284 @@ class CommentServiceTest {
           .isInstanceOf(BadRequestException.class)
           .hasMessageContaining("삭제된 댓글에는 답글을 작성할 수 없습니다");
     }
+
+    @Test
+    @DisplayName("성공: 존재하지 않는 사용자 멘션은 무시되고 댓글이 생성된다")
+    void createComment_WithNonExistentMention_ShouldIgnoreAndCreateComment() {
+      // given
+      Long threadId = 1L;
+      String userEmail = "testuser@example.com";
+      CommentCreateRequest request = CommentCreateRequest.builder()
+          .content("@nonexistentuser 안녕하세요!")
+          .build();
+
+      User mockUser = createMockUser(1L, userEmail, "testuser");
+      Thread mockThread = createMockThread(threadId, "테스트 스레드");
+      Comment mockComment = createMockComment(1L, request.getContent(), mockUser, mockThread);
+
+      given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
+      given(threadRepository.findById(threadId)).willReturn(Optional.of(mockThread));
+      given(userRepository.findByNicknameAndIsActiveTrue("nonexistentuser")).willReturn(Optional.empty());
+      given(commentRepository.save(any(Comment.class))).willReturn(mockComment);
+
+      // when
+      CommentResponse result = commentService.createComment(threadId, request, userEmail);
+
+      // then
+      assertThat(result).isNotNull();
+      assertThat(result.getContent()).isEqualTo("@nonexistentuser 안녕하세요!");
+
+      then(eventPublisher).should(never()).publishEvent(any(CommentMentionEvent.class));
+    }
+
+    @Test
+    @DisplayName("성공: 비활성 사용자 멘션은 무시되고 댓글이 생성된다")
+    void createComment_WithInactiveMention_ShouldIgnoreAndCreateComment() {
+      // given
+      Long threadId = 1L;
+      String userEmail = "testuser@example.com";
+      CommentCreateRequest request = CommentCreateRequest.builder()
+          .content("@inactiveuser 안녕하세요!")
+          .build();
+
+      User mockUser = createMockUser(1L, userEmail, "testuser");
+      Thread mockThread = createMockThread(threadId, "테스트 스레드");
+      Comment mockComment = createMockComment(1L, request.getContent(), mockUser, mockThread);
+
+      given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
+      given(threadRepository.findById(threadId)).willReturn(Optional.of(mockThread));
+      given(userRepository.findByNicknameAndIsActiveTrue("inactiveuser")).willReturn(Optional.empty());
+      given(commentRepository.save(any(Comment.class))).willReturn(mockComment);
+
+      // when
+      CommentResponse result = commentService.createComment(threadId, request, userEmail);
+
+      // then
+      assertThat(result).isNotNull();
+      assertThat(result.getContent()).isEqualTo("@inactiveuser 안녕하세요!");
+
+      then(eventPublisher).should(never()).publishEvent(any(CommentMentionEvent.class));
+    }
+
+    @Test
+    @DisplayName("성공: 잘못된 멘션 형식은 무시되고 댓글이 생성된다")
+    void createComment_WithInvalidMentionFormat_ShouldIgnoreAndCreateComment() {
+      // given
+      Long threadId = 1L;
+      String userEmail = "testuser@example.com";
+      CommentCreateRequest request = CommentCreateRequest.builder()
+          .content("@ john (공백포함), @, @123 안녕하세요!")
+          .build();
+
+      User mockUser = createMockUser(1L, userEmail, "testuser");
+      Thread mockThread = createMockThread(threadId, "테스트 스레드");
+      Comment mockComment = createMockComment(1L, request.getContent(), mockUser, mockThread);
+
+      given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
+      given(threadRepository.findById(threadId)).willReturn(Optional.of(mockThread));
+      given(commentRepository.save(any(Comment.class))).willReturn(mockComment);
+
+      // when
+      CommentResponse result = commentService.createComment(threadId, request, userEmail);
+
+      // then
+      assertThat(result).isNotNull();
+      assertThat(result.getContent()).isEqualTo("@ john (공백포함), @, @123 안녕하세요!");
+
+      // 이벤트가 발행되지 않았는지 확인 (유효한 멘션이 없으므로)
+      then(eventPublisher).should(never()).publishEvent(any(CommentMentionEvent.class));
+    }
+
+    @Test
+    @DisplayName("성공: 중복 멘션은 한 번만 처리된다")
+    void createComment_WithDuplicateMention_ShouldProcessOnlyOnce() {
+      // given
+      Long threadId = 1L;
+      String userEmail = "testuser@example.com";
+      CommentCreateRequest request = CommentCreateRequest.builder()
+          .content("@john @john 안녕하세요!")
+          .build();
+
+      User mockUser = createMockUser(1L, userEmail, "testuser");
+      User mentionedUser = createMockUser(2L, "john@example.com", "john");
+      Thread mockThread = createMockThread(threadId, "테스트 스레드");
+
+      Comment mockComment = Comment.builder()
+          .id(1L)
+          .content(request.getContent())
+          .author(mockUser)
+          .thread(mockThread)
+          .mentionedUsers(Set.of(mentionedUser)) // Set이므로 중복 제거됨
+          .build();
+
+      given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
+      given(threadRepository.findById(threadId)).willReturn(Optional.of(mockThread));
+      given(userRepository.findByNicknameAndIsActiveTrue("john")).willReturn(Optional.of(mentionedUser));
+      given(commentRepository.save(any(Comment.class))).willReturn(mockComment);
+
+      // when
+      commentService.createComment(threadId, request, userEmail);
+
+      // then
+      ArgumentCaptor<CommentMentionEvent> eventCaptor = ArgumentCaptor.forClass(CommentMentionEvent.class);
+      then(eventPublisher).should().publishEvent(eventCaptor.capture());
+
+      CommentMentionEvent event = eventCaptor.getValue();
+      assertThat(event.getMentionedUserIds()).hasSize(1); // 중복 제거되어 1개만
+      assertThat(event.getMentionedUserIds()).contains(2L);
+    }
+
+    @Test
+    @DisplayName("성공: 유효한 멘션과 무효한 멘션이 혼재할 때 유효한 것만 처리된다")
+    void createComment_WithMixedValidInvalidMentions_ShouldProcessOnlyValid() {
+      // given
+      Long threadId = 1L;
+      String userEmail = "testuser@example.com";
+      CommentCreateRequest request = CommentCreateRequest.builder()
+          .content("@john @nonexistent @alice 안녕하세요!")
+          .build();
+
+      User mockUser = createMockUser(1L, userEmail, "testuser");
+      User johnUser = createMockUser(2L, "john@example.com", "john");
+      User aliceUser = createMockUser(3L, "alice@example.com", "alice");
+      Thread mockThread = createMockThread(threadId, "테스트 스레드");
+
+      Comment mockComment = Comment.builder()
+          .id(1L)
+          .content(request.getContent())
+          .author(mockUser)
+          .thread(mockThread)
+          .mentionedUsers(Set.of(johnUser, aliceUser)) // 유효한 사용자만
+          .build();
+
+      given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
+      given(threadRepository.findById(threadId)).willReturn(Optional.of(mockThread));
+      given(userRepository.findByNicknameAndIsActiveTrue("john")).willReturn(Optional.of(johnUser));
+      given(userRepository.findByNicknameAndIsActiveTrue("nonexistent")).willReturn(Optional.empty());
+      given(userRepository.findByNicknameAndIsActiveTrue("alice")).willReturn(Optional.of(aliceUser));
+      given(commentRepository.save(any(Comment.class))).willReturn(mockComment);
+
+      // when
+      commentService.createComment(threadId, request, userEmail);
+
+      // then
+      ArgumentCaptor<CommentMentionEvent> eventCaptor = ArgumentCaptor.forClass(CommentMentionEvent.class);
+      then(eventPublisher).should().publishEvent(eventCaptor.capture());
+
+      CommentMentionEvent event = eventCaptor.getValue();
+      assertThat(event.getMentionedUserIds()).hasSize(2); // 유효한 2명만
+      assertThat(event.getMentionedUserIds()).containsExactlyInAnyOrder(2L, 3L);
+    }
+
+    @Test
+    @DisplayName("성공: 여러 사용자 멘션 시 모든 사용자에게 이벤트가 발행된다")
+    void createComment_WithMultipleMentions_ShouldPublishEventForAll() {
+      // given
+      Long threadId = 1L;
+      String userEmail = "testuser@example.com";
+      CommentCreateRequest request = CommentCreateRequest.builder()
+          .content("@john @alice @bob 안녕하세요!")
+          .build();
+
+      User mockUser = createMockUser(1L, userEmail, "testuser");
+      User johnUser = createMockUser(2L, "john@example.com", "john");
+      User aliceUser = createMockUser(3L, "alice@example.com", "alice");
+      User bobUser = createMockUser(4L, "bob@example.com", "bob");
+      Thread mockThread = createMockThread(threadId, "테스트 스레드");
+
+      Comment mockComment = Comment.builder()
+          .id(1L)
+          .content(request.getContent())
+          .author(mockUser)
+          .thread(mockThread)
+          .mentionedUsers(Set.of(johnUser, aliceUser, bobUser))
+          .build();
+
+      given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
+      given(threadRepository.findById(threadId)).willReturn(Optional.of(mockThread));
+      given(userRepository.findByNicknameAndIsActiveTrue("john")).willReturn(Optional.of(johnUser));
+      given(userRepository.findByNicknameAndIsActiveTrue("alice")).willReturn(Optional.of(aliceUser));
+      given(userRepository.findByNicknameAndIsActiveTrue("bob")).willReturn(Optional.of(bobUser));
+      given(commentRepository.save(any(Comment.class))).willReturn(mockComment);
+
+      // when
+      commentService.createComment(threadId, request, userEmail);
+
+      // then
+      ArgumentCaptor<CommentMentionEvent> eventCaptor = ArgumentCaptor.forClass(CommentMentionEvent.class);
+      then(eventPublisher).should().publishEvent(eventCaptor.capture());
+
+      CommentMentionEvent event = eventCaptor.getValue();
+      assertThat(event.getMentionedUserIds()).hasSize(3);
+      assertThat(event.getMentionedUserIds()).containsExactlyInAnyOrder(2L, 3L, 4L);
+    }
+
+    @Test
+    @DisplayName("성공: 멘션 없는 댓글은 이벤트가 발행되지 않는다")
+    void createComment_WithoutMention_ShouldNotPublishEvent() {
+      // given
+      Long threadId = 1L;
+      String userEmail = "testuser@example.com";
+      CommentCreateRequest request = CommentCreateRequest.builder()
+          .content("안녕하세요! 멘션이 없는 댓글입니다.")
+          .build();
+
+      User mockUser = createMockUser(1L, userEmail, "testuser");
+      Thread mockThread = createMockThread(threadId, "테스트 스레드");
+      Comment mockComment = createMockComment(1L, request.getContent(), mockUser, mockThread);
+
+      given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
+      given(threadRepository.findById(threadId)).willReturn(Optional.of(mockThread));
+      given(commentRepository.save(any(Comment.class))).willReturn(mockComment);
+
+      // when
+      CommentResponse result = commentService.createComment(threadId, request, userEmail);
+
+      // then
+      assertThat(result).isNotNull();
+      assertThat(result.getContent()).isEqualTo("안녕하세요! 멘션이 없는 댓글입니다.");
+
+      // 이벤트가 발행되지 않았는지 확인
+      then(eventPublisher).should(never()).publishEvent(any(CommentMentionEvent.class));
+    }
+
+    @Test
+    @DisplayName("성공: 한글 닉네임 멘션이 정상 처리된다")
+    void createComment_WithKoreanNickname_ShouldProcessCorrectly() {
+      // given
+      Long threadId = 1L;
+      String userEmail = "testuser@example.com";
+      CommentCreateRequest request = CommentCreateRequest.builder()
+          .content("@홍길동 안녕하세요!")
+          .build();
+
+      User mockUser = createMockUser(1L, userEmail, "testuser");
+      User koreanUser = createMockUser(2L, "hong@example.com", "홍길동");
+      Thread mockThread = createMockThread(threadId, "테스트 스레드");
+
+      Comment mockComment = Comment.builder()
+          .id(1L)
+          .content(request.getContent())
+          .author(mockUser)
+          .thread(mockThread)
+          .mentionedUsers(Set.of(koreanUser))
+          .build();
+
+      given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
+      given(threadRepository.findById(threadId)).willReturn(Optional.of(mockThread));
+      given(userRepository.findByNicknameAndIsActiveTrue("홍길동")).willReturn(Optional.of(koreanUser));
+      given(commentRepository.save(any(Comment.class))).willReturn(mockComment);
+
+      // when
+      commentService.createComment(threadId, request, userEmail);
+
+      // then
+      ArgumentCaptor<CommentMentionEvent> eventCaptor = ArgumentCaptor.forClass(CommentMentionEvent.class);
+      then(eventPublisher).should().publishEvent(eventCaptor.capture());
+
+      CommentMentionEvent event = eventCaptor.getValue();
+      assertThat(event.getMentionedUserIds()).contains(2L);
+    }
   }
 
   @Nested
@@ -442,49 +722,6 @@ class CommentServiceTest {
       assertThat(result.getContent()).isEqualTo("수정된 댓글 내용");
     }
 
-    // TODO: Issue #80 - 멘션 기능 구현 시 활성화
-    // @Test
-    // @DisplayName("성공: 멘션이 추가된 댓글 수정 시 새로운 멘션에 대한 이벤트만 발행한다")
-    // void updateComment_Success_WithNewMentions() {
-    //   // given
-    //   Long commentId = 1L;
-    //   String userEmail = "testuser@example.com";
-    //   CommentUpdateRequest request = CommentUpdateRequest.builder()
-    //       .content("@newuser 추가 멘션과 @olduser 기존 멘션")
-    //       .build();
-
-    //   User mockUser = createMockUser(1L, userEmail, "testuser");
-    //   User oldUser = createMockUser(2L, "olduser@example.com", "olduser");
-    //   User newUser = createMockUser(3L, "newuser@example.com", "newuser");
-    //   Thread mockThread = createMockThread(1L, "테스트 스레드");
-
-    //   Comment mockComment = Comment.builder()
-    //       .id(commentId)
-    //       .content("@olduser 기존 멘션")
-    //       .author(mockUser)
-    //       .thread(mockThread)
-    //       .mentionedUsers(new HashSet<>(Set.of(oldUser)))
-    //       .build();
-
-    //   given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
-    //   given(commentRepository.findByIdAndAuthorId(commentId, mockUser.getId()))
-    //       .willReturn(Optional.of(mockComment));
-    //   given(userRepository.findByEmail("olduser@example.com")).willReturn(Optional.of(oldUser));
-    //   given(userRepository.findByEmail("newuser@example.com")).willReturn(Optional.of(newUser));
-
-    //   // when
-    //   commentService.updateComment(commentId, request, userEmail);
-
-    //   // then
-    //   ArgumentCaptor<CommentMentionEvent> eventCaptor = ArgumentCaptor.forClass(
-    //       CommentMentionEvent.class);
-    //   then(eventPublisher).should().publishEvent(eventCaptor.capture());
-
-    //   CommentMentionEvent event = eventCaptor.getValue();
-    //   assertThat(event.getMentionedUserIds()).contains(3L); // 새로운 멘션만
-    //   assertThat(event.getMentionedUserIds()).doesNotContain(2L); // 기존 멘션 제외
-    // }
-
     @Test
     @DisplayName("실패: 다른 사용자의 댓글 수정은 ResourceNotFoundException을 던진다")
     void updateComment_Failure_NotOwner() {
@@ -535,6 +772,115 @@ class CommentServiceTest {
       assertThatThrownBy(() -> commentService.updateComment(commentId, request, userEmail))
           .isInstanceOf(BadRequestException.class)
           .hasMessageContaining("삭제된 댓글은 수정할 수 없습니다");
+    }
+
+    @Test
+    @DisplayName("성공: 새로운 멘션 추가 시 해당 사용자들에게만 이벤트가 발행된다")
+    void updateComment_WithNewMentions_ShouldPublishEventOnlyForNewOnes() {
+      // given
+      Long commentId = 1L;
+      String userEmail = "testuser@example.com";
+      CommentUpdateRequest request = CommentUpdateRequest.builder()
+          .content("@alice @bob 새로운 멘션이 추가되었습니다!")
+          .build();
+
+      User mockUser = createMockUser(1L, userEmail, "testuser");
+      User aliceUser = createMockUser(2L, "alice@example.com", "alice");
+      User bobUser = createMockUser(3L, "bob@example.com", "bob");
+      User johnUser = createMockUser(4L, "john@example.com", "john");
+      Thread mockThread = createMockThread(1L, "테스트 스레드");
+
+      Comment existingComment = Comment.builder()
+          .id(commentId)
+          .content("@john 기존 댓글")
+          .author(mockUser)
+          .thread(mockThread)
+          .mentionedUsers(new HashSet<>(Set.of(johnUser)))
+          .build();
+
+      given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
+      given(commentRepository.findByIdAndAuthorId(commentId, mockUser.getId()))
+          .willReturn(Optional.of(existingComment));
+      given(userRepository.findByNicknameAndIsActiveTrue("alice")).willReturn(Optional.of(aliceUser));
+      given(userRepository.findByNicknameAndIsActiveTrue("bob")).willReturn(Optional.of(bobUser));
+
+      // when
+      commentService.updateComment(commentId, request, userEmail);
+
+      // then
+      ArgumentCaptor<CommentMentionEvent> eventCaptor = ArgumentCaptor.forClass(CommentMentionEvent.class);
+      then(eventPublisher).should().publishEvent(eventCaptor.capture());
+
+      CommentMentionEvent event = eventCaptor.getValue();
+      assertThat(event.getMentionedUserIds()).hasSize(2); // 새로 추가된 alice, bob만
+      assertThat(event.getMentionedUserIds()).containsExactlyInAnyOrder(2L, 3L);
+    }
+
+    @Test
+    @DisplayName("성공: 기존 멘션만 있는 댓글 수정 시 이벤트가 발행되지 않는다")
+    void updateComment_WithExistingMentionsOnly_ShouldNotPublishEvent() {
+      // given
+      Long commentId = 1L;
+      String userEmail = "testuser@example.com";
+      CommentUpdateRequest request = CommentUpdateRequest.builder()
+          .content("@john 기존 멘션만 있는 수정된 댓글")
+          .build();
+
+      User mockUser = createMockUser(1L, userEmail, "testuser");
+      User johnUser = createMockUser(2L, "john@example.com", "john");
+      Thread mockThread = createMockThread(1L, "테스트 스레드");
+
+      Comment existingComment = Comment.builder()
+          .id(commentId)
+          .content("@john 기존 댓글")
+          .author(mockUser)
+          .thread(mockThread)
+          .mentionedUsers(new HashSet<>(Set.of(johnUser)))
+          .build();
+
+      given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
+      given(commentRepository.findByIdAndAuthorId(commentId, mockUser.getId()))
+          .willReturn(Optional.of(existingComment));
+      given(userRepository.findByNicknameAndIsActiveTrue("john")).willReturn(Optional.of(johnUser));
+
+      // when
+      commentService.updateComment(commentId, request, userEmail);
+
+      // then
+      then(eventPublisher).should(never()).publishEvent(any(CommentMentionEvent.class));
+    }
+
+    @Test
+    @DisplayName("성공: 멘션 제거 시 이벤트가 발행되지 않는다")
+    void updateComment_WithMentionRemoval_ShouldNotPublishEvent() {
+      // given
+      Long commentId = 1L;
+      String userEmail = "testuser@example.com";
+      CommentUpdateRequest request = CommentUpdateRequest.builder()
+          .content("멘션이 제거된 댓글")
+          .build();
+
+      User mockUser = createMockUser(1L, userEmail, "testuser");
+      User johnUser = createMockUser(2L, "john@example.com", "john");
+      Thread mockThread = createMockThread(1L, "테스트 스레드");
+
+      Comment existingComment = Comment.builder()
+          .id(commentId)
+          .content("@john 기존 댓글")
+          .author(mockUser)
+          .thread(mockThread)
+          .mentionedUsers(new HashSet<>(Set.of(johnUser)))
+          .build();
+
+      given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
+      given(commentRepository.findByIdAndAuthorId(commentId, mockUser.getId()))
+          .willReturn(Optional.of(existingComment));
+
+      // when
+      commentService.updateComment(commentId, request, userEmail);
+
+      // then
+      then(eventPublisher).should(never()).publishEvent(any(CommentMentionEvent.class));
     }
   }
 
