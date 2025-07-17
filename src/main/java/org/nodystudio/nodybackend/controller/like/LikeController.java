@@ -42,7 +42,6 @@ public class LikeController implements LikeApiDocs {
       @Valid @RequestBody LikeRequest request,
       Authentication authentication) {
 
-    // 인증 객체가 null인 경우 처리
     if (authentication == null) {
       throw new IllegalArgumentException("인증 정보가 필요합니다.");
     }
