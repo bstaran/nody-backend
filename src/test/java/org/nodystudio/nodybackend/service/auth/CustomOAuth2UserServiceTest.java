@@ -107,13 +107,13 @@ class CustomOAuth2UserServiceTest {
 
     given(userRepository.findByProviderAndSocialIdAndIsActiveTrue(OAuthProvider.GOOGLE,
         "google_12345")).willReturn(
-        Optional.empty());
+            Optional.empty());
     given(userRepository.findByEmailAndDeletedAtAfter(anyString(),
         any(LocalDateTime.class))).willReturn(
-        Optional.empty());
+            Optional.empty());
     given(
         userRepository.findByProviderAndSocialId(OAuthProvider.GOOGLE, "google_12345")).willReturn(
-        Optional.empty());
+            Optional.empty());
     given(userRepository.saveAndFlush(any(User.class))).willAnswer(invocation -> {
       User userToSave = invocation.getArgument(0);
 
@@ -208,12 +208,12 @@ class CustomOAuth2UserServiceTest {
     // when and then
     assertThatThrownBy(() -> customOAuth2UserService.loadUser(userRequest))
         .isInstanceOf(OAuth2AuthenticationException.class)
-        .extracting("error.errorCode")
-        .isEqualTo("user_loading_failed");
-    
-    assertThatThrownBy(() -> customOAuth2UserService.loadUser(userRequest))
-        .isInstanceOf(OAuth2AuthenticationException.class)
-        .hasCause(expectedCause);
+        .satisfies(thrown -> {
+          OAuth2AuthenticationException exception = (OAuth2AuthenticationException) thrown;
+          assertThat(exception.getError().getErrorCode()).isEqualTo("user_loading_failed");
+          assertThat(exception.getCause()).isEqualTo(expectedCause);
+        });
+
     then(userRepository).should(never())
         .findByProviderAndSocialIdAndIsActiveTrue(any(OAuthProvider.class), anyString());
     then(userRepository).should(never()).saveAndFlush(any(User.class));

@@ -114,12 +114,11 @@ class TokenProviderTest {
     // when and then
     assertThatThrownBy(() -> tokenProvider.validateToken(expiredToken))
         .isInstanceOf(InvalidTokenException.class)
-        .extracting("errorCode")
-        .isEqualTo(ErrorCode.EXPIRED_TOKEN);
-    
-    assertThatThrownBy(() -> tokenProvider.validateToken(expiredToken))
-        .isInstanceOf(InvalidTokenException.class)
-        .hasCauseInstanceOf(ExpiredJwtException.class);
+        .satisfies(thrown -> {
+          InvalidTokenException exception = (InvalidTokenException) thrown;
+          assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.EXPIRED_TOKEN);
+          assertThat(exception.getCause()).isInstanceOf(ExpiredJwtException.class);
+        });
   }
 
   @Test
