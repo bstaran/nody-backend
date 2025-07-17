@@ -12,7 +12,8 @@ import org.springframework.security.core.userdetails.UserDetails;
  * Spring Security의 인증 주체로 사용되는 커스텀 UserDetails 구현체입니다.
  *
  * <p>
- * 이 클래스는 {@link User} 엔티티를 래핑하여 Spring Security가 요구하는 {@link UserDetails} 인터페이스를 구현합니다. JWT 기반 인증
+ * 이 클래스는 {@link User} 엔티티를 래핑하여 Spring Security가 요구하는 {@link UserDetails}
+ * 인터페이스를 구현합니다. JWT 기반 인증
  * 시스템에서 인증된 사용자 정보를 보안 컨텍스트에 저장하는 데 사용됩니다.
  * </p>
  *
@@ -69,7 +70,7 @@ public class CustomUserDetails implements UserDetails {
   /**
    * 사용자의 고유 식별자를 반환합니다.
    *
-   * @return 사용자 ID 문자열
+   * @return 사용자 ID (고유 식별자)
    */
   @Override
   public String getUsername() {

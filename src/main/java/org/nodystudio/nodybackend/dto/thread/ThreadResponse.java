@@ -21,6 +21,8 @@ public class ThreadResponse {
   private LocalDateTime updatedAt;
   private Boolean isLinkedToLog;
   private Boolean isIndependent;
+  private Long likeCount;
+  private Boolean isLiked;
 
   public static ThreadResponse from(Thread thread) {
     return ThreadResponse.builder()
@@ -34,6 +36,8 @@ public class ThreadResponse {
         .updatedAt(thread.getUpdatedAt())
         .isLinkedToLog(thread.isLinkedToLog())
         .isIndependent(thread.isIndependent())
+        .likeCount(0L)
+        .isLiked(false)
         .build();
   }
 
@@ -49,6 +53,32 @@ public class ThreadResponse {
         .updatedAt(thread.getUpdatedAt())
         .isLinkedToLog(thread.isLinkedToLog())
         .isIndependent(thread.isIndependent())
+        .likeCount(0L)
+        .isLiked(false)
+        .build();
+  }
+
+  /**
+   * 좋아요 정보를 설정한 ThreadResponse를 반환합니다.
+   *
+   * @param likeCount 좋아요 개수
+   * @param isLiked   사용자의 좋아요 여부
+   * @return 좋아요 정보가 설정된 ThreadResponse
+   */
+  public ThreadResponse withLikeInfo(Long likeCount, Boolean isLiked) {
+    return ThreadResponse.builder()
+        .id(this.id)
+        .content(this.content)
+        .isPublic(this.isPublic)
+        .viewCount(this.viewCount)
+        .user(this.user)
+        .log(this.log)
+        .createdAt(this.createdAt)
+        .updatedAt(this.updatedAt)
+        .isLinkedToLog(this.isLinkedToLog)
+        .isIndependent(this.isIndependent)
+        .likeCount(likeCount)
+        .isLiked(isLiked)
         .build();
   }
 }

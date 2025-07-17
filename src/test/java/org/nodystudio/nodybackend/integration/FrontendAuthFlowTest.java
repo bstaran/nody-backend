@@ -23,7 +23,6 @@ import org.nodystudio.nodybackend.repository.UserRepository;
 import org.nodystudio.nodybackend.security.jwt.TokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -34,7 +33,6 @@ import org.springframework.test.web.servlet.MvcResult;
  */
 @DisplayName("프론트엔드 인증 플로우 통합 테스트")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
-@Sql(scripts = "/schema.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_CLASS)
 class FrontendAuthFlowTest extends BaseIntegrationTest {
 
   @Autowired

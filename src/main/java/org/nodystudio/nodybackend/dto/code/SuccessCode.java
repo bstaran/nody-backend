@@ -21,7 +21,11 @@ public enum SuccessCode {
   // 인증 관련 성공
   LOGIN_SUCCESS(HttpStatus.OK, "AUTH_S001", "로그인에 성공했습니다."),
   LOGOUT_SUCCESS(HttpStatus.OK, "AUTH_S002", "로그아웃에 성공했습니다."),
-  TOKEN_REFRESHED(HttpStatus.OK, "AUTH_S003", "토큰이 성공적으로 재발급되었습니다.");
+  TOKEN_REFRESHED(HttpStatus.OK, "AUTH_S003", "토큰이 성공적으로 재발급되었습니다."),
+
+  // 좋아요 관련 성공
+  LIKE_TOGGLE_SUCCESS(HttpStatus.OK, "LIKE_S001", "좋아요 토글이 성공적으로 처리되었습니다."),
+  LIKE_STATUS_RETRIEVED(HttpStatus.OK, "LIKE_S002", "좋아요 상태가 성공적으로 조회되었습니다.");
 
   private final HttpStatus status;
   private final String code;
