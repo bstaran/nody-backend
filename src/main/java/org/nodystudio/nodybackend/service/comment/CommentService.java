@@ -5,6 +5,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.nodystudio.nodybackend.domain.comment.Comment;
@@ -20,6 +24,8 @@ import org.nodystudio.nodybackend.exception.custom.UserNotFoundException;
 import org.nodystudio.nodybackend.repository.CommentRepository;
 import org.nodystudio.nodybackend.repository.ThreadRepository;
 import org.nodystudio.nodybackend.repository.UserRepository;
+import org.nodystudio.nodybackend.event.CommentMentionEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -29,7 +35,8 @@ import org.springframework.transaction.annotation.Transactional;
  * 댓글 관리 서비스
  *
  * <p>
- * 스레드에 대한 댓글 생성, 조회, 수정, 삭제 기능을 제공합니다. 사용자 멘션 기능을 지원하며, 멘션 알림은 비동기 이벤트로 처리됩니다. 계층형 댓글 구조를 지원하여 대댓글
+ * 스레드에 대한 댓글 생성, 조회, 수정, 삭제 기능을 제공합니다. 사용자 멘션 기능을 지원하며, 멘션 알림은 비동기 이벤트로 처리됩니다.
+ * 계층형 댓글 구조를 지원하여 대댓글
  * 작성이 가능합니다.
  * </p>
  */
@@ -40,14 +47,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class CommentService {
 
   // 멘션 패턴: @username 형식
-  // TODO: Issue #80 - 멘션 기능 구현 시 활성화
-  // private static final Pattern MENTION_PATTERN =
-  // Pattern.compile("@([a-zA-Z0-9가-힣_]+)");
+  private static final Pattern MENTION_PATTERN = Pattern.compile("@([a-zA-Z0-9가-힣_]+)");
+
   private final CommentRepository commentRepository;
   private final ThreadRepository threadRepository;
   private final UserRepository userRepository;
-  // TODO: Issue #80 - 멘션 기능 구현 시 활성화
-  // private final ApplicationEventPublisher eventPublisher;
+  private final ApplicationEventPublisher eventPublisher;
 
   /**
    * 새로운 댓글을 생성합니다.
@@ -76,25 +81,22 @@ public class CommentService {
     }
 
     // 멘션된 사용자 파싱
-    // TODO: Issue #80 - 멘션 기능 구현 시 활성화
-    // Set<User> mentionedUsers = parseMentionedUsers(request.getContent());
+    Set<User> mentionedUsers = parseMentionedUsers(request.getContent());
 
     Comment comment = Comment.builder()
         .thread(thread)
         .author(author)
         .content(request.getContent().trim())
         .parent(parent)
-        .mentionedUsers(new HashSet<>()) // 빈 Set으로 임시 처리
+        .mentionedUsers(mentionedUsers)
         .build();
 
     Comment savedComment = commentRepository.save(comment);
     thread.addComment(savedComment);
 
-    // 멘션 알림 이벤트 발행 (비동기 처리)
-    // TODO: Issue #80 - 멘션 기능 구현 시 활성화
-    // if (!mentionedUsers.isEmpty()) {
-    // publishMentionEvent(savedComment, mentionedUsers);
-    // }
+    if (!mentionedUsers.isEmpty()) {
+      publishMentionEvent(savedComment, mentionedUsers);
+    }
 
     log.info("댓글 생성 완료 - ID: {}", savedComment.getId());
 
@@ -149,22 +151,22 @@ public class CommentService {
       throw new BadRequestException("삭제된 댓글은 수정할 수 없습니다.");
     }
 
-    // 새로운 멘션 파싱 및 업데이트
-    // TODO: Issue #80 - 멘션 기능 구현 시 활성화
-    // Set<User> newMentionedUsers = parseMentionedUsers(request.getContent());
-    // Set<User> previousMentions = new HashSet<>(comment.getMentionedUsers());
+    Set<User> newMentionedUsers = parseMentionedUsers(request.getContent());
+    Set<User> previousMentions = new HashSet<>(comment.getMentionedUsers());
 
     comment.updateContent(request.getContent());
-    // comment.setMentionedUsers(newMentionedUsers);
+    comment.setMentionedUsers(newMentionedUsers);
 
     // 새로 추가된 멘션에 대해서만 알림 발행
-    // Set<User> addedMentions = newMentionedUsers.stream()
-    // .filter(u -> !previousMentions.contains(u))
-    // .collect(Collectors.toSet());
+    Set<User> addedMentions = newMentionedUsers.stream()
+        .filter(u -> !previousMentions.contains(u))
+        .collect(Collectors.toSet());
 
-    // if (!addedMentions.isEmpty()) {
-    // publishMentionEvent(comment, addedMentions);
-    // }
+    if (!addedMentions.isEmpty()) {
+      publishMentionEvent(comment, addedMentions);
+      log.info("댓글 수정 시 새로운 멘션 발행 - 댓글: {}, 새 멘션: {}명",
+          commentId, addedMentions.size());
+    }
 
     log.info("댓글 수정 완료 - ID: {}", commentId);
     return CommentResponse.from(comment);
@@ -273,23 +275,28 @@ public class CommentService {
 
   /**
    * 댓글 내용에서 멘션된 사용자들을 파싱합니다.
-   * TODO: Issue #80 - 멘션 기능 구현 시 활성화
+   *
+   * @param content 댓글 내용
+   * @return 멘션된 사용자들의 Set
    */
-  // private Set<User> parseMentionedUsers(String content) {
-  // Set<User> mentionedUsers = new HashSet<>();
-  // Matcher matcher = MENTION_PATTERN.matcher(content);
-  //
-  // while (matcher.find()) {
-  // String username = matcher.group(1);
-  // // 사용자명으로 사용자 검색 (username 필드가 있다고 가정)
-  // // 실제 구현에서는 username 필드 추가 필요
-  // // 임시로 이메일로 검색
-  // userRepository.findByEmail(username + "@example.com")
-  // .ifPresent(mentionedUsers::add);
-  // }
-  //
-  // return mentionedUsers;
-  // }
+  private Set<User> parseMentionedUsers(String content) {
+    Set<User> mentionedUsers = new HashSet<>();
+    Matcher matcher = MENTION_PATTERN.matcher(content);
+
+    while (matcher.find()) {
+      String nickname = matcher.group(1);
+      log.debug("멘션 파싱 중 - 닉네임: {}", nickname);
+
+      userRepository.findByNicknameAndIsActiveTrue(nickname)
+          .ifPresent(user -> {
+            mentionedUsers.add(user);
+            log.debug("멘션된 사용자 찾음 - 닉네임: {}, ID: {}", nickname, user.getId());
+          });
+    }
+
+    log.info("멘션 파싱 완료 - 총 {}명의 사용자 멘션됨", mentionedUsers.size());
+    return mentionedUsers;
+  }
 
   /**
    * 댓글 목록을 계층 구조로 변환합니다.
@@ -323,20 +330,21 @@ public class CommentService {
 
   /**
    * 멘션 알림 이벤트를 발행합니다.
-   * TODO: Issue #80 - 멘션 기능 구현 시 활성화
+   *
+   * @param comment        댓글 정보
+   * @param mentionedUsers 멘션된 사용자들
    */
-  // private void publishMentionEvent(Comment comment, Set<User> mentionedUsers) {
-  // CommentMentionEvent event = new CommentMentionEvent(
-  // comment.getId(),
-  // comment.getAuthor().getId(),
-  // comment.getThread().getId(),
-  // mentionedUsers.stream()
-  // .map(User::getId)
-  // .collect(Collectors.toSet())
-  // );
-  //
-  // eventPublisher.publishEvent(event);
-  // log.debug("멘션 알림 이벤트 발행 - 댓글: {}, 멘션된 사용자: {}",
-  // comment.getId(), mentionedUsers.size());
-  // }
+  private void publishMentionEvent(Comment comment, Set<User> mentionedUsers) {
+    CommentMentionEvent event = new CommentMentionEvent(
+        comment.getId(),
+        comment.getAuthor().getId(),
+        comment.getThread().getId(),
+        mentionedUsers.stream()
+            .map(User::getId)
+            .collect(Collectors.toSet()));
+
+    eventPublisher.publishEvent(event);
+    log.info("멘션 알림 이벤트 발행 - 댓글: {}, 멘션된 사용자: {}명",
+        comment.getId(), mentionedUsers.size());
+  }
 }
