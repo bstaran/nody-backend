@@ -2,8 +2,6 @@ package org.nodystudio.nodybackend.controller.comment;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -105,12 +103,12 @@ class CommentControllerTest {
           request);
 
       // then
-      assertEquals(HttpStatus.CREATED, result.getStatusCode());
-      assertNotNull(result.getBody());
+      assertThat(result.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+      assertThat(result.getBody()).isNotNull();
       ApiResponse<CommentResponse> body = Objects.requireNonNull(result.getBody());
-      assertEquals(1L, body.getData().getId());
-      assertEquals("새로운 댓글입니다.", body.getData().getContent());
-      assertEquals("댓글이 성공적으로 작성되었습니다.", body.getMessage());
+      assertThat(body.getData().getId()).isEqualTo(1L);
+      assertThat(body.getData().getContent()).isEqualTo("새로운 댓글입니다.");
+      assertThat(body.getMessage()).isEqualTo("댓글이 성공적으로 작성되었습니다.");
 
       verify(commentService).createComment(eq(threadId), any(CommentCreateRequest.class),
           eq(MOCK_USER_EMAIL));
@@ -153,10 +151,10 @@ class CommentControllerTest {
           request);
 
       // then
-      assertEquals(HttpStatus.CREATED, result.getStatusCode());
-      assertNotNull(result.getBody());
+      assertThat(result.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+      assertThat(result.getBody()).isNotNull();
       ApiResponse<CommentResponse> body = Objects.requireNonNull(result.getBody());
-      assertEquals(1L, body.getData().getParentId());
+      assertThat(body.getData().getParentId()).isEqualTo(1L);
     }
 
     @Test
@@ -268,12 +266,12 @@ class CommentControllerTest {
           threadId);
 
       // then
-      assertEquals(HttpStatus.OK, result.getStatusCode());
-      assertNotNull(result.getBody());
+      assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+      assertThat(result.getBody()).isNotNull();
       ApiResponse<List<CommentResponse>> body = Objects.requireNonNull(result.getBody());
-      assertEquals(1, body.getData().size());
-      assertEquals(1L, body.getData().get(0).getId());
-      assertEquals(1, body.getData().get(0).getChildren().size());
+      assertThat(body.getData().size()).isEqualTo(1);
+      assertThat(body.getData().get(0).getId()).isEqualTo(1L);
+      assertThat(body.getData().get(0).getChildren().size()).isEqualTo(1);
 
       verify(commentService).getThreadComments(threadId);
     }
@@ -292,8 +290,8 @@ class CommentControllerTest {
           threadId);
 
       // then
-      assertEquals(HttpStatus.OK, result.getStatusCode());
-      assertNotNull(result.getBody());
+      assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+      assertThat(result.getBody()).isNotNull();
       ApiResponse<List<CommentResponse>> body = Objects.requireNonNull(result.getBody());
       assertThat(body.getData()).isEmpty();
     }
@@ -353,11 +351,11 @@ class CommentControllerTest {
           request);
 
       // then
-      assertEquals(HttpStatus.OK, result.getStatusCode());
-      assertNotNull(result.getBody());
+      assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+      assertThat(result.getBody()).isNotNull();
       ApiResponse<CommentResponse> body = Objects.requireNonNull(result.getBody());
-      assertEquals("수정된 댓글 내용", body.getData().getContent());
-      assertEquals("댓글이 성공적으로 수정되었습니다.", body.getMessage());
+      assertThat(body.getData().getContent()).isEqualTo("수정된 댓글 내용");
+      assertThat(body.getMessage()).isEqualTo("댓글이 성공적으로 수정되었습니다.");
 
       verify(commentService).updateComment(eq(commentId), any(CommentUpdateRequest.class),
           eq(MOCK_USER_EMAIL));
@@ -425,10 +423,10 @@ class CommentControllerTest {
           userDetails);
 
       // then
-      assertEquals(HttpStatus.OK, result.getStatusCode());
-      assertNotNull(result.getBody());
+      assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+      assertThat(result.getBody()).isNotNull();
       ApiResponse<String> body = Objects.requireNonNull(result.getBody());
-      assertEquals("댓글이 성공적으로 삭제되었습니다.", body.getMessage());
+      assertThat(body.getMessage()).isEqualTo("댓글이 성공적으로 삭제되었습니다.");
 
       verify(commentService).deleteComment(commentId, MOCK_USER_EMAIL);
     }
@@ -505,11 +503,11 @@ class CommentControllerTest {
           pageable);
 
       // then
-      assertEquals(HttpStatus.OK, result.getStatusCode());
-      assertNotNull(result.getBody());
+      assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+      assertThat(result.getBody()).isNotNull();
       ApiResponse<Page<CommentResponse>> body = Objects.requireNonNull(result.getBody());
-      assertEquals(1, body.getData().getContent().size());
-      assertEquals("내 댓글", body.getData().getContent().get(0).getContent());
+      assertThat(body.getData().getContent().size()).isEqualTo(1);
+      assertThat(body.getData().getContent().get(0).getContent()).isEqualTo("내 댓글");
 
       verify(commentService).getUserComments(MOCK_USER_EMAIL, pageable);
     }
@@ -552,11 +550,11 @@ class CommentControllerTest {
           pageable);
 
       // then
-      assertEquals(HttpStatus.OK, result.getStatusCode());
-      assertNotNull(result.getBody());
+      assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+      assertThat(result.getBody()).isNotNull();
       ApiResponse<Page<CommentResponse>> body = Objects.requireNonNull(result.getBody());
-      assertEquals(1, body.getData().getContent().size());
-      assertEquals("@testuser 안녕하세요!", body.getData().getContent().get(0).getContent());
+      assertThat(body.getData().getContent().size()).isEqualTo(1);
+      assertThat(body.getData().getContent().get(0).getContent()).isEqualTo("@testuser 안녕하세요!");
 
       verify(commentService).getMentionedComments(MOCK_USER_EMAIL, pageable);
     }
@@ -580,11 +578,11 @@ class CommentControllerTest {
       ResponseEntity<ApiResponse<Long>> result = commentController.getCommentCount(threadId);
 
       // then
-      assertEquals(HttpStatus.OK, result.getStatusCode());
-      assertNotNull(result.getBody());
+      assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+      assertThat(result.getBody()).isNotNull();
       ApiResponse<Long> body = Objects.requireNonNull(result.getBody());
-      assertEquals(expectedCount, body.getData());
-      assertEquals("댓글 개수 조회가 완료되었습니다.", body.getMessage());
+      assertThat(body.getData()).isEqualTo(expectedCount);
+      assertThat(body.getMessage()).isEqualTo("댓글 개수 조회가 완료되었습니다.");
 
       verify(commentService).getCommentCount(threadId);
     }

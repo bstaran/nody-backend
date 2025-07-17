@@ -1,12 +1,12 @@
 package org.nodystudio.nodybackend.controller.like;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 
+import java.util.Objects;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -67,16 +67,16 @@ class LikeControllerTest {
           authentication);
 
       // Then
-      assertEquals(200, result.getStatusCode().value());
-      assertNotNull(result.getBody());
-      ApiResponse<LikeStatusResponse> body = result.getBody();
-      assertEquals(200, body.getStatus());
-      assertEquals("LIKE_S001", body.getCode());
-      assertEquals("좋아요 토글이 성공적으로 처리되었습니다.", body.getMessage());
-      assertEquals(true, body.getData().getIsLiked());
-      assertEquals(1L, body.getData().getLikeCount());
-      assertEquals(TargetType.THREAD, body.getData().getTargetType());
-      assertEquals(1L, body.getData().getTargetId());
+      assertThat(result.getStatusCode().value()).isEqualTo(200);
+      assertThat(result.getBody()).isNotNull();
+      ApiResponse<LikeStatusResponse> body = Objects.requireNonNull(result.getBody());
+      assertThat(body.getStatus()).isEqualTo(200);
+      assertThat(body.getCode()).isEqualTo("LIKE_S001");
+      assertThat(body.getMessage()).isEqualTo("좋아요 토글이 성공적으로 처리되었습니다.");
+      assertThat(body.getData().getIsLiked()).isTrue();
+      assertThat(body.getData().getLikeCount()).isEqualTo(1L);
+      assertThat(body.getData().getTargetType()).isEqualTo(TargetType.THREAD);
+      assertThat(body.getData().getTargetId()).isEqualTo(1L);
     }
 
     @Test
@@ -100,15 +100,15 @@ class LikeControllerTest {
           authentication);
 
       // Then
-      assertEquals(200, result.getStatusCode().value());
-      assertNotNull(result.getBody());
-      ApiResponse<LikeStatusResponse> body = result.getBody();
-      assertEquals(200, body.getStatus());
-      assertEquals("LIKE_S001", body.getCode());
-      assertEquals(true, body.getData().getIsLiked());
-      assertEquals(1L, body.getData().getLikeCount());
-      assertEquals(TargetType.LOG, body.getData().getTargetType());
-      assertEquals(1L, body.getData().getTargetId());
+      assertThat(result.getStatusCode().value()).isEqualTo(200);
+      assertThat(result.getBody()).isNotNull();
+      ApiResponse<LikeStatusResponse> body = Objects.requireNonNull(result.getBody());
+      assertThat(body.getStatus()).isEqualTo(200);
+      assertThat(body.getCode()).isEqualTo("LIKE_S001");
+      assertThat(body.getData().getIsLiked()).isTrue();
+      assertThat(body.getData().getLikeCount()).isEqualTo(1L);
+      assertThat(body.getData().getTargetType()).isEqualTo(TargetType.LOG);
+      assertThat(body.getData().getTargetId()).isEqualTo(1L);
     }
 
     @Test
@@ -126,9 +126,8 @@ class LikeControllerTest {
       Authentication authentication = createMockAuthentication();
 
       // When & Then
-      assertThrows(ResourceNotFoundException.class, () -> {
-        likeController.toggleLike(request, authentication);
-      });
+      assertThatThrownBy(() -> likeController.toggleLike(request, authentication))
+          .isInstanceOf(ResourceNotFoundException.class);
     }
 
     @Test
@@ -146,9 +145,8 @@ class LikeControllerTest {
       Authentication authentication = createMockAuthentication();
 
       // When & Then
-      assertThrows(UserNotFoundException.class, () -> {
-        likeController.toggleLike(request, authentication);
-      });
+      assertThatThrownBy(() -> likeController.toggleLike(request, authentication))
+          .isInstanceOf(UserNotFoundException.class);
     }
 
     @Test
@@ -161,9 +159,8 @@ class LikeControllerTest {
           .build();
 
       // When & Then
-      assertThrows(IllegalArgumentException.class, () -> {
-        likeController.toggleLike(request, null);
-      });
+      assertThatThrownBy(() -> likeController.toggleLike(request, null))
+          .isInstanceOf(IllegalArgumentException.class);
     }
   }
 
@@ -187,16 +184,16 @@ class LikeControllerTest {
           TargetType.THREAD, 1L, authentication);
 
       // Then
-      assertEquals(200, result.getStatusCode().value());
-      assertNotNull(result.getBody());
-      ApiResponse<LikeStatusResponse> body = result.getBody();
-      assertEquals(200, body.getStatus());
-      assertEquals("LIKE_S002", body.getCode());
-      assertEquals("좋아요 상태가 성공적으로 조회되었습니다.", body.getMessage());
-      assertEquals(true, body.getData().getIsLiked());
-      assertEquals(5L, body.getData().getLikeCount());
-      assertEquals(TargetType.THREAD, body.getData().getTargetType());
-      assertEquals(1L, body.getData().getTargetId());
+      assertThat(result.getStatusCode().value()).isEqualTo(200);
+      assertThat(result.getBody()).isNotNull();
+      ApiResponse<LikeStatusResponse> body = Objects.requireNonNull(result.getBody());
+      assertThat(body.getStatus()).isEqualTo(200);
+      assertThat(body.getCode()).isEqualTo("LIKE_S002");
+      assertThat(body.getMessage()).isEqualTo("좋아요 상태가 성공적으로 조회되었습니다.");
+      assertThat(body.getData().getIsLiked()).isTrue();
+      assertThat(body.getData().getLikeCount()).isEqualTo(5L);
+      assertThat(body.getData().getTargetType()).isEqualTo(TargetType.THREAD);
+      assertThat(body.getData().getTargetId()).isEqualTo(1L);
     }
 
     @Test
@@ -213,15 +210,15 @@ class LikeControllerTest {
           TargetType.LOG, 1L, null);
 
       // Then
-      assertEquals(200, result.getStatusCode().value());
-      assertNotNull(result.getBody());
-      ApiResponse<LikeStatusResponse> body = result.getBody();
-      assertEquals(200, body.getStatus());
-      assertEquals("LIKE_S002", body.getCode());
-      assertEquals(false, body.getData().getIsLiked());
-      assertEquals(3L, body.getData().getLikeCount());
-      assertEquals(TargetType.LOG, body.getData().getTargetType());
-      assertEquals(1L, body.getData().getTargetId());
+      assertThat(result.getStatusCode().value()).isEqualTo(200);
+      assertThat(result.getBody()).isNotNull();
+      ApiResponse<LikeStatusResponse> body = Objects.requireNonNull(result.getBody());
+      assertThat(body.getStatus()).isEqualTo(200);
+      assertThat(body.getCode()).isEqualTo("LIKE_S002");
+      assertThat(body.getData().getIsLiked()).isFalse();
+      assertThat(body.getData().getLikeCount()).isEqualTo(3L);
+      assertThat(body.getData().getTargetType()).isEqualTo(TargetType.LOG);
+      assertThat(body.getData().getTargetId()).isEqualTo(1L);
     }
 
     @Test
@@ -232,9 +229,8 @@ class LikeControllerTest {
           .willThrow(new ResourceNotFoundException("스레드를 찾을 수 없습니다. ID: 999"));
 
       // When & Then
-      assertThrows(ResourceNotFoundException.class, () -> {
-        likeController.getLikeStatus(TargetType.THREAD, 999L, null);
-      });
+      assertThatThrownBy(() -> likeController.getLikeStatus(TargetType.THREAD, 999L, null))
+          .isInstanceOf(ResourceNotFoundException.class);
     }
   }
 }

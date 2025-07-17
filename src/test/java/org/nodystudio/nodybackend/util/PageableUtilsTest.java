@@ -2,6 +2,7 @@ package org.nodystudio.nodybackend.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Objects;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.nodystudio.nodybackend.domain.enums.SortDirection;
@@ -25,7 +26,7 @@ class PageableUtilsTest {
     assertThat(pageable.getPageSize()).isEqualTo(10);
     Sort.Order order = pageable.getSort().getOrderFor("name");
     assertThat(order).isNotNull();
-    assertThat(order.getDirection()).isEqualTo(Sort.Direction.ASC);
+    assertThat(Objects.requireNonNull(order).getDirection()).isEqualTo(Sort.Direction.ASC);
   }
 
   @Test
@@ -39,7 +40,7 @@ class PageableUtilsTest {
     assertThat(pageable.getPageSize()).isEqualTo(20);
     Sort.Order order = pageable.getSort().getOrderFor("createdAt");
     assertThat(order).isNotNull();
-    assertThat(order.getDirection()).isEqualTo(Sort.Direction.DESC);
+    assertThat(Objects.requireNonNull(order).getDirection()).isEqualTo(Sort.Direction.DESC);
   }
 
   @Test
@@ -54,7 +55,7 @@ class PageableUtilsTest {
     assertThat(pageable.getPageSize()).isEqualTo(10);
     Sort.Order order = pageable.getSort().getOrderFor("viewCount");
     assertThat(order).isNotNull();
-    assertThat(order.getDirection()).isEqualTo(Sort.Direction.ASC);
+    assertThat(Objects.requireNonNull(order).getDirection()).isEqualTo(Sort.Direction.ASC);
   }
 
   @Test
@@ -70,7 +71,7 @@ class PageableUtilsTest {
     assertThat(pageable.getPageSize()).isEqualTo(10);
     Sort.Order order = pageable.getSort().getOrderFor("createdAt");
     assertThat(order).isNotNull();
-    assertThat(order.getDirection()).isEqualTo(Sort.Direction.ASC);
+    assertThat(Objects.requireNonNull(order).getDirection()).isEqualTo(Sort.Direction.ASC);
   }
 
   @Test
@@ -122,7 +123,7 @@ class PageableUtilsTest {
     // then
     Sort.Order order = sort.getOrderFor("createdAt");
     assertThat(order).isNotNull();
-    assertThat(order.getDirection()).isEqualTo(Sort.Direction.ASC);
+    assertThat(Objects.requireNonNull(order).getDirection()).isEqualTo(Sort.Direction.ASC);
   }
 
   @Test
@@ -134,7 +135,7 @@ class PageableUtilsTest {
     // then
     Sort.Order order = sort.getOrderFor("viewCount");
     assertThat(order).isNotNull();
-    assertThat(order.getDirection()).isEqualTo(Sort.Direction.DESC);
+    assertThat(Objects.requireNonNull(order).getDirection()).isEqualTo(Sort.Direction.DESC);
   }
 
   @Test
@@ -146,7 +147,7 @@ class PageableUtilsTest {
     // then
     Sort.Order order = sort.getOrderFor("viewCount");
     assertThat(order).isNotNull();
-    assertThat(order.getDirection()).isEqualTo(Sort.Direction.ASC);
+    assertThat(Objects.requireNonNull(order).getDirection()).isEqualTo(Sort.Direction.ASC);
   }
 
   @Test
@@ -158,7 +159,7 @@ class PageableUtilsTest {
     // then
     Sort.Order order = sort.getOrderFor("createdAt");
     assertThat(order).isNotNull();
-    assertThat(order.getDirection()).isEqualTo(Sort.Direction.DESC);
+    assertThat(Objects.requireNonNull(order).getDirection()).isEqualTo(Sort.Direction.DESC);
   }
 
   @Test
@@ -171,11 +172,11 @@ class PageableUtilsTest {
     // then
     Sort.Order order1 = sort1.getOrderFor("createdAt");
     assertThat(order1).isNotNull();
-    assertThat(order1.getDirection()).isEqualTo(Sort.Direction.ASC);
+    assertThat(Objects.requireNonNull(order1).getDirection()).isEqualTo(Sort.Direction.ASC);
 
     Sort.Order order2 = sort2.getOrderFor("viewCount");
     assertThat(order2).isNotNull();
-    assertThat(order2.getDirection()).isEqualTo(Sort.Direction.DESC);
+    assertThat(Objects.requireNonNull(order2).getDirection()).isEqualTo(Sort.Direction.DESC);
   }
 
   @Test
@@ -187,6 +188,6 @@ class PageableUtilsTest {
     // then
     Sort.Order order = sort.getOrderFor("name");
     assertThat(order).isNotNull();
-    assertThat(order.getDirection()).isEqualTo(Sort.Direction.ASC);
+    assertThat(Objects.requireNonNull(order).getDirection()).isEqualTo(Sort.Direction.ASC);
   }
 }
