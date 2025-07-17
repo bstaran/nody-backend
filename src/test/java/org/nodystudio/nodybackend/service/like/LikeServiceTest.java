@@ -3,7 +3,6 @@ package org.nodystudio.nodybackend.service.like;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
@@ -152,8 +151,8 @@ class LikeServiceTest {
       given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
       given(threadRepository.findById(1L)).willReturn(Optional.of(testThread));
       given(likeRepository.atomicToggleLike(1L, "THREAD", 1L)).willReturn(1);
-      given(likeRepository.existsByUserIdAndTargetTypeAndTargetIdAndIsActiveTrue(1L, TargetType.THREAD, 1L))
-          .willReturn(true);
+      given(likeRepository.existsByUserIdAndTargetTypeAndTargetIdAndIsActiveTrue(1L,
+          TargetType.THREAD, 1L)).willReturn(true);
       given(likeRepository.countByTargetTypeAndTargetIdAndIsActiveTrue(TargetType.THREAD, 1L))
           .willReturn(1L);
 
@@ -176,8 +175,8 @@ class LikeServiceTest {
       given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
       given(logRepository.findById(1L)).willReturn(Optional.of(testLog));
       given(likeRepository.atomicToggleLike(1L, "LOG", 1L)).willReturn(1);
-      given(likeRepository.existsByUserIdAndTargetTypeAndTargetIdAndIsActiveTrue(1L, TargetType.LOG, 1L))
-          .willReturn(true);
+      given(likeRepository.existsByUserIdAndTargetTypeAndTargetIdAndIsActiveTrue(1L, TargetType.LOG,
+          1L)).willReturn(true);
       given(likeRepository.countByTargetTypeAndTargetIdAndIsActiveTrue(TargetType.LOG, 1L))
           .willReturn(1L);
 
@@ -200,8 +199,8 @@ class LikeServiceTest {
       given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
       given(threadRepository.findById(1L)).willReturn(Optional.of(testThread));
       given(likeRepository.atomicToggleLike(1L, "THREAD", 1L)).willReturn(1);
-      given(likeRepository.existsByUserIdAndTargetTypeAndTargetIdAndIsActiveTrue(1L, TargetType.THREAD, 1L))
-          .willReturn(false);
+      given(likeRepository.existsByUserIdAndTargetTypeAndTargetIdAndIsActiveTrue(1L,
+          TargetType.THREAD, 1L)).willReturn(false);
       given(likeRepository.countByTargetTypeAndTargetIdAndIsActiveTrue(TargetType.THREAD, 1L))
           .willReturn(0L);
 
@@ -295,8 +294,8 @@ class LikeServiceTest {
       given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
       given(likeRepository.countByTargetTypeAndTargetIdAndIsActiveTrue(TargetType.THREAD, 1L))
           .willReturn(5L);
-      given(likeRepository.existsByUserIdAndTargetTypeAndTargetIdAndIsActiveTrue(1L, TargetType.THREAD, 1L))
-          .willReturn(true);
+      given(likeRepository.existsByUserIdAndTargetTypeAndTargetIdAndIsActiveTrue(1L,
+          TargetType.THREAD, 1L)).willReturn(true);
 
       // When
       LikeStatusResponse result = likeService.getLikeStatus(TargetType.THREAD, 1L,
@@ -368,8 +367,8 @@ class LikeServiceTest {
     void isLikedByUser_WithLike_ShouldReturnTrue() {
       // Given
       given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
-      given(likeRepository.existsByUserIdAndTargetTypeAndTargetIdAndIsActiveTrue(1L, TargetType.THREAD, 1L))
-          .willReturn(true);
+      given(likeRepository.existsByUserIdAndTargetTypeAndTargetIdAndIsActiveTrue(1L,
+          TargetType.THREAD, 1L)).willReturn(true);
 
       // When
       boolean result = likeService.isLikedByUser(TargetType.THREAD, 1L, "test@example.com");
@@ -383,8 +382,8 @@ class LikeServiceTest {
     void isLikedByUser_WithoutLike_ShouldReturnFalse() {
       // Given
       given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
-      given(likeRepository.existsByUserIdAndTargetTypeAndTargetIdAndIsActiveTrue(1L, TargetType.THREAD, 1L))
-          .willReturn(false);
+      given(likeRepository.existsByUserIdAndTargetTypeAndTargetIdAndIsActiveTrue(1L,
+          TargetType.THREAD, 1L)).willReturn(false);
 
       // When
       boolean result = likeService.isLikedByUser(TargetType.THREAD, 1L, "test@example.com");

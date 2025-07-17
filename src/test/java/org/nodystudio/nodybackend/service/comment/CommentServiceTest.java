@@ -342,7 +342,8 @@ class CommentServiceTest {
 
       given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
       given(threadRepository.findById(threadId)).willReturn(Optional.of(mockThread));
-      given(userRepository.findByNicknameAndIsActiveTrue("nonexistentuser")).willReturn(Optional.empty());
+      given(userRepository.findByNicknameAndIsActiveTrue("nonexistentuser"))
+          .willReturn(Optional.empty());
       given(commentRepository.save(any(Comment.class))).willReturn(mockComment);
 
       // when
@@ -371,7 +372,8 @@ class CommentServiceTest {
 
       given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
       given(threadRepository.findById(threadId)).willReturn(Optional.of(mockThread));
-      given(userRepository.findByNicknameAndIsActiveTrue("inactiveuser")).willReturn(Optional.empty());
+      given(userRepository.findByNicknameAndIsActiveTrue("inactiveuser"))
+          .willReturn(Optional.empty());
       given(commentRepository.save(any(Comment.class))).willReturn(mockComment);
 
       // when
@@ -437,14 +439,16 @@ class CommentServiceTest {
 
       given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
       given(threadRepository.findById(threadId)).willReturn(Optional.of(mockThread));
-      given(userRepository.findByNicknameAndIsActiveTrue("john")).willReturn(Optional.of(mentionedUser));
+      given(userRepository.findByNicknameAndIsActiveTrue("john"))
+          .willReturn(Optional.of(mentionedUser));
       given(commentRepository.save(any(Comment.class))).willReturn(mockComment);
 
       // when
       commentService.createComment(threadId, request, userEmail);
 
       // then
-      ArgumentCaptor<CommentMentionEvent> eventCaptor = ArgumentCaptor.forClass(CommentMentionEvent.class);
+      ArgumentCaptor<CommentMentionEvent> eventCaptor = ArgumentCaptor.forClass(
+          CommentMentionEvent.class);
       then(eventPublisher).should().publishEvent(eventCaptor.capture());
 
       CommentMentionEvent event = eventCaptor.getValue();
@@ -478,15 +482,18 @@ class CommentServiceTest {
       given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
       given(threadRepository.findById(threadId)).willReturn(Optional.of(mockThread));
       given(userRepository.findByNicknameAndIsActiveTrue("john")).willReturn(Optional.of(johnUser));
-      given(userRepository.findByNicknameAndIsActiveTrue("nonexistent")).willReturn(Optional.empty());
-      given(userRepository.findByNicknameAndIsActiveTrue("alice")).willReturn(Optional.of(aliceUser));
+      given(userRepository.findByNicknameAndIsActiveTrue("nonexistent"))
+          .willReturn(Optional.empty());
+      given(userRepository.findByNicknameAndIsActiveTrue("alice"))
+          .willReturn(Optional.of(aliceUser));
       given(commentRepository.save(any(Comment.class))).willReturn(mockComment);
 
       // when
       commentService.createComment(threadId, request, userEmail);
 
       // then
-      ArgumentCaptor<CommentMentionEvent> eventCaptor = ArgumentCaptor.forClass(CommentMentionEvent.class);
+      ArgumentCaptor<CommentMentionEvent> eventCaptor = ArgumentCaptor.forClass(
+          CommentMentionEvent.class);
       then(eventPublisher).should().publishEvent(eventCaptor.capture());
 
       CommentMentionEvent event = eventCaptor.getValue();
@@ -521,7 +528,8 @@ class CommentServiceTest {
       given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
       given(threadRepository.findById(threadId)).willReturn(Optional.of(mockThread));
       given(userRepository.findByNicknameAndIsActiveTrue("john")).willReturn(Optional.of(johnUser));
-      given(userRepository.findByNicknameAndIsActiveTrue("alice")).willReturn(Optional.of(aliceUser));
+      given(userRepository.findByNicknameAndIsActiveTrue("alice"))
+          .willReturn(Optional.of(aliceUser));
       given(userRepository.findByNicknameAndIsActiveTrue("bob")).willReturn(Optional.of(bobUser));
       given(commentRepository.save(any(Comment.class))).willReturn(mockComment);
 
@@ -529,7 +537,8 @@ class CommentServiceTest {
       commentService.createComment(threadId, request, userEmail);
 
       // then
-      ArgumentCaptor<CommentMentionEvent> eventCaptor = ArgumentCaptor.forClass(CommentMentionEvent.class);
+      ArgumentCaptor<CommentMentionEvent> eventCaptor = ArgumentCaptor.forClass(
+          CommentMentionEvent.class);
       then(eventPublisher).should().publishEvent(eventCaptor.capture());
 
       CommentMentionEvent event = eventCaptor.getValue();
@@ -590,14 +599,16 @@ class CommentServiceTest {
 
       given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
       given(threadRepository.findById(threadId)).willReturn(Optional.of(mockThread));
-      given(userRepository.findByNicknameAndIsActiveTrue("홍길동")).willReturn(Optional.of(koreanUser));
+      given(userRepository.findByNicknameAndIsActiveTrue("홍길동"))
+          .willReturn(Optional.of(koreanUser));
       given(commentRepository.save(any(Comment.class))).willReturn(mockComment);
 
       // when
       commentService.createComment(threadId, request, userEmail);
 
       // then
-      ArgumentCaptor<CommentMentionEvent> eventCaptor = ArgumentCaptor.forClass(CommentMentionEvent.class);
+      ArgumentCaptor<CommentMentionEvent> eventCaptor = ArgumentCaptor.forClass(
+          CommentMentionEvent.class);
       then(eventPublisher).should().publishEvent(eventCaptor.capture());
 
       CommentMentionEvent event = eventCaptor.getValue();
@@ -659,20 +670,22 @@ class CommentServiceTest {
       given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
       given(threadRepository.findById(threadId)).willReturn(Optional.of(mockThread));
       given(userRepository.findByNicknameAndIsActiveTrue("john")).willReturn(Optional.of(johnUser));
-      given(userRepository.findByNicknameAndIsActiveTrue("alice")).willReturn(Optional.of(aliceUser));
+      given(userRepository.findByNicknameAndIsActiveTrue("alice")).willReturn(
+          Optional.of(aliceUser));
       given(commentRepository.save(any(Comment.class))).willReturn(mockComment);
 
       // when
       commentService.createComment(threadId, request, userEmail);
 
       // then
-      ArgumentCaptor<CommentMentionEvent> eventCaptor = ArgumentCaptor.forClass(CommentMentionEvent.class);
+      ArgumentCaptor<CommentMentionEvent> eventCaptor = ArgumentCaptor.forClass(
+          CommentMentionEvent.class);
       then(eventPublisher).should().publishEvent(eventCaptor.capture());
 
       CommentMentionEvent event = eventCaptor.getValue();
       assertThat(event.getMentionedUserIds()).hasSize(2); // john, alice만
       assertThat(event.getMentionedUserIds()).containsExactlyInAnyOrder(2L, 3L);
-      
+
       // 숫자로 시작하는 멘션에 대한 조회가 시도되지 않았는지 확인
       then(userRepository).should(never()).findByNicknameAndIsActiveTrue("123");
       then(userRepository).should(never()).findByNicknameAndIsActiveTrue("456def");
@@ -875,14 +888,16 @@ class CommentServiceTest {
       given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
       given(commentRepository.findByIdAndAuthorId(commentId, mockUser.getId()))
           .willReturn(Optional.of(existingComment));
-      given(userRepository.findByNicknameAndIsActiveTrue("alice")).willReturn(Optional.of(aliceUser));
+      given(userRepository.findByNicknameAndIsActiveTrue("alice")).willReturn(
+          Optional.of(aliceUser));
       given(userRepository.findByNicknameAndIsActiveTrue("bob")).willReturn(Optional.of(bobUser));
 
       // when
       commentService.updateComment(commentId, request, userEmail);
 
       // then
-      ArgumentCaptor<CommentMentionEvent> eventCaptor = ArgumentCaptor.forClass(CommentMentionEvent.class);
+      ArgumentCaptor<CommentMentionEvent> eventCaptor = ArgumentCaptor.forClass(
+          CommentMentionEvent.class);
       then(eventPublisher).should().publishEvent(eventCaptor.capture());
 
       CommentMentionEvent event = eventCaptor.getValue();

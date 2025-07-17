@@ -7,7 +7,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -64,7 +63,8 @@ class LikeControllerTest {
       Authentication authentication = createMockAuthentication();
 
       // When
-      ResponseEntity<ApiResponse<LikeStatusResponse>> result = likeController.toggleLike(request, authentication);
+      ResponseEntity<ApiResponse<LikeStatusResponse>> result = likeController.toggleLike(request,
+          authentication);
 
       // Then
       assertEquals(200, result.getStatusCode().value());
@@ -96,7 +96,8 @@ class LikeControllerTest {
       Authentication authentication = createMockAuthentication();
 
       // When
-      ResponseEntity<ApiResponse<LikeStatusResponse>> result = likeController.toggleLike(request, authentication);
+      ResponseEntity<ApiResponse<LikeStatusResponse>> result = likeController.toggleLike(request,
+          authentication);
 
       // Then
       assertEquals(200, result.getStatusCode().value());

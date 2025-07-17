@@ -10,17 +10,17 @@ import org.nodystudio.nodybackend.domain.enums.TargetType;
 import org.nodystudio.nodybackend.domain.user.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.annotation.DirtiesContext;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
  * MySQL의 ON DUPLICATE KEY UPDATE 문법 테스트
- * 
+ *
  * <p>
  * 이 테스트는 실제 MySQL 환경에서 MySQL 전용 쿼리의 동작을 검증합니다.
  * TestContainers를 사용하여 격리된 MySQL 환경에서 테스트합니다.
@@ -40,6 +40,13 @@ class LikeRepositoryMySQLTest {
       .withUsername("test")
       .withPassword("test")
       .withInitScript("schema.sql");
+  @Autowired
+  private LikeRepository likeRepository;
+  @Autowired
+  private UserRepository userRepository;
+  private User testUser;
+  private Long targetId;
+  private TargetType targetType;
 
   @DynamicPropertySource
   static void configureProperties(DynamicPropertyRegistry registry) {
@@ -47,16 +54,6 @@ class LikeRepositoryMySQLTest {
     registry.add("spring.datasource.username", mysql::getUsername);
     registry.add("spring.datasource.password", mysql::getPassword);
   }
-
-  @Autowired
-  private LikeRepository likeRepository;
-
-  @Autowired
-  private UserRepository userRepository;
-
-  private User testUser;
-  private Long targetId;
-  private TargetType targetType;
 
   @BeforeEach
   void setUp() {

@@ -105,7 +105,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
    * 특정 사용자를 제외하고 닉네임 중복 여부를 확인합니다. (닉네임 변경 시 사용)
    *
    * @param nickname 확인할 닉네임
-   * @param userId 제외할 사용자 ID
+   * @param userId   제외할 사용자 ID
    * @return 닉네임 중복 여부
    */
   boolean existsByNicknameAndIdNotAndIsActiveTrue(String nickname, Long userId);
