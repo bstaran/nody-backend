@@ -35,7 +35,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 class LikeRepositoryMySQLIntegrationTest {
 
     @Container
-    static MySQLContainer<?> mysql = new MySQLContainer<>("mysql:8.0")
+    @SuppressWarnings("resource")
+    static final MySQLContainer<?> mysql = new MySQLContainer<>("mysql:8.0")
         .withDatabaseName("testdb")
         .withUsername("test")
         .withPassword("test")
