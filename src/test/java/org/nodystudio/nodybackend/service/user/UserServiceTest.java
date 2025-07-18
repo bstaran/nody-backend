@@ -21,9 +21,9 @@ import org.nodystudio.nodybackend.dto.user.UserDetailResponseDto;
 import org.nodystudio.nodybackend.exception.custom.AccountAlreadyDeactivatedException;
 import org.nodystudio.nodybackend.exception.custom.DuplicateNicknameException;
 import org.nodystudio.nodybackend.exception.custom.UserNotFoundException;
-import org.nodystudio.nodybackend.repository.CommentRepository;
-import org.nodystudio.nodybackend.repository.LikeRepository;
 import org.nodystudio.nodybackend.repository.UserRepository;
+import org.nodystudio.nodybackend.service.comment.CommentService;
+import org.nodystudio.nodybackend.service.like.LikeService;
 import org.nodystudio.nodybackend.service.log.LogService;
 import org.nodystudio.nodybackend.service.thread.ThreadService;
 
@@ -40,9 +40,9 @@ class UserServiceTest {
   @Mock
   private ThreadService threadService;
   @Mock
-  private CommentRepository commentRepository;
+  private CommentService commentService;
   @Mock
-  private LikeRepository likeRepository;
+  private LikeService likeService;
   @InjectMocks
   private UserService userService;
   private User testUser;
@@ -225,8 +225,8 @@ class UserServiceTest {
     given(userRepository.findById(TEST_USER_ID)).willReturn(Optional.of(testUser));
     given(logService.deactivateLogsByUserId(TEST_USER_ID)).willReturn(5);
     given(threadService.deactivateThreadsByUserId(TEST_USER_ID)).willReturn(3);
-    given(commentRepository.deactivateByUserId(TEST_USER_ID)).willReturn(10);
-    given(likeRepository.deactivateByUserId(TEST_USER_ID)).willReturn(7);
+    given(commentService.deactivateCommentsByUserId(TEST_USER_ID)).willReturn(10);
+    given(likeService.deactivateLikesByUserId(TEST_USER_ID)).willReturn(7);
 
     // when
     userService.deactivateAccount(TEST_USER_ID_STRING);
@@ -239,8 +239,8 @@ class UserServiceTest {
     verify(userRepository).findById(TEST_USER_ID);
     verify(logService).deactivateLogsByUserId(TEST_USER_ID);
     verify(threadService).deactivateThreadsByUserId(TEST_USER_ID);
-    verify(commentRepository).deactivateByUserId(TEST_USER_ID);
-    verify(likeRepository).deactivateByUserId(TEST_USER_ID);
+    verify(commentService).deactivateCommentsByUserId(TEST_USER_ID);
+    verify(likeService).deactivateLikesByUserId(TEST_USER_ID);
   }
 
   @Test
@@ -300,8 +300,8 @@ class UserServiceTest {
     // given
     given(logService.reactivateLogsByUserId(TEST_USER_ID)).willReturn(5);
     given(threadService.reactivateThreadsByUserId(TEST_USER_ID)).willReturn(3);
-    given(commentRepository.reactivateByUserId(TEST_USER_ID)).willReturn(10);
-    given(likeRepository.reactivateByUserId(TEST_USER_ID)).willReturn(7);
+    given(commentService.reactivateCommentsByUserId(TEST_USER_ID)).willReturn(10);
+    given(likeService.reactivateLikesByUserId(TEST_USER_ID)).willReturn(7);
 
     // when
     userService.reactivateUserGeneratedData(testUser);
@@ -309,8 +309,8 @@ class UserServiceTest {
     // then
     verify(logService).reactivateLogsByUserId(TEST_USER_ID);
     verify(threadService).reactivateThreadsByUserId(TEST_USER_ID);
-    verify(commentRepository).reactivateByUserId(TEST_USER_ID);
-    verify(likeRepository).reactivateByUserId(TEST_USER_ID);
+    verify(commentService).reactivateCommentsByUserId(TEST_USER_ID);
+    verify(likeService).reactivateLikesByUserId(TEST_USER_ID);
   }
 
   @Test
