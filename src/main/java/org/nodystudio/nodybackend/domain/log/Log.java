@@ -151,4 +151,38 @@ public class Log extends BaseTimeEntity {
     }
     return viewer != null && isOwnedBy(viewer);
   }
+
+  /**
+   * 로그를 비활성화합니다.
+   * 계정 탈퇴 시 사용되며, 비활성화된 로그는 일반 조회에서 제외됩니다.
+   */
+  public void deactivate() {
+    this.deactivatedAt = LocalDateTime.now();
+  }
+
+  /**
+   * 로그를 재활성화합니다.
+   * 계정 복구 시 사용되며, 원본 공개설정이 그대로 복원됩니다.
+   */
+  public void reactivate() {
+    this.deactivatedAt = null;
+  }
+
+  /**
+   * 로그가 활성 상태인지 확인합니다.
+   *
+   * @return 활성 상태이면 true, 비활성 상태이면 false
+   */
+  public boolean isActive() {
+    return this.deactivatedAt == null;
+  }
+
+  /**
+   * 로그가 비활성 상태인지 확인합니다.
+   *
+   * @return 비활성 상태이면 true, 활성 상태이면 false
+   */
+  public boolean isDeactivated() {
+    return this.deactivatedAt != null;
+  }
 }
