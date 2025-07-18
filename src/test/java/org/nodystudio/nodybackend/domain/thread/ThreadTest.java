@@ -468,4 +468,85 @@ class ThreadTest {
     assertThat(thread.getComments()).doesNotContain(comment);
     assertThat(comment.getThread()).isEqualTo(otherThread); // 다른 스레드 유지
   }
+
+  @Test
+  @DisplayName("스레드 비활성화 - 성공")
+  void deactivate_Success() {
+    // given
+    assertThat(thread.isActive()).isTrue();
+    assertThat(thread.isDeactivated()).isFalse();
+
+    // when
+    thread.deactivate();
+
+    // then
+    assertThat(thread.isActive()).isFalse();
+    assertThat(thread.isDeactivated()).isTrue();
+    assertThat(thread.getDeactivatedAt()).isNotNull();
+  }
+
+  @Test
+  @DisplayName("스레드 재활성화 - 성공")
+  void reactivate_Success() {
+    // given
+    thread.deactivate();
+    assertThat(thread.isDeactivated()).isTrue();
+
+    // when
+    thread.reactivate();
+
+    // then
+    assertThat(thread.isActive()).isTrue();
+    assertThat(thread.isDeactivated()).isFalse();
+    assertThat(thread.getDeactivatedAt()).isNull();
+  }
+
+  @Test
+  @DisplayName("활성 스레드 상태 확인")
+  void isActive_ActiveThread_ReturnsTrue() {
+    // given & when & then
+    assertThat(thread.isActive()).isTrue();
+    assertThat(thread.isDeactivated()).isFalse();
+  }
+
+  @Test
+  @DisplayName("비활성 스레드 상태 확인")
+  void isDeactivated_DeactivatedThread_ReturnsTrue() {
+    // given
+    thread.deactivate();
+
+    // when & then
+    assertThat(thread.isDeactivated()).isTrue();
+    assertThat(thread.isActive()).isFalse();
+  }
+
+  @Test
+  @DisplayName("비활성화된 스레드의 원본 공개설정 보존 확인")
+  void deactivate_PreservesOriginalPublicSetting() {
+    // given
+    thread.updatePublicSetting(false); // 비공개로 설정
+    assertThat(thread.getIsPublic()).isFalse();
+
+    // when
+    thread.deactivate();
+
+    // then
+    assertThat(thread.getIsPublic()).isFalse(); // 원본 설정 보존
+    assertThat(thread.isDeactivated()).isTrue();
+  }
+
+  @Test
+  @DisplayName("재활성화된 스레드의 원본 공개설정 보존 확인")
+  void reactivate_PreservesOriginalPublicSetting() {
+    // given
+    thread.updatePublicSetting(false); // 비공개로 설정
+    thread.deactivate();
+    
+    // when
+    thread.reactivate();
+
+    // then
+    assertThat(thread.getIsPublic()).isFalse(); // 원본 설정 보존
+    assertThat(thread.isActive()).isTrue();
+  }
 }
