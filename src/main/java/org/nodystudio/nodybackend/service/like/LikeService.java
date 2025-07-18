@@ -9,8 +9,9 @@ import org.nodystudio.nodybackend.dto.like.LikeStatusResponse;
 import org.nodystudio.nodybackend.exception.custom.AnonymousUserLikeNotAllowedException;
 import org.nodystudio.nodybackend.exception.custom.ResourceNotFoundException;
 import org.nodystudio.nodybackend.exception.custom.UserNotFoundException;
-import org.nodystudio.nodybackend.repository.LikeRepository;
+import org.nodystudio.nodybackend.repository.LogLikeRepository;
 import org.nodystudio.nodybackend.repository.LogRepository;
+import org.nodystudio.nodybackend.repository.ThreadLikeRepository;
 import org.nodystudio.nodybackend.repository.ThreadRepository;
 import org.nodystudio.nodybackend.repository.UserRepository;
 import org.nodystudio.nodybackend.util.LoggingUtils;
@@ -18,12 +19,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 좋아요 관리 서비스
+ * 중간 엔티티 기반 좋아요 관리 서비스
  *
  * <p>
+ * ThreadLike와 LogLike 중간 엔티티를 사용하여 참조 무결성을 보장하고
+ * 타입 안전성을 제공하는 좋아요 시스템입니다.
  * 스레드와 로그에 대한 좋아요 생성, 취소, 조회 기능을 제공합니다.
- * 사용자가 동일한 대상에 중복 좋아요를 할 수 없도록 제어하며,
- * 좋아요 통계 정보를 제공합니다.
  * </p>
  */
 @Slf4j
@@ -32,7 +33,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class LikeService {
 
-  private final LikeRepository likeRepository;
+  private final ThreadLikeRepository threadLikeRepository;
+  private final LogLikeRepository logLikeRepository;
   private final UserRepository userRepository;
   private final ThreadRepository threadRepository;
   private final LogRepository logRepository;
@@ -65,22 +67,27 @@ public class LikeService {
 
     validateTargetExists(request.getTargetType(), request.getTargetId());
 
-    // 원자적 토글 연산 실행
-    int affectedRows = likeRepository.atomicToggleLike(
-        user.getId(),
-        request.getTargetType().name(),
-        request.getTargetId()
-    );
+    // 타입별 원자적 토글 연산 실행
+    int affectedRows = switch (request.getTargetType()) {
+      case THREAD -> threadLikeRepository.atomicToggleLike(user.getId(), request.getTargetId());
+      case LOG -> logLikeRepository.atomicToggleLike(user.getId(), request.getTargetId());
+    };
 
     log.info("원자적 토글 완료 - userId: {}, targetType: {}, targetId: {}, affectedRows: {}",
         user.getId(), request.getTargetType(), request.getTargetId(), affectedRows);
 
     // 결과 조회
-    boolean isLiked = likeRepository.existsByUserIdAndTargetTypeAndTargetIdAndIsActiveTrue(
-        user.getId(), request.getTargetType(), request.getTargetId());
+    boolean isLiked = switch (request.getTargetType()) {
+      case THREAD -> threadLikeRepository.existsByUserIdAndThreadIdAndIsActiveTrue(
+          user.getId(), request.getTargetId());
+      case LOG -> logLikeRepository.existsByUserIdAndLogIdAndIsActiveTrue(
+          user.getId(), request.getTargetId());
+    };
 
-    long likeCount = likeRepository.countByTargetTypeAndTargetIdAndIsActiveTrue(
-        request.getTargetType(), request.getTargetId());
+    long likeCount = switch (request.getTargetType()) {
+      case THREAD -> threadLikeRepository.countByThreadIdAndIsActiveTrue(request.getTargetId());
+      case LOG -> logLikeRepository.countByLogIdAndIsActiveTrue(request.getTargetId());
+    };
 
     log.info("좋아요 토글 완료 - userId: {}, targetType: {}, targetId: {}, isLiked: {}, likeCount: {}",
         user.getId(), request.getTargetType(), request.getTargetId(), isLiked, likeCount);
@@ -106,8 +113,10 @@ public class LikeService {
     validateTargetExists(targetType, targetId);
 
     // 활성 좋아요 개수 조회
-    long likeCount = likeRepository.countByTargetTypeAndTargetIdAndIsActiveTrue(targetType,
-        targetId);
+    long likeCount = switch (targetType) {
+      case THREAD -> threadLikeRepository.countByThreadIdAndIsActiveTrue(targetId);
+      case LOG -> logLikeRepository.countByLogIdAndIsActiveTrue(targetId);
+    };
 
     boolean isLiked = false;
     if (userEmail != null) {
@@ -115,8 +124,12 @@ public class LikeService {
       User user = userRepository.findByEmail(userEmail)
           .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다. Email: " + userEmail));
 
-      isLiked = likeRepository.existsByUserIdAndTargetTypeAndTargetIdAndIsActiveTrue(
-          user.getId(), targetType, targetId);
+      isLiked = switch (targetType) {
+        case THREAD -> threadLikeRepository.existsByUserIdAndThreadIdAndIsActiveTrue(
+            user.getId(), targetId);
+        case LOG -> logLikeRepository.existsByUserIdAndLogIdAndIsActiveTrue(
+            user.getId(), targetId);
+      };
     }
 
     log.info("좋아요 상태 조회 완료 - targetType: {}, targetId: {}, isLiked: {}, likeCount: {}",
@@ -134,7 +147,10 @@ public class LikeService {
    */
   public long getLikeCount(TargetType targetType, Long targetId) {
     log.debug("활성 좋아요 개수 조회 - targetType: {}, targetId: {}", targetType, targetId);
-    return likeRepository.countByTargetTypeAndTargetIdAndIsActiveTrue(targetType, targetId);
+    return switch (targetType) {
+      case THREAD -> threadLikeRepository.countByThreadIdAndIsActiveTrue(targetId);
+      case LOG -> logLikeRepository.countByLogIdAndIsActiveTrue(targetId);
+    };
   }
 
   /**
@@ -153,8 +169,12 @@ public class LikeService {
     User user = userRepository.findByEmail(userEmail)
         .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다. Email: " + userEmail));
 
-    return likeRepository.existsByUserIdAndTargetTypeAndTargetIdAndIsActiveTrue(
-        user.getId(), targetType, targetId);
+    return switch (targetType) {
+      case THREAD -> threadLikeRepository.existsByUserIdAndThreadIdAndIsActiveTrue(
+          user.getId(), targetId);
+      case LOG -> logLikeRepository.existsByUserIdAndLogIdAndIsActiveTrue(
+          user.getId(), targetId);
+    };
   }
 
   /**
@@ -192,12 +212,15 @@ public class LikeService {
   public int deactivateLikesByUserId(Long userId) {
     log.debug("사용자 좋아요 비활성화 시작: userId={}", LoggingUtils.maskUserId(userId));
 
-    int deactivatedCount = likeRepository.deactivateByUserId(userId);
+    int threadLikesDeactivated = threadLikeRepository.deactivateByUserId(userId);
+    int logLikesDeactivated = logLikeRepository.deactivateByUserId(userId);
+    int totalDeactivated = threadLikesDeactivated + logLikesDeactivated;
 
-    log.debug("사용자 좋아요 비활성화 완료: userId={}, count={}", 
-            LoggingUtils.maskUserId(userId), deactivatedCount);
+    log.debug("사용자 좋아요 비활성화 완료: userId={}, threadLikes={}, logLikes={}, total={}",
+        LoggingUtils.maskUserId(userId), threadLikesDeactivated, logLikesDeactivated,
+        totalDeactivated);
 
-    return deactivatedCount;
+    return totalDeactivated;
   }
 
   /**
@@ -211,11 +234,14 @@ public class LikeService {
   public int reactivateLikesByUserId(Long userId) {
     log.debug("사용자 좋아요 재활성화 시작: userId={}", LoggingUtils.maskUserId(userId));
 
-    int reactivatedCount = likeRepository.reactivateByUserId(userId);
+    int threadLikesReactivated = threadLikeRepository.reactivateByUserId(userId);
+    int logLikesReactivated = logLikeRepository.reactivateByUserId(userId);
+    int totalReactivated = threadLikesReactivated + logLikesReactivated;
 
-    log.debug("사용자 좋아요 재활성화 완료: userId={}, count={}", 
-            LoggingUtils.maskUserId(userId), reactivatedCount);
+    log.debug("사용자 좋아요 재활성화 완료: userId={}, threadLikes={}, logLikes={}, total={}",
+        LoggingUtils.maskUserId(userId), threadLikesReactivated, logLikesReactivated,
+        totalReactivated);
 
-    return reactivatedCount;
+    return totalReactivated;
   }
 }

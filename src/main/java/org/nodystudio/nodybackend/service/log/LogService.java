@@ -1,5 +1,6 @@
 package org.nodystudio.nodybackend.service.log;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.nodystudio.nodybackend.domain.enums.LogSortField;
@@ -21,8 +22,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 /**
  * 사용자의 위치 기반 로그 관리 서비스
@@ -368,8 +367,8 @@ public class LogService {
     activeLogs.forEach(Log::deactivate);
     logRepository.saveAll(activeLogs);
 
-    log.debug("사용자 로그 비활성화 완료: userId={}, count={}", 
-            LoggingUtils.maskUserId(userId), activeLogs.size());
+    log.debug("사용자 로그 비활성화 완료: userId={}, count={}",
+        LoggingUtils.maskUserId(userId), activeLogs.size());
 
     return activeLogs.size();
   }
@@ -389,8 +388,8 @@ public class LogService {
     deactivatedLogs.forEach(Log::reactivate);
     logRepository.saveAll(deactivatedLogs);
 
-    log.debug("사용자 로그 재활성화 완료: userId={}, count={}", 
-            LoggingUtils.maskUserId(userId), deactivatedLogs.size());
+    log.debug("사용자 로그 재활성화 완료: userId={}, count={}",
+        LoggingUtils.maskUserId(userId), deactivatedLogs.size());
 
     return deactivatedLogs.size();
   }
