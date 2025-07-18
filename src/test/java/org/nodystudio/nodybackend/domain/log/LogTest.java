@@ -329,7 +329,7 @@ class LogTest {
     // given
     log.updatePublicSetting(false); // 비공개로 설정
     log.deactivate();
-    
+
     // when
     log.reactivate();
 

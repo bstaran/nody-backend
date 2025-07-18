@@ -88,8 +88,12 @@ public class CommentService {
         .author(author)
         .content(request.getContent().trim())
         .parent(parent)
-        .mentionedUsers(mentionedUsers)
         .build();
+
+    // 멘션된 사용자들을 추가
+    for (User mentionedUser : mentionedUsers) {
+      comment.addMentionedUser(mentionedUser);
+    }
 
     Comment savedComment = commentRepository.save(comment);
     thread.addComment(savedComment);
@@ -152,10 +156,10 @@ public class CommentService {
     }
 
     Set<User> newMentionedUsers = parseMentionedUsers(request.getContent());
-    Set<User> previousMentions = new HashSet<>(comment.getMentionedUsers());
+    List<User> previousMentions = new ArrayList<>(comment.getMentionedUsers());
 
     comment.updateContent(request.getContent());
-    comment.setMentionedUsers(newMentionedUsers);
+    comment.setMentionedUsers(new ArrayList<>(newMentionedUsers));
 
     // 새로 추가된 멘션에 대해서만 알림 발행
     Set<User> addedMentions = newMentionedUsers.stream()
@@ -361,8 +365,8 @@ public class CommentService {
 
     int deactivatedCount = commentRepository.deactivateByUserId(userId);
 
-    log.debug("사용자 댓글 비활성화 완료: userId={}, count={}", 
-            LoggingUtils.maskUserId(userId), deactivatedCount);
+    log.debug("사용자 댓글 비활성화 완료: userId={}, count={}",
+        LoggingUtils.maskUserId(userId), deactivatedCount);
 
     return deactivatedCount;
   }
@@ -380,8 +384,8 @@ public class CommentService {
 
     int reactivatedCount = commentRepository.reactivateByUserId(userId);
 
-    log.debug("사용자 댓글 재활성화 완료: userId={}, count={}", 
-            LoggingUtils.maskUserId(userId), reactivatedCount);
+    log.debug("사용자 댓글 재활성화 완료: userId={}, count={}",
+        LoggingUtils.maskUserId(userId), reactivatedCount);
 
     return reactivatedCount;
   }

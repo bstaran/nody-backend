@@ -1,5 +1,6 @@
 package org.nodystudio.nodybackend.service.thread;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.nodystudio.nodybackend.domain.log.Log;
@@ -21,8 +22,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 /**
  * 스레드 관리 서비스
@@ -300,8 +299,8 @@ public class ThreadService {
     activeThreads.forEach(Thread::deactivate);
     threadRepository.saveAll(activeThreads);
 
-    log.debug("사용자 스레드 비활성화 완료: userId={}, count={}", 
-            LoggingUtils.maskUserId(userId), activeThreads.size());
+    log.debug("사용자 스레드 비활성화 완료: userId={}, count={}",
+        LoggingUtils.maskUserId(userId), activeThreads.size());
 
     return activeThreads.size();
   }
@@ -321,8 +320,8 @@ public class ThreadService {
     deactivatedThreads.forEach(Thread::reactivate);
     threadRepository.saveAll(deactivatedThreads);
 
-    log.debug("사용자 스레드 재활성화 완료: userId={}, count={}", 
-            LoggingUtils.maskUserId(userId), deactivatedThreads.size());
+    log.debug("사용자 스레드 재활성화 완료: userId={}, count={}",
+        LoggingUtils.maskUserId(userId), deactivatedThreads.size());
 
     return deactivatedThreads.size();
   }

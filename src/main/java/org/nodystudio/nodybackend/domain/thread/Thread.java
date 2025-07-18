@@ -25,6 +25,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 import org.nodystudio.nodybackend.domain.BaseTimeEntity;
 import org.nodystudio.nodybackend.domain.comment.Comment;
+import org.nodystudio.nodybackend.domain.like.ThreadLike;
 import org.nodystudio.nodybackend.domain.log.Log;
 import org.nodystudio.nodybackend.domain.user.User;
 
@@ -74,6 +75,10 @@ public class Thread extends BaseTimeEntity {
   @OneToMany(mappedBy = "thread", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
   @Builder.Default
   private List<Comment> comments = new ArrayList<>();
+
+  @OneToMany(mappedBy = "thread", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+  @Builder.Default
+  private List<ThreadLike> likes = new ArrayList<>();
 
   /**
    * 계정 탈퇴 시 스레드 비활성화 시점을 기록합니다.
@@ -184,6 +189,37 @@ public class Thread extends BaseTimeEntity {
     if (comment.getThread() == this) {
       comment.setThread(null);
     }
+  }
+
+  /**
+   * 연관관계 편의 메서드 - 좋아요 추가
+   */
+  public void addLike(User user) {
+    ThreadLike threadLike = ThreadLike.builder()
+        .thread(this)
+        .user(user)
+        .build();
+    this.likes.add(threadLike);
+  }
+
+  /**
+   * 활성 좋아요 개수를 반환합니다.
+   */
+  public long getActiveLikeCount() {
+    return this.likes.stream()
+        .filter(ThreadLike::getIsActive)
+        .count();
+  }
+
+  /**
+   * 특정 사용자가 활성 좋아요를 눌렀는지 확인합니다.
+   */
+  public boolean isLikedByUser(User user) {
+    if (user == null) {
+      return false;
+    }
+    return this.likes.stream()
+        .anyMatch(like -> like.isOwnedBy(user) && like.getIsActive());
   }
 
   /**

@@ -20,7 +20,8 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
   @Query("""
           SELECT c FROM Comment c 
           LEFT JOIN FETCH c.author 
-          LEFT JOIN FETCH c.mentionedUsers 
+          LEFT JOIN FETCH c.mentions m
+          LEFT JOIN FETCH m.mentionedUser
           WHERE c.thread.id = :threadId AND c.deletedAt IS NULL
           ORDER BY c.createdAt ASC
       """)
@@ -47,8 +48,8 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
    */
   @Query("""
           SELECT c FROM Comment c 
-          JOIN c.mentionedUsers m 
-          WHERE m.id = :userId AND c.deletedAt IS NULL
+          JOIN c.mentions m 
+          WHERE m.mentionedUser.id = :userId AND c.deletedAt IS NULL
           ORDER BY c.createdAt DESC
       """)
   Page<Comment> findByMentionedUserId(@Param("userId") Long userId, Pageable pageable);

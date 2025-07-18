@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -150,8 +149,8 @@ class CommentRepositoryTest {
           .content("첫 번째 댓글")
           .author(testUser1)
           .thread(testThread1)
-          .mentionedUsers(Set.of(testUser2))
           .build();
+      comment1.addMentionedUser(testUser2);
       commentRepository.save(comment1);
 
       Comment comment2 = Comment.builder()
@@ -347,16 +346,16 @@ class CommentRepositoryTest {
           .content("@user2 첫 번째 멘션")
           .author(testUser1)
           .thread(testThread1)
-          .mentionedUsers(Set.of(testUser2))
           .build();
+      mentionComment1.addMentionedUser(testUser2);
       commentRepository.save(mentionComment1);
 
       Comment mentionComment2 = Comment.builder()
           .content("@user2 두 번째 멘션")
           .author(testUser1)
           .thread(testThread2)
-          .mentionedUsers(Set.of(testUser2))
           .build();
+      mentionComment2.addMentionedUser(testUser2);
       commentRepository.save(mentionComment2);
 
       // 멘션되지 않은 댓글 (결과에 포함되지 않아야 함)

@@ -9,8 +9,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -18,9 +16,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -73,13 +69,9 @@ public class Comment extends BaseTimeEntity {
   @Builder.Default
   private List<Comment> children = new ArrayList<>();
 
-  @ManyToMany(fetch = FetchType.LAZY)
-  @JoinTable(name = "comment_mentions", joinColumns = @JoinColumn(name = "comment_id"), inverseJoinColumns = @JoinColumn(name = "user_id"), indexes = {
-      @Index(name = "idx_comment_mentions_comment_id", columnList = "comment_id"),
-      @Index(name = "idx_comment_mentions_user_id", columnList = "user_id")
-  })
+  @OneToMany(mappedBy = "comment", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
   @Builder.Default
-  private Set<User> mentionedUsers = new HashSet<>();
+  private List<CommentMention> mentions = new ArrayList<>();
 
   @Column(name = "deleted_at")
   private LocalDateTime deletedAt;
@@ -95,22 +87,65 @@ public class Comment extends BaseTimeEntity {
   }
 
   /**
-   * 멘션된 사용자를 추가합니다.
+   * 사용자를 멘션합니다.
    */
-  public void addMentionedUser(User user) {
+  public void addMention(User user, MentionType mentionType) {
     if (user != null) {
-      this.mentionedUsers.add(user);
+      CommentMention mention = CommentMention.builder()
+          .comment(this)
+          .mentionedUser(user)
+          .mentionType(mentionType != null ? mentionType : MentionType.GENERAL)
+          .build();
+      this.mentions.add(mention);
     }
   }
 
   /**
-   * 멘션된 사용자들을 설정합니다.
+   * 사용자를 일반 멘션으로 추가합니다.
    */
-  public void setMentionedUsers(Set<User> users) {
-    this.mentionedUsers.clear();
-    if (users != null) {
-      this.mentionedUsers.addAll(users);
+  public void addMentionedUser(User user) {
+    addMention(user, MentionType.GENERAL);
+  }
+
+  /**
+   * 특정 사용자의 멘션을 제거합니다.
+   */
+  public void removeMention(User user) {
+    if (user != null) {
+      this.mentions.removeIf(mention -> mention.isMentionFor(user));
     }
+  }
+
+  /**
+   * 멘션된 사용자 목록을 반환합니다.
+   */
+  public List<User> getMentionedUsers() {
+    return this.mentions.stream()
+        .map(CommentMention::getMentionedUser)
+        .toList();
+  }
+
+  /**
+   * 모든 멘션을 제거하고 새로운 멘션들을 설정합니다.
+   */
+  public void setMentionedUsers(List<User> users) {
+    this.mentions.clear();
+    if (users != null) {
+      for (User user : users) {
+        addMentionedUser(user);
+      }
+    }
+  }
+
+  /**
+   * 특정 사용자가 멘션되었는지 확인합니다.
+   */
+  public boolean isMentioned(User user) {
+    if (user == null) {
+      return false;
+    }
+    return this.mentions.stream()
+        .anyMatch(mention -> mention.isMentionFor(user));
   }
 
   /**

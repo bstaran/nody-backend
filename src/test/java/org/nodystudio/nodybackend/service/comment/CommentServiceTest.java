@@ -11,10 +11,8 @@ import static org.mockito.Mockito.never;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -86,7 +84,6 @@ class CommentServiceTest {
         .content(content)
         .author(author)
         .thread(thread)
-        .mentionedUsers(new HashSet<>())
         .build();
   }
 
@@ -179,8 +176,8 @@ class CommentServiceTest {
           .content(request.getContent())
           .author(mockUser)
           .thread(mockThread)
-          .mentionedUsers(Set.of(mentionedUser))
           .build();
+      mockComment.addMentionedUser(mentionedUser);
 
       given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
       given(threadRepository.findById(threadId)).willReturn(Optional.of(mockThread));
@@ -434,8 +431,8 @@ class CommentServiceTest {
           .content(request.getContent())
           .author(mockUser)
           .thread(mockThread)
-          .mentionedUsers(Set.of(mentionedUser)) // Set이므로 중복 제거됨
           .build();
+      mockComment.addMentionedUser(mentionedUser); // Set이므로 중복 제거됨
 
       given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
       given(threadRepository.findById(threadId)).willReturn(Optional.of(mockThread));
@@ -476,8 +473,9 @@ class CommentServiceTest {
           .content(request.getContent())
           .author(mockUser)
           .thread(mockThread)
-          .mentionedUsers(Set.of(johnUser, aliceUser)) // 유효한 사용자만
           .build();
+      mockComment.addMentionedUser(johnUser); // 유효한 사용자만
+      mockComment.addMentionedUser(aliceUser);
 
       given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
       given(threadRepository.findById(threadId)).willReturn(Optional.of(mockThread));
@@ -522,8 +520,10 @@ class CommentServiceTest {
           .content(request.getContent())
           .author(mockUser)
           .thread(mockThread)
-          .mentionedUsers(Set.of(johnUser, aliceUser, bobUser))
           .build();
+      mockComment.addMentionedUser(johnUser);
+      mockComment.addMentionedUser(aliceUser);
+      mockComment.addMentionedUser(bobUser);
 
       given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
       given(threadRepository.findById(threadId)).willReturn(Optional.of(mockThread));
@@ -594,8 +594,8 @@ class CommentServiceTest {
           .content(request.getContent())
           .author(mockUser)
           .thread(mockThread)
-          .mentionedUsers(Set.of(koreanUser))
           .build();
+      mockComment.addMentionedUser(koreanUser);
 
       given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
       given(threadRepository.findById(threadId)).willReturn(Optional.of(mockThread));
@@ -664,8 +664,9 @@ class CommentServiceTest {
           .content(request.getContent())
           .author(mockUser)
           .thread(mockThread)
-          .mentionedUsers(Set.of(johnUser, aliceUser)) // 유효한 사용자만
           .build();
+      mockComment.addMentionedUser(johnUser); // 유효한 사용자만
+      mockComment.addMentionedUser(aliceUser);
 
       given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
       given(threadRepository.findById(threadId)).willReturn(Optional.of(mockThread));
@@ -709,7 +710,6 @@ class CommentServiceTest {
           .content("부모 댓글")
           .author(mockUser)
           .thread(mockThread)
-          .mentionedUsers(new HashSet<>())
           .build();
 
       Comment childComment = Comment.builder()
@@ -718,7 +718,6 @@ class CommentServiceTest {
           .author(mockUser)
           .thread(mockThread)
           .parent(rootComment)
-          .mentionedUsers(new HashSet<>())
           .build();
 
       given(threadRepository.existsById(threadId)).willReturn(true);
@@ -794,7 +793,6 @@ class CommentServiceTest {
           .content("원본 댓글 내용")
           .author(mockUser)
           .thread(mockThread)
-          .mentionedUsers(new HashSet<>())
           .build();
 
       given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
@@ -882,8 +880,8 @@ class CommentServiceTest {
           .content("@john 기존 댓글")
           .author(mockUser)
           .thread(mockThread)
-          .mentionedUsers(new HashSet<>(Set.of(johnUser)))
           .build();
+      existingComment.addMentionedUser(johnUser);
 
       given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
       given(commentRepository.findByIdAndAuthorId(commentId, mockUser.getId()))
@@ -924,8 +922,8 @@ class CommentServiceTest {
           .content("@john 기존 댓글")
           .author(mockUser)
           .thread(mockThread)
-          .mentionedUsers(new HashSet<>(Set.of(johnUser)))
           .build();
+      existingComment.addMentionedUser(johnUser);
 
       given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
       given(commentRepository.findByIdAndAuthorId(commentId, mockUser.getId()))
@@ -958,8 +956,8 @@ class CommentServiceTest {
           .content("@john 기존 댓글")
           .author(mockUser)
           .thread(mockThread)
-          .mentionedUsers(new HashSet<>(Set.of(johnUser)))
           .build();
+      existingComment.addMentionedUser(johnUser);
 
       given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
       given(commentRepository.findByIdAndAuthorId(commentId, mockUser.getId()))

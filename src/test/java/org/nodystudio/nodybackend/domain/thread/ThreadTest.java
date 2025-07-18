@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.math.BigDecimal;
-import java.util.HashSet;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -391,7 +390,6 @@ class ThreadTest {
         .id(1L)
         .content("테스트 댓글")
         .author(testUser)
-        .mentionedUsers(new HashSet<>())
         .build();
 
     // when
@@ -411,7 +409,6 @@ class ThreadTest {
         .content("테스트 댓글")
         .author(testUser)
         .thread(thread)
-        .mentionedUsers(new HashSet<>())
         .build();
     thread.addComment(comment);
 
@@ -432,7 +429,6 @@ class ThreadTest {
         .content("테스트 댓글")
         .author(testUser)
         .thread(thread)
-        .mentionedUsers(new HashSet<>())
         .build();
 
     // when
@@ -458,7 +454,6 @@ class ThreadTest {
         .content("테스트 댓글")
         .author(testUser)
         .thread(otherThread)
-        .mentionedUsers(new HashSet<>())
         .build();
 
     // when
@@ -541,7 +536,7 @@ class ThreadTest {
     // given
     thread.updatePublicSetting(false); // 비공개로 설정
     thread.deactivate();
-    
+
     // when
     thread.reactivate();
 
