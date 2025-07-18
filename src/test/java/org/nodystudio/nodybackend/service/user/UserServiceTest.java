@@ -23,9 +23,9 @@ import org.nodystudio.nodybackend.exception.custom.DuplicateNicknameException;
 import org.nodystudio.nodybackend.exception.custom.UserNotFoundException;
 import org.nodystudio.nodybackend.repository.CommentRepository;
 import org.nodystudio.nodybackend.repository.LikeRepository;
-import org.nodystudio.nodybackend.repository.LogRepository;
-import org.nodystudio.nodybackend.repository.ThreadRepository;
 import org.nodystudio.nodybackend.repository.UserRepository;
+import org.nodystudio.nodybackend.service.log.LogService;
+import org.nodystudio.nodybackend.service.thread.ThreadService;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserService 테스트")
@@ -36,9 +36,9 @@ class UserServiceTest {
   @Mock
   private UserRepository userRepository;
   @Mock
-  private LogRepository logRepository;
+  private LogService logService;
   @Mock
-  private ThreadRepository threadRepository;
+  private ThreadService threadService;
   @Mock
   private CommentRepository commentRepository;
   @Mock
@@ -223,8 +223,8 @@ class UserServiceTest {
   void deactivateAccount_success() {
     // given
     given(userRepository.findById(TEST_USER_ID)).willReturn(Optional.of(testUser));
-    given(logRepository.deactivateByUserId(TEST_USER_ID)).willReturn(5);
-    given(threadRepository.deactivateByUserId(TEST_USER_ID)).willReturn(3);
+    given(logService.deactivateLogsByUserId(TEST_USER_ID)).willReturn(5);
+    given(threadService.deactivateThreadsByUserId(TEST_USER_ID)).willReturn(3);
     given(commentRepository.deactivateByUserId(TEST_USER_ID)).willReturn(10);
     given(likeRepository.deactivateByUserId(TEST_USER_ID)).willReturn(7);
 
@@ -237,8 +237,8 @@ class UserServiceTest {
     assertThat(testUser.getRefreshToken()).isNull();
     assertThat(testUser.getRefreshTokenExpiry()).isNull();
     verify(userRepository).findById(TEST_USER_ID);
-    verify(logRepository).deactivateByUserId(TEST_USER_ID);
-    verify(threadRepository).deactivateByUserId(TEST_USER_ID);
+    verify(logService).deactivateLogsByUserId(TEST_USER_ID);
+    verify(threadService).deactivateThreadsByUserId(TEST_USER_ID);
     verify(commentRepository).deactivateByUserId(TEST_USER_ID);
     verify(likeRepository).deactivateByUserId(TEST_USER_ID);
   }
@@ -298,8 +298,8 @@ class UserServiceTest {
   @DisplayName("사용자 생성 데이터 재활성화 - 성공")
   void reactivateUserGeneratedData_success() {
     // given
-    given(logRepository.reactivateByUserId(TEST_USER_ID)).willReturn(5);
-    given(threadRepository.reactivateByUserId(TEST_USER_ID)).willReturn(3);
+    given(logService.reactivateLogsByUserId(TEST_USER_ID)).willReturn(5);
+    given(threadService.reactivateThreadsByUserId(TEST_USER_ID)).willReturn(3);
     given(commentRepository.reactivateByUserId(TEST_USER_ID)).willReturn(10);
     given(likeRepository.reactivateByUserId(TEST_USER_ID)).willReturn(7);
 
@@ -307,8 +307,8 @@ class UserServiceTest {
     userService.reactivateUserGeneratedData(testUser);
 
     // then
-    verify(logRepository).reactivateByUserId(TEST_USER_ID);
-    verify(threadRepository).reactivateByUserId(TEST_USER_ID);
+    verify(logService).reactivateLogsByUserId(TEST_USER_ID);
+    verify(threadService).reactivateThreadsByUserId(TEST_USER_ID);
     verify(commentRepository).reactivateByUserId(TEST_USER_ID);
     verify(likeRepository).reactivateByUserId(TEST_USER_ID);
   }
@@ -317,7 +317,7 @@ class UserServiceTest {
   @DisplayName("사용자 생성 데이터 재활성화 - 재활성화 도중 오류 발생")
   void reactivateUserGeneratedData_exceptionDuringReactivation() {
     // given
-    given(logRepository.reactivateByUserId(TEST_USER_ID)).willThrow(
+    given(logService.reactivateLogsByUserId(TEST_USER_ID)).willThrow(
         new RuntimeException("Database error"));
 
     // when & then
@@ -325,6 +325,6 @@ class UserServiceTest {
         .isInstanceOf(RuntimeException.class)
         .hasMessage("Database error");
 
-    verify(logRepository).reactivateByUserId(TEST_USER_ID);
+    verify(logService).reactivateLogsByUserId(TEST_USER_ID);
   }
 }
