@@ -6,7 +6,12 @@ import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.dto.user.UpdateNicknameRequestDto;
 import org.nodystudio.nodybackend.dto.user.UserDetailResponseDto;
 import org.nodystudio.nodybackend.exception.custom.AccountAlreadyDeactivatedException;
+import org.nodystudio.nodybackend.exception.custom.DuplicateNicknameException;
 import org.nodystudio.nodybackend.exception.custom.UserNotFoundException;
+import org.nodystudio.nodybackend.repository.CommentRepository;
+import org.nodystudio.nodybackend.repository.LikeRepository;
+import org.nodystudio.nodybackend.repository.LogRepository;
+import org.nodystudio.nodybackend.repository.ThreadRepository;
 import org.nodystudio.nodybackend.repository.UserRepository;
 import org.nodystudio.nodybackend.util.LoggingUtils;
 import org.springframework.stereotype.Service;
@@ -19,6 +24,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
   private final UserRepository userRepository;
+  private final LogRepository logRepository;
+  private final ThreadRepository threadRepository;
+  private final CommentRepository commentRepository;
+  private final LikeRepository likeRepository;
 
   public UserDetailResponseDto getCurrentUser(String userId) {
     User user = findUserById(userId);
@@ -33,6 +42,14 @@ public class UserService {
     log.debug("닉네임 변경 상세: 기존닉네임={}, 새닉네임={}",
         LoggingUtils.maskNickname(user.getNickname()),
         LoggingUtils.maskNickname(requestDto.getNickname()));
+
+    // 닉네임 중복 검증 (본인 제외)
+    if (userRepository.existsByNicknameAndIdNotAndIsActiveTrue(requestDto.getNickname(),
+        user.getId())) {
+      log.warn("닉네임 중복 시도: userId={}, nickname={}",
+          LoggingUtils.maskUserId(userId), LoggingUtils.maskNickname(requestDto.getNickname()));
+      throw new DuplicateNicknameException("이미 사용 중인 닉네임입니다: " + requestDto.getNickname());
+    }
 
     user.updateNickname(requestDto.getNickname());
 
@@ -59,8 +76,8 @@ public class UserService {
         LoggingUtils.maskEmail(user.getEmail()),
         LoggingUtils.maskNickname(user.getNickname()));
 
-    // 1. 사용자 생성 데이터 삭제 (현재는 User만 존재, 추후 Log/Thread/Comment 추가 시 확장)
-    deleteUserGeneratedData(user);
+    // 1. 사용자 생성 데이터 비활성화 (Soft Delete)
+    deactivateUserGeneratedData(user);
 
     // 2. 계정 비활성화
     user.deactivateAccount();
@@ -73,23 +90,32 @@ public class UserService {
    *
    * @param user 탈퇴하는 사용자
    */
-  private void deleteUserGeneratedData(User user) {
+  private void deactivateUserGeneratedData(User user) {
     log.debug("사용자 생성 데이터 비활성화 시작: userId={}", LoggingUtils.maskUserId(user.getId()));
 
-    // TODO: 아래 엔티티들이 구현되면 주석 해제
-    // 1. Log 비활성화 (isVisible = false 설정)
-    // logRepository.deactivateByUserId(user.getUserId());
+    // 1. Log 비활성화 (deactivatedAt timestamp 설정)
+    int deactivatedLogs = logRepository.deactivateByUserId(user.getId());
+    log.debug("로그 비활성화 완료: userId={}, count={}", LoggingUtils.maskUserId(user.getId()),
+        deactivatedLogs);
 
-    // 2. Thread 비활성화 (isPublic = false로 변경)
-    // threadRepository.deactivateByUserId(user.getUserId());
+    // 2. Thread 비활성화 (deactivatedAt timestamp 설정)
+    int deactivatedThreads = threadRepository.deactivateByUserId(user.getId());
+    log.debug("스레드 비활성화 완료: userId={}, count={}", LoggingUtils.maskUserId(user.getId()),
+        deactivatedThreads);
 
     // 3. Comment 비활성화 (soft delete)
-    // commentRepository.deactivateByUserId(user.getUserId());
+    int deactivatedComments = commentRepository.deactivateByUserId(user.getId());
+    log.debug("댓글 비활성화 완료: userId={}, count={}", LoggingUtils.maskUserId(user.getId()),
+        deactivatedComments);
 
     // 4. 좋아요 비활성화 (soft delete)
-    // likeRepository.deactivateByUserId(user.getUserId());
+    int deactivatedLikes = likeRepository.deactivateByUserId(user.getId());
+    log.debug("좋아요 비활성화 완료: userId={}, count={}", LoggingUtils.maskUserId(user.getId()),
+        deactivatedLikes);
 
-    log.debug("사용자 생성 데이터 비활성화 완료: userId={}", LoggingUtils.maskUserId(user.getId()));
+    log.info("사용자 생성 데이터 비활성화 완료: userId={}, logs={}, threads={}, comments={}, likes={}",
+        LoggingUtils.maskUserId(user.getId()), deactivatedLogs, deactivatedThreads,
+        deactivatedComments, deactivatedLikes);
   }
 
   /**
@@ -100,20 +126,29 @@ public class UserService {
   public void reactivateUserGeneratedData(User user) {
     log.debug("사용자 생성 데이터 재활성화 시작: userId={}", LoggingUtils.maskUserId(user.getId()));
 
-    // TODO: 아래 엔티티들이 구현되면 주석 해제
-    // 1. Log 재활성화 (isVisible = true 설정)
-    // logRepository.reactivateByUserId(user.getUserId());
+    // 1. Log 재활성화 (deactivatedAt을 NULL로 설정)
+    int reactivatedLogs = logRepository.reactivateByUserId(user.getId());
+    log.debug("로그 재활성화 완료: userId={}, count={}", LoggingUtils.maskUserId(user.getId()),
+        reactivatedLogs);
 
-    // 2. Thread 재활성화 (원래 공개 설정으로 복원)
-    // threadRepository.reactivateByUserId(user.getUserId());
+    // 2. Thread 재활성화 (deactivatedAt을 NULL로 설정)
+    int reactivatedThreads = threadRepository.reactivateByUserId(user.getId());
+    log.debug("스레드 재활성화 완료: userId={}, count={}", LoggingUtils.maskUserId(user.getId()),
+        reactivatedThreads);
 
     // 3. Comment 재활성화
-    // commentRepository.reactivateByUserId(user.getUserId());
+    int reactivatedComments = commentRepository.reactivateByUserId(user.getId());
+    log.debug("댓글 재활성화 완료: userId={}, count={}", LoggingUtils.maskUserId(user.getId()),
+        reactivatedComments);
 
     // 4. 좋아요 데이터 재활성화
-    // likeRepository.reactivateByUserId(user.getUserId());
+    int reactivatedLikes = likeRepository.reactivateByUserId(user.getId());
+    log.debug("좋아요 재활성화 완료: userId={}, count={}", LoggingUtils.maskUserId(user.getId()),
+        reactivatedLikes);
 
-    log.debug("사용자 생성 데이터 재활성화 완료: userId={}", LoggingUtils.maskUserId(user.getId()));
+    log.info("사용자 생성 데이터 재활성화 완료: userId={}, logs={}, threads={}, comments={}, likes={}",
+        LoggingUtils.maskUserId(user.getId()), reactivatedLogs, reactivatedThreads,
+        reactivatedComments, reactivatedLikes);
   }
 
   /**
@@ -125,21 +160,7 @@ public class UserService {
    * @throws IllegalArgumentException 사용자 ID가 유효하지 않은 경우
    */
   private User findUserById(String userId) {
-    if (userId == null || userId.trim().isEmpty()) {
-      throw new IllegalArgumentException("사용자 ID는 필수입니다.");
-    }
-
-    Long userIdLong;
-    try {
-      userIdLong = Long.parseLong(userId.trim());
-    } catch (NumberFormatException e) {
-      throw new IllegalArgumentException("유효하지 않은 사용자 ID 형식입니다: " + userId);
-    }
-
-    if (userIdLong <= 0) {
-      throw new IllegalArgumentException("사용자 ID는 양수여야 합니다: " + userId);
-    }
-
+    Long userIdLong = parseAndValidateUserId(userId);
     return userRepository.findByIdAndIsActiveTrue(userIdLong)
         .orElseThrow(() -> UserNotFoundException.byUserId(userId));
   }
@@ -153,6 +174,19 @@ public class UserService {
    * @throws IllegalArgumentException 사용자 ID가 유효하지 않은 경우
    */
   private User findUserByIdIncludingInactive(String userId) {
+    Long userIdLong = parseAndValidateUserId(userId);
+    return userRepository.findById(userIdLong)
+        .orElseThrow(() -> UserNotFoundException.byUserId(userId));
+  }
+
+  /**
+   * 사용자 ID 문자열을 파싱하고 유효성을 검증합니다.
+   *
+   * @param userId 사용자 ID (문자열)
+   * @return 파싱된 사용자 ID (Long)
+   * @throws IllegalArgumentException 사용자 ID가 유효하지 않은 경우
+   */
+  private Long parseAndValidateUserId(String userId) {
     if (userId == null || userId.trim().isEmpty()) {
       throw new IllegalArgumentException("사용자 ID는 필수입니다.");
     }
@@ -168,7 +202,6 @@ public class UserService {
       throw new IllegalArgumentException("사용자 ID는 양수여야 합니다: " + userId);
     }
 
-    return userRepository.findById(userIdLong)
-        .orElseThrow(() -> UserNotFoundException.byUserId(userId));
+    return userIdLong;
   }
 }
