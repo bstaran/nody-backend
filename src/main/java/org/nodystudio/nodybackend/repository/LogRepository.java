@@ -7,6 +7,7 @@ import org.nodystudio.nodybackend.domain.log.Log;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -19,14 +20,16 @@ import org.springframework.stereotype.Repository;
 public interface LogRepository extends JpaRepository<Log, Long> {
 
   /**
-   * 사용자별 로그 조회
+   * 사용자별 로그 조회 (활성화된 로그만)
    */
-  List<Log> findByUserIdOrderByCreatedAtDesc(Long userId);
+  @Query("SELECT l FROM Log l WHERE l.user.id = :userId AND l.deactivatedAt IS NULL ORDER BY l.createdAt DESC")
+  List<Log> findByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId);
 
   /**
-   * 사용자별 로그 조회 (페이징)
+   * 사용자별 로그 조회 (페이징, 활성화된 로그만)
    */
-  Page<Log> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
+  @Query("SELECT l FROM Log l WHERE l.user.id = :userId AND l.deactivatedAt IS NULL ORDER BY l.createdAt DESC")
+  Page<Log> findByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId, Pageable pageable);
 
   /**
    * 특정 좌표 반경 내 로그 조회 (Haversine 공식 사용)
@@ -45,6 +48,7 @@ public interface LogRepository extends JpaRepository<Log, Long> {
       FROM logs l
       WHERE l.latitude IS NOT NULL
         AND l.longitude IS NOT NULL
+        AND l.deactivated_at IS NULL
         AND (6371 * acos(cos(radians(:latitude)) * cos(radians(l.latitude)) *
              cos(radians(l.longitude) - radians(:longitude)) +
              sin(radians(:latitude)) * sin(radians(l.latitude)))) <= :radiusKm
@@ -54,6 +58,7 @@ public interface LogRepository extends JpaRepository<Log, Long> {
       FROM logs l
       WHERE l.latitude IS NOT NULL
         AND l.longitude IS NOT NULL
+        AND l.deactivated_at IS NULL
         AND (6371 * acos(cos(radians(:latitude)) * cos(radians(l.latitude)) *
              cos(radians(l.longitude) - radians(:longitude)) +
              sin(radians(:latitude)) * sin(radians(l.latitude)))) <= :radiusKm
@@ -75,6 +80,7 @@ public interface LogRepository extends JpaRepository<Log, Long> {
       WHERE l.latitude IS NOT NULL
         AND l.longitude IS NOT NULL
         AND l.is_public = true
+        AND l.deactivated_at IS NULL
         AND (6371 * acos(cos(radians(:latitude)) * cos(radians(l.latitude)) *
              cos(radians(l.longitude) - radians(:longitude)) +
              sin(radians(:latitude)) * sin(radians(l.latitude)))) <= :radiusKm
@@ -88,6 +94,7 @@ public interface LogRepository extends JpaRepository<Log, Long> {
       WHERE l.latitude IS NOT NULL
         AND l.longitude IS NOT NULL
         AND l.is_public = true
+        AND l.deactivated_at IS NULL
         AND (6371 * acos(cos(radians(:latitude)) * cos(radians(l.latitude)) *
              cos(radians(l.longitude) - radians(:longitude)) +
              sin(radians(:latitude)) * sin(radians(l.latitude)))) <= :radiusKm
@@ -109,6 +116,7 @@ public interface LogRepository extends JpaRepository<Log, Long> {
       FROM logs l
       WHERE l.latitude IS NOT NULL
         AND l.longitude IS NOT NULL
+        AND l.deactivated_at IS NULL
         AND (l.is_public = true OR l.user_id = :userId)
         AND (6371 * acos(cos(radians(:latitude)) * cos(radians(l.latitude)) *
              cos(radians(l.longitude) - radians(:longitude)) +
@@ -122,6 +130,7 @@ public interface LogRepository extends JpaRepository<Log, Long> {
       FROM logs l
       WHERE l.latitude IS NOT NULL
         AND l.longitude IS NOT NULL
+        AND l.deactivated_at IS NULL
         AND (l.is_public = true OR l.user_id = :userId)
         AND (6371 * acos(cos(radians(:latitude)) * cos(radians(l.latitude)) *
              cos(radians(l.longitude) - radians(:longitude)) +
@@ -135,30 +144,49 @@ public interface LogRepository extends JpaRepository<Log, Long> {
       Pageable pageable);
 
   /**
-   * 로그 ID와 작성자 확인을 위한 조회
+   * 로그 ID와 작성자 확인을 위한 조회 (활성화된 로그만)
    */
-  Optional<Log> findByIdAndUserId(Long id, Long userId);
+  @Query("SELECT l FROM Log l WHERE l.id = :id AND l.user.id = :userId AND l.deactivatedAt IS NULL")
+  Optional<Log> findByIdAndUserId(@Param("id") Long id, @Param("userId") Long userId);
 
   /**
-   * 공개 로그 또는 특정 사용자의 로그 조회
+   * 공개 로그 또는 특정 사용자의 로그 조회 (활성화된 로그만)
    */
-  @Query("SELECT l FROM Log l WHERE l.id = :id AND (l.isPublic = true OR l.user.id = :userId)")
+  @Query("SELECT l FROM Log l WHERE l.id = :id AND l.deactivatedAt IS NULL AND (l.isPublic = true OR l.user.id = :userId)")
   Optional<Log> findViewableLogByIdAndUserId(@Param("id") Long id, @Param("userId") Long userId);
 
   /**
-   * 공개 로그만 조회
+   * 공개 로그만 조회 (활성화된 로그만)
    */
-  Optional<Log> findByIdAndIsPublicTrue(Long id);
+  @Query("SELECT l FROM Log l WHERE l.id = :id AND l.isPublic = true AND l.deactivatedAt IS NULL")
+  Optional<Log> findByIdAndIsPublicTrue(@Param("id") Long id);
 
   /**
-   * 공개 로그만 전체 조회 (비로그인 사용자용)
+   * 공개 로그만 전체 조회 (비로그인 사용자용, 활성화된 로그만)
    */
+  @Query("SELECT l FROM Log l WHERE l.isPublic = true AND l.deactivatedAt IS NULL ORDER BY l.createdAt DESC")
   Page<Log> findByIsPublicTrueOrderByCreatedAtDesc(Pageable pageable);
 
   /**
-   * 공개 로그 + 특정 사용자의 비공개 로그 조회 (로그인 사용자용)
+   * 공개 로그 + 특정 사용자의 비공개 로그 조회 (로그인 사용자용, 활성화된 로그만)
    */
-  @Query("SELECT l FROM Log l WHERE l.isPublic = true OR l.user.id = :userId ORDER BY l.createdAt DESC")
+  @Query("SELECT l FROM Log l WHERE l.deactivatedAt IS NULL AND (l.isPublic = true OR l.user.id = :userId) ORDER BY l.createdAt DESC")
   Page<Log> findPublicOrUserLogsOrderByCreatedAtDesc(@Param("userId") Long userId,
       Pageable pageable);
+
+  /**
+   * 사용자별 로그를 비활성화합니다 (계정 탈퇴 시).
+   * Soft delete로 처리하여 데이터는 보존하되 공개되지 않도록 합니다.
+   */
+  @Modifying
+  @Query("UPDATE Log l SET l.deactivatedAt = CURRENT_TIMESTAMP WHERE l.user.id = :userId AND l.deactivatedAt IS NULL")
+  int deactivateByUserId(@Param("userId") Long userId);
+
+  /**
+   * 사용자별 로그를 재활성화합니다 (계정 복구 시).
+   * Soft delete 상태를 해제하여 로그를 다시 공개합니다.
+   */
+  @Modifying
+  @Query("UPDATE Log l SET l.deactivatedAt = NULL WHERE l.user.id = :userId AND l.deactivatedAt IS NOT NULL")
+  int reactivateByUserId(@Param("userId") Long userId);
 }

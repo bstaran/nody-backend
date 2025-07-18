@@ -104,4 +104,20 @@ public interface LikeRepository extends JpaRepository<Like, Long> {
    * @param targetId   대상 ID
    */
   void deleteByUserIdAndTargetTypeAndTargetId(Long userId, TargetType targetType, Long targetId);
+
+  /**
+   * 사용자별 좋아요를 비활성화합니다 (계정 탈퇴 시).
+   * 물리적 삭제 대신 isActive = false로 설정합니다.
+   */
+  @Modifying
+  @Query("UPDATE Like l SET l.isActive = false WHERE l.user.id = :userId AND l.isActive = true")
+  int deactivateByUserId(@Param("userId") Long userId);
+
+  /**
+   * 사용자별 좋아요를 재활성화합니다 (계정 복구 시).
+   * 비활성화된 좋아요를 다시 활성화합니다.
+   */
+  @Modifying
+  @Query("UPDATE Like l SET l.isActive = true WHERE l.user.id = :userId AND l.isActive = false")
+  int reactivateByUserId(@Param("userId") Long userId);
 }
