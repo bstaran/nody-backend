@@ -10,9 +10,9 @@ import org.nodystudio.nodybackend.exception.custom.DuplicateNicknameException;
 import org.nodystudio.nodybackend.exception.custom.UserNotFoundException;
 import org.nodystudio.nodybackend.repository.CommentRepository;
 import org.nodystudio.nodybackend.repository.LikeRepository;
-import org.nodystudio.nodybackend.repository.LogRepository;
-import org.nodystudio.nodybackend.repository.ThreadRepository;
 import org.nodystudio.nodybackend.repository.UserRepository;
+import org.nodystudio.nodybackend.service.log.LogService;
+import org.nodystudio.nodybackend.service.thread.ThreadService;
 import org.nodystudio.nodybackend.util.LoggingUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,8 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
   private final UserRepository userRepository;
-  private final LogRepository logRepository;
-  private final ThreadRepository threadRepository;
+  private final LogService logService;
+  private final ThreadService threadService;
   private final CommentRepository commentRepository;
   private final LikeRepository likeRepository;
 
@@ -93,13 +93,13 @@ public class UserService {
   private void deactivateUserGeneratedData(User user) {
     log.debug("사용자 생성 데이터 비활성화 시작: userId={}", LoggingUtils.maskUserId(user.getId()));
 
-    // 1. Log 비활성화 (deactivatedAt timestamp 설정)
-    int deactivatedLogs = logRepository.deactivateByUserId(user.getId());
+    // 1. 사용자 로그를 비활성화하여 조회에서 제외 (원본 공개설정 보존)
+    int deactivatedLogs = logService.deactivateLogsByUserId(user.getId());
     log.debug("로그 비활성화 완료: userId={}, count={}", LoggingUtils.maskUserId(user.getId()),
         deactivatedLogs);
 
-    // 2. Thread 비활성화 (deactivatedAt timestamp 설정)
-    int deactivatedThreads = threadRepository.deactivateByUserId(user.getId());
+    // 2. 사용자 스레드를 비활성화하여 조회에서 제외 (원본 공개설정 보존)
+    int deactivatedThreads = threadService.deactivateThreadsByUserId(user.getId());
     log.debug("스레드 비활성화 완료: userId={}, count={}", LoggingUtils.maskUserId(user.getId()),
         deactivatedThreads);
 
@@ -126,13 +126,13 @@ public class UserService {
   public void reactivateUserGeneratedData(User user) {
     log.debug("사용자 생성 데이터 재활성화 시작: userId={}", LoggingUtils.maskUserId(user.getId()));
 
-    // 1. Log 재활성화 (deactivatedAt을 NULL로 설정)
-    int reactivatedLogs = logRepository.reactivateByUserId(user.getId());
+    // 1. 사용자 로그를 재활성화하여 원본 공개설정으로 복원
+    int reactivatedLogs = logService.reactivateLogsByUserId(user.getId());
     log.debug("로그 재활성화 완료: userId={}, count={}", LoggingUtils.maskUserId(user.getId()),
         reactivatedLogs);
 
-    // 2. Thread 재활성화 (deactivatedAt을 NULL로 설정)
-    int reactivatedThreads = threadRepository.reactivateByUserId(user.getId());
+    // 2. 사용자 스레드를 재활성화하여 원본 공개설정으로 복원
+    int reactivatedThreads = threadService.reactivateThreadsByUserId(user.getId());
     log.debug("스레드 재활성화 완료: userId={}, count={}", LoggingUtils.maskUserId(user.getId()),
         reactivatedThreads);
 
