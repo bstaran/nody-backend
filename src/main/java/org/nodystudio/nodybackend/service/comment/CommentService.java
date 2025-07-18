@@ -25,6 +25,7 @@ import org.nodystudio.nodybackend.exception.custom.UserNotFoundException;
 import org.nodystudio.nodybackend.repository.CommentRepository;
 import org.nodystudio.nodybackend.repository.ThreadRepository;
 import org.nodystudio.nodybackend.repository.UserRepository;
+import org.nodystudio.nodybackend.util.LoggingUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -345,5 +346,43 @@ public class CommentService {
     eventPublisher.publishEvent(event);
     log.info("멘션 알림 이벤트 발행 - 댓글: {}, 멘션된 사용자: {}명",
         comment.getId(), mentionedUsers.size());
+  }
+
+  /**
+   * 특정 사용자의 모든 활성 댓글을 비활성화합니다.
+   * 계정 탈퇴 시 사용자 생성 데이터를 안전하게 보존하면서 조회에서 제외시킵니다.
+   *
+   * @param userId 비활성화할 사용자 ID
+   * @return 비활성화된 댓글의 개수
+   */
+  @Transactional
+  public int deactivateCommentsByUserId(Long userId) {
+    log.debug("사용자 댓글 비활성화 시작: userId={}", LoggingUtils.maskUserId(userId));
+
+    int deactivatedCount = commentRepository.deactivateByUserId(userId);
+
+    log.debug("사용자 댓글 비활성화 완료: userId={}, count={}", 
+            LoggingUtils.maskUserId(userId), deactivatedCount);
+
+    return deactivatedCount;
+  }
+
+  /**
+   * 특정 사용자의 모든 비활성화된 댓글을 재활성화합니다.
+   * 계정 복구 시 다시 조회 가능하도록 복원합니다.
+   *
+   * @param userId 재활성화할 사용자 ID
+   * @return 재활성화된 댓글의 개수
+   */
+  @Transactional
+  public int reactivateCommentsByUserId(Long userId) {
+    log.debug("사용자 댓글 재활성화 시작: userId={}", LoggingUtils.maskUserId(userId));
+
+    int reactivatedCount = commentRepository.reactivateByUserId(userId);
+
+    log.debug("사용자 댓글 재활성화 완료: userId={}, count={}", 
+            LoggingUtils.maskUserId(userId), reactivatedCount);
+
+    return reactivatedCount;
   }
 }

@@ -14,12 +14,15 @@ import org.nodystudio.nodybackend.exception.custom.UserNotFoundException;
 import org.nodystudio.nodybackend.repository.LogRepository;
 import org.nodystudio.nodybackend.repository.UserRepository;
 import org.nodystudio.nodybackend.util.LocationUtils;
+import org.nodystudio.nodybackend.util.LoggingUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 /**
  * 사용자의 위치 기반 로그 관리 서비스
@@ -348,5 +351,47 @@ public class LogService {
     if (request.getMediaUrls() != null) {
       logEntity.updateMediaUrls(request.getMediaUrls());
     }
+  }
+
+  /**
+   * 특정 사용자의 모든 활성 로그를 비활성화합니다.
+   * 계정 탈퇴 시 사용자 생성 데이터를 안전하게 보존하면서 조회에서 제외시킵니다.
+   *
+   * @param userId 비활성화할 사용자 ID
+   * @return 비활성화된 로그의 개수
+   */
+  @Transactional
+  public int deactivateLogsByUserId(Long userId) {
+    log.debug("사용자 로그 비활성화 시작: userId={}", LoggingUtils.maskUserId(userId));
+
+    List<Log> activeLogs = logRepository.findActiveLogsByUserId(userId);
+    activeLogs.forEach(Log::deactivate);
+    logRepository.saveAll(activeLogs);
+
+    log.debug("사용자 로그 비활성화 완료: userId={}, count={}", 
+            LoggingUtils.maskUserId(userId), activeLogs.size());
+
+    return activeLogs.size();
+  }
+
+  /**
+   * 특정 사용자의 모든 비활성화된 로그를 재활성화합니다.
+   * 계정 복구 시 원본 공개설정을 보존하면서 다시 조회 가능하도록 복원합니다.
+   *
+   * @param userId 재활성화할 사용자 ID
+   * @return 재활성화된 로그의 개수
+   */
+  @Transactional
+  public int reactivateLogsByUserId(Long userId) {
+    log.debug("사용자 로그 재활성화 시작: userId={}", LoggingUtils.maskUserId(userId));
+
+    List<Log> deactivatedLogs = logRepository.findDeactivatedLogsByUserId(userId);
+    deactivatedLogs.forEach(Log::reactivate);
+    logRepository.saveAll(deactivatedLogs);
+
+    log.debug("사용자 로그 재활성화 완료: userId={}, count={}", 
+            LoggingUtils.maskUserId(userId), deactivatedLogs.size());
+
+    return deactivatedLogs.size();
   }
 }

@@ -6,6 +6,7 @@ import org.nodystudio.nodybackend.domain.comment.Comment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -107,4 +108,20 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
       """)
   List<Comment> findByThreadIdAndAuthorId(@Param("threadId") Long threadId,
       @Param("authorId") Long authorId);
+
+  /**
+   * 사용자별 댓글을 비활성화합니다 (계정 탈퇴 시).
+   * Soft delete로 처리하여 데이터는 보존하되 공개되지 않도록 합니다.
+   */
+  @Modifying
+  @Query("UPDATE Comment c SET c.deletedAt = CURRENT_TIMESTAMP WHERE c.author.id = :userId AND c.deletedAt IS NULL")
+  int deactivateByUserId(@Param("userId") Long userId);
+
+  /**
+   * 사용자별 댓글을 재활성화합니다 (계정 복구 시).
+   * Soft delete 상태를 해제하여 댓글을 다시 공개합니다.
+   */
+  @Modifying
+  @Query("UPDATE Comment c SET c.deletedAt = NULL WHERE c.author.id = :userId AND c.deletedAt IS NOT NULL")
+  int reactivateByUserId(@Param("userId") Long userId);
 }

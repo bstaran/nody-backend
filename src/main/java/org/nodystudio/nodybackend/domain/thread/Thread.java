@@ -14,6 +14,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
@@ -36,7 +37,8 @@ import org.nodystudio.nodybackend.domain.user.User;
     @Index(name = "idx_threads_user_id", columnList = "user_id"),
     @Index(name = "idx_threads_log_id", columnList = "log_id"),
     @Index(name = "idx_threads_is_public", columnList = "is_public"),
-    @Index(name = "idx_threads_created_at", columnList = "created_at")
+    @Index(name = "idx_threads_created_at", columnList = "created_at"),
+    @Index(name = "idx_threads_deactivated_at", columnList = "deactivated_at")
 })
 public class Thread extends BaseTimeEntity {
 
@@ -72,6 +74,13 @@ public class Thread extends BaseTimeEntity {
   @OneToMany(mappedBy = "thread", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
   @Builder.Default
   private List<Comment> comments = new ArrayList<>();
+
+  /**
+   * 계정 탈퇴 시 스레드 비활성화 시점을 기록합니다.
+   * NULL이면 활성 상태, NULL이 아니면 비활성 상태입니다.
+   */
+  @Column(name = "deactivated_at")
+  private LocalDateTime deactivatedAt;
 
   /**
    * 스레드 내용을 업데이트합니다.
@@ -175,5 +184,39 @@ public class Thread extends BaseTimeEntity {
     if (comment.getThread() == this) {
       comment.setThread(null);
     }
+  }
+
+  /**
+   * 스레드를 비활성화합니다.
+   * 계정 탈퇴 시 사용되며, 비활성화된 스레드는 일반 조회에서 제외됩니다.
+   */
+  public void deactivate() {
+    this.deactivatedAt = LocalDateTime.now();
+  }
+
+  /**
+   * 스레드를 재활성화합니다.
+   * 계정 복구 시 사용되며, 원본 공개설정이 그대로 복원됩니다.
+   */
+  public void reactivate() {
+    this.deactivatedAt = null;
+  }
+
+  /**
+   * 스레드가 활성 상태인지 확인합니다.
+   *
+   * @return 활성 상태이면 true, 비활성 상태이면 false
+   */
+  public boolean isActive() {
+    return this.deactivatedAt == null;
+  }
+
+  /**
+   * 스레드가 비활성 상태인지 확인합니다.
+   *
+   * @return 비활성 상태이면 true, 활성 상태이면 false
+   */
+  public boolean isDeactivated() {
+    return this.deactivatedAt != null;
   }
 }
