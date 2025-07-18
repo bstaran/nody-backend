@@ -15,11 +15,14 @@ import org.nodystudio.nodybackend.exception.custom.UserNotFoundException;
 import org.nodystudio.nodybackend.repository.LogRepository;
 import org.nodystudio.nodybackend.repository.ThreadRepository;
 import org.nodystudio.nodybackend.repository.UserRepository;
+import org.nodystudio.nodybackend.util.LoggingUtils;
 import org.nodystudio.nodybackend.util.PageableUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 /**
  * 스레드 관리 서비스
@@ -280,5 +283,47 @@ public class ThreadService {
       Log newLog = validateAndGetLinkedLog(request.getLogId(), user);
       thread.connectToLog(newLog);
     }
+  }
+
+  /**
+   * 특정 사용자의 모든 활성 스레드를 비활성화합니다.
+   * 계정 탈퇴 시 사용자 생성 데이터를 안전하게 보존하면서 조회에서 제외시킵니다.
+   *
+   * @param userId 비활성화할 사용자 ID
+   * @return 비활성화된 스레드의 개수
+   */
+  @Transactional
+  public int deactivateThreadsByUserId(Long userId) {
+    log.debug("사용자 스레드 비활성화 시작: userId={}", LoggingUtils.maskUserId(userId));
+
+    List<Thread> activeThreads = threadRepository.findActiveThreadsByUserId(userId);
+    activeThreads.forEach(Thread::deactivate);
+    threadRepository.saveAll(activeThreads);
+
+    log.debug("사용자 스레드 비활성화 완료: userId={}, count={}", 
+            LoggingUtils.maskUserId(userId), activeThreads.size());
+
+    return activeThreads.size();
+  }
+
+  /**
+   * 특정 사용자의 모든 비활성화된 스레드를 재활성화합니다.
+   * 계정 복구 시 원본 공개설정을 보존하면서 다시 조회 가능하도록 복원합니다.
+   *
+   * @param userId 재활성화할 사용자 ID
+   * @return 재활성화된 스레드의 개수
+   */
+  @Transactional
+  public int reactivateThreadsByUserId(Long userId) {
+    log.debug("사용자 스레드 재활성화 시작: userId={}", LoggingUtils.maskUserId(userId));
+
+    List<Thread> deactivatedThreads = threadRepository.findDeactivatedThreadsByUserId(userId);
+    deactivatedThreads.forEach(Thread::reactivate);
+    threadRepository.saveAll(deactivatedThreads);
+
+    log.debug("사용자 스레드 재활성화 완료: userId={}, count={}", 
+            LoggingUtils.maskUserId(userId), deactivatedThreads.size());
+
+    return deactivatedThreads.size();
   }
 }
