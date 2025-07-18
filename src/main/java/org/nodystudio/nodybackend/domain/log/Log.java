@@ -1,5 +1,6 @@
 package org.nodystudio.nodybackend.domain.log;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -11,6 +12,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
@@ -27,6 +29,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 import org.nodystudio.nodybackend.domain.BaseTimeEntity;
+import org.nodystudio.nodybackend.domain.like.LogLike;
 import org.nodystudio.nodybackend.domain.user.User;
 
 @Getter
@@ -84,6 +87,10 @@ public class Log extends BaseTimeEntity {
   @ColumnDefault("0")
   @Builder.Default
   private Long viewCount = 0L;
+
+  @OneToMany(mappedBy = "log", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+  @Builder.Default
+  private List<LogLike> likes = new ArrayList<>();
 
   /**
    * 계정 탈퇴 시 로그 비활성화 시점을 기록합니다.
@@ -150,6 +157,37 @@ public class Log extends BaseTimeEntity {
       return true;
     }
     return viewer != null && isOwnedBy(viewer);
+  }
+
+  /**
+   * 연관관계 편의 메서드 - 좋아요 추가
+   */
+  public void addLike(User user) {
+    LogLike logLike = LogLike.builder()
+        .log(this)
+        .user(user)
+        .build();
+    this.likes.add(logLike);
+  }
+
+  /**
+   * 활성 좋아요 개수를 반환합니다.
+   */
+  public long getActiveLikeCount() {
+    return this.likes.stream()
+        .filter(LogLike::getIsActive)
+        .count();
+  }
+
+  /**
+   * 특정 사용자가 활성 좋아요를 눌렀는지 확인합니다.
+   */
+  public boolean isLikedByUser(User user) {
+    if (user == null) {
+      return false;
+    }
+    return this.likes.stream()
+        .anyMatch(like -> like.isOwnedBy(user) && like.getIsActive());
   }
 
   /**
