@@ -1,5 +1,6 @@
 package org.nodystudio.nodybackend.repository;
 
+import java.util.List;
 import java.util.Optional;
 import org.nodystudio.nodybackend.domain.thread.Thread;
 import org.springframework.data.domain.Page;
@@ -185,18 +186,15 @@ public interface ThreadRepository extends JpaRepository<Thread, Long> {
   int incrementViewCount(@Param("threadId") Long threadId);
 
   /**
-   * 사용자별 스레드를 비활성화합니다 (계정 탈퇴 시).
-   * Soft delete로 처리하여 데이터는 보존하되 공개되지 않도록 합니다.
+   * 활성화된 사용자 스레드를 모두 조회합니다 (비활성화 작업용).
    */
-  @Modifying
-  @Query("UPDATE Thread t SET t.deactivatedAt = CURRENT_TIMESTAMP WHERE t.user.id = :userId AND t.deactivatedAt IS NULL")
-  int deactivateByUserId(@Param("userId") Long userId);
+  @Query("SELECT t FROM Thread t WHERE t.user.id = :userId AND t.deactivatedAt IS NULL")
+  List<Thread> findActiveThreadsByUserId(@Param("userId") Long userId);
 
   /**
-   * 사용자별 스레드를 재활성화합니다 (계정 복구 시).
-   * Soft delete 상태를 해제하여 스레드를 다시 공개합니다.
+   * 비활성화된 사용자 스레드를 모두 조회합니다 (재활성화 작업용).
    */
-  @Modifying
-  @Query("UPDATE Thread t SET t.deactivatedAt = NULL WHERE t.user.id = :userId AND t.deactivatedAt IS NOT NULL")
-  int reactivateByUserId(@Param("userId") Long userId);
+  @Query("SELECT t FROM Thread t WHERE t.user.id = :userId AND t.deactivatedAt IS NOT NULL")
+  List<Thread> findDeactivatedThreadsByUserId(@Param("userId") Long userId);
+
 }

@@ -7,7 +7,6 @@ import org.nodystudio.nodybackend.domain.log.Log;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -175,18 +174,15 @@ public interface LogRepository extends JpaRepository<Log, Long> {
       Pageable pageable);
 
   /**
-   * 사용자별 로그를 비활성화합니다 (계정 탈퇴 시).
-   * Soft delete로 처리하여 데이터는 보존하되 공개되지 않도록 합니다.
+   * 활성화된 사용자 로그를 모두 조회합니다 (비활성화 작업용).
    */
-  @Modifying
-  @Query("UPDATE Log l SET l.deactivatedAt = CURRENT_TIMESTAMP WHERE l.user.id = :userId AND l.deactivatedAt IS NULL")
-  int deactivateByUserId(@Param("userId") Long userId);
+  @Query("SELECT l FROM Log l WHERE l.user.id = :userId AND l.deactivatedAt IS NULL")
+  List<Log> findActiveLogsByUserId(@Param("userId") Long userId);
 
   /**
-   * 사용자별 로그를 재활성화합니다 (계정 복구 시).
-   * Soft delete 상태를 해제하여 로그를 다시 공개합니다.
+   * 비활성화된 사용자 로그를 모두 조회합니다 (재활성화 작업용).
    */
-  @Modifying
-  @Query("UPDATE Log l SET l.deactivatedAt = NULL WHERE l.user.id = :userId AND l.deactivatedAt IS NOT NULL")
-  int reactivateByUserId(@Param("userId") Long userId);
+  @Query("SELECT l FROM Log l WHERE l.user.id = :userId AND l.deactivatedAt IS NOT NULL")
+  List<Log> findDeactivatedLogsByUserId(@Param("userId") Long userId);
+
 }
