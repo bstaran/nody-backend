@@ -4,8 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -98,17 +97,13 @@ class CommentTest {
     @Test
     @DisplayName("성공: 멘션이 포함된 댓글을 생성한다")
     void createCommentWithMentions_Success() {
-      // given
-      Set<User> mentionedUsers = new HashSet<>();
-      mentionedUsers.add(testUser2);
-
-      // when
+      // given & when
       Comment comment = Comment.builder()
           .content("@user2 안녕하세요!")
           .author(testUser1)
           .thread(testThread)
-          .mentionedUsers(mentionedUsers)
           .build();
+      comment.addMentionedUser(testUser2);
 
       // then
       assertThat(comment.getMentionedUsers()).hasSize(1);
@@ -252,8 +247,7 @@ class CommentTest {
           .thread(testThread)
           .build();
 
-      Set<User> newMentions = new HashSet<>();
-      newMentions.add(testUser2);
+      List<User> newMentions = List.of(testUser2);
 
       // when
       comment.setMentionedUsers(newMentions);
@@ -267,15 +261,12 @@ class CommentTest {
     @DisplayName("성공: 기존 멘션을 새로운 목록으로 교체한다")
     void setMentionedUsers_Success_ReplaceExisting() {
       // given
-      Set<User> initialMentions = new HashSet<>();
-      initialMentions.add(testUser2);
-
       Comment comment = Comment.builder()
           .content("댓글")
           .author(testUser1)
           .thread(testThread)
-          .mentionedUsers(initialMentions)
           .build();
+      comment.addMentionedUser(testUser2);
 
       User newUser = User.builder()
           .id(3L)
@@ -285,8 +276,7 @@ class CommentTest {
           .nickname("user3")
           .build();
 
-      Set<User> newMentions = new HashSet<>();
-      newMentions.add(newUser);
+      List<User> newMentions = List.of(newUser);
 
       // when
       comment.setMentionedUsers(newMentions);
@@ -301,15 +291,12 @@ class CommentTest {
     @DisplayName("성공: null 목록으로 설정하면 기존 멘션이 모두 제거된다")
     void setMentionedUsers_Success_NullList() {
       // given
-      Set<User> initialMentions = new HashSet<>();
-      initialMentions.add(testUser2);
-
       Comment comment = Comment.builder()
           .content("댓글")
           .author(testUser1)
           .thread(testThread)
-          .mentionedUsers(initialMentions)
           .build();
+      comment.addMentionedUser(testUser2);
 
       // when
       comment.setMentionedUsers(null);

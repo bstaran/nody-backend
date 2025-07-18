@@ -14,11 +14,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.nodystudio.nodybackend.domain.enums.OAuthProvider;
 import org.nodystudio.nodybackend.domain.enums.TargetType;
-import org.nodystudio.nodybackend.domain.like.Like;
+import org.nodystudio.nodybackend.domain.like.ThreadLike;
 import org.nodystudio.nodybackend.domain.thread.Thread;
 import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.dto.like.LikeRequest;
-import org.nodystudio.nodybackend.repository.LikeRepository;
+import org.nodystudio.nodybackend.repository.ThreadLikeRepository;
 import org.nodystudio.nodybackend.repository.ThreadRepository;
 import org.nodystudio.nodybackend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,7 +76,7 @@ class LikeServiceConcurrencyMySQLTest {
   @Autowired
   private ThreadRepository threadRepository;
   @Autowired
-  private LikeRepository likeRepository;
+  private ThreadLikeRepository threadLikeRepository;
   private User testUser;
   private Thread testThread;
 
@@ -148,7 +148,7 @@ class LikeServiceConcurrencyMySQLTest {
     assertThat(failureCount.get()).isEqualTo(0);
 
     // 최종 상태 확인 - 짝수 번 토글하면 좋아요가 없고, 홀수 번이면 있어야 함
-    List<Like> allLikes = likeRepository.findAll();
+    List<ThreadLike> allLikes = threadLikeRepository.findAll();
     long activeLikes = allLikes.stream()
         .filter(like -> like.getIsActive())
         .count();
@@ -165,13 +165,12 @@ class LikeServiceConcurrencyMySQLTest {
   @DisplayName("좋아요가 있는 상태에서 동시에 토글 요청이 들어와도 최종 상태가 일관성있게 유지된다")
   void concurrentToggle_ShouldMaintainConsistency() throws InterruptedException {
     // Given - 먼저 좋아요를 추가
-    Like existingLike = Like.builder()
+    ThreadLike existingLike = ThreadLike.builder()
         .user(testUser)
-        .targetType(TargetType.THREAD)
-        .targetId(testThread.getId())
+        .thread(testThread)
         .isActive(true)
         .build();
-    likeRepository.save(existingLike);
+    threadLikeRepository.save(existingLike);
 
     int numberOfThreads = 20;
     ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads);
@@ -212,12 +211,11 @@ class LikeServiceConcurrencyMySQLTest {
 
     // 최종 상태 확인 - 초기에 활성 좋아요가 1개 있었고, 20번 토글했으므로
     // 21번의 상태 변화가 있어야 함 (홀수이므로 최종적으로 활성)
-    long activeLikeCount = likeRepository.countByTargetTypeAndTargetIdAndIsActiveTrue(
-        TargetType.THREAD, testThread.getId());
+    long activeLikeCount = threadLikeRepository.countByThreadIdAndIsActiveTrue(testThread.getId());
     assertThat(activeLikeCount).isEqualTo(1);
 
     // 데이터베이스에는 여전히 하나의 레코드만 있어야 함
-    List<Like> allLikes = likeRepository.findAll();
+    List<ThreadLike> allLikes = threadLikeRepository.findAll();
     assertThat(allLikes).hasSize(1);
     assertThat(allLikes.get(0).getIsActive()).isTrue();
   }
@@ -274,14 +272,13 @@ class LikeServiceConcurrencyMySQLTest {
     assertThat(failureCount.get()).isEqualTo(0);
 
     // 모든 사용자의 활성 좋아요가 정상적으로 생성되었는지 확인
-    long totalActiveLikes = likeRepository.countByTargetTypeAndTargetIdAndIsActiveTrue(
-        TargetType.THREAD, testThread.getId());
+    long totalActiveLikes = threadLikeRepository.countByThreadIdAndIsActiveTrue(testThread.getId());
     assertThat(totalActiveLikes).isEqualTo(numberOfUsers);
 
     // 각 사용자별로 정확히 하나의 활성 좋아요가 생성되었는지 확인
     users.forEach(user -> {
-      boolean liked = likeRepository.existsByUserIdAndTargetTypeAndTargetIdAndIsActiveTrue(
-          user.getId(), TargetType.THREAD, testThread.getId());
+      boolean liked = threadLikeRepository.existsByUserIdAndThreadIdAndIsActiveTrue(
+          user.getId(), testThread.getId());
       assertThat(liked).isTrue();
     });
   }
@@ -329,12 +326,11 @@ class LikeServiceConcurrencyMySQLTest {
 
     // 최종 상태는 0 또는 1이어야 함 (짝수 번 토글하면 0, 홀수 번이면 1)
     // 50번(짝수)이므로 최종적으로 활성 좋아요는 0개여야 함
-    long activeFinalCount = likeRepository.countByTargetTypeAndTargetIdAndIsActiveTrue(
-        TargetType.THREAD, testThread.getId());
+    long activeFinalCount = threadLikeRepository.countByThreadIdAndIsActiveTrue(testThread.getId());
     assertThat(activeFinalCount).isEqualTo(0);
 
     // 해당 사용자의 좋아요 레코드는 정확히 1개만 존재해야 함 (isActive=false)
-    List<Like> userLikes = likeRepository.findAll().stream()
+    List<ThreadLike> userLikes = threadLikeRepository.findAll().stream()
         .filter(like -> like.getUser().getId().equals(testUser.getId()))
         .toList();
     assertThat(userLikes).hasSize(1);
@@ -402,12 +398,11 @@ class LikeServiceConcurrencyMySQLTest {
     assertThat(failureCount.get()).isEqualTo(0);
 
     // 각 사용자별로 짝수 번(10번) 토글했으므로 모든 사용자의 좋아요가 비활성 상태여야 함
-    long totalActiveLikes = likeRepository.countByTargetTypeAndTargetIdAndIsActiveTrue(
-        TargetType.THREAD, testThread.getId());
+    long totalActiveLikes = threadLikeRepository.countByThreadIdAndIsActiveTrue(testThread.getId());
     assertThat(totalActiveLikes).isEqualTo(0);
 
     // 각 사용자별로 정확히 하나의 레코드가 존재해야 함
-    long totalRecords = likeRepository.count();
+    long totalRecords = threadLikeRepository.count();
     assertThat(totalRecords).isEqualTo(numberOfUsers);
 
     // 성능 확인 - 평균 처리 시간이 합리적인 범위 내에 있어야 함

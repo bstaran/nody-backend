@@ -19,7 +19,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.nodystudio.nodybackend.domain.enums.OAuthProvider;
 import org.nodystudio.nodybackend.domain.enums.TargetType;
-import org.nodystudio.nodybackend.domain.like.Like;
+import org.nodystudio.nodybackend.domain.like.LogLike;
+import org.nodystudio.nodybackend.domain.like.ThreadLike;
 import org.nodystudio.nodybackend.domain.log.Log;
 import org.nodystudio.nodybackend.domain.thread.Thread;
 import org.nodystudio.nodybackend.domain.user.User;
@@ -28,8 +29,9 @@ import org.nodystudio.nodybackend.dto.like.LikeStatusResponse;
 import org.nodystudio.nodybackend.exception.custom.AnonymousUserLikeNotAllowedException;
 import org.nodystudio.nodybackend.exception.custom.ResourceNotFoundException;
 import org.nodystudio.nodybackend.exception.custom.UserNotFoundException;
-import org.nodystudio.nodybackend.repository.LikeRepository;
+import org.nodystudio.nodybackend.repository.LogLikeRepository;
 import org.nodystudio.nodybackend.repository.LogRepository;
+import org.nodystudio.nodybackend.repository.ThreadLikeRepository;
 import org.nodystudio.nodybackend.repository.ThreadRepository;
 import org.nodystudio.nodybackend.repository.UserRepository;
 
@@ -38,7 +40,10 @@ import org.nodystudio.nodybackend.repository.UserRepository;
 class LikeServiceTest {
 
   @Mock
-  private LikeRepository likeRepository;
+  private ThreadLikeRepository threadLikeRepository;
+
+  @Mock
+  private LogLikeRepository logLikeRepository;
 
   @Mock
   private UserRepository userRepository;
@@ -142,11 +147,9 @@ class LikeServiceTest {
       // Given
       given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
       given(threadRepository.findById(1L)).willReturn(Optional.of(testThread));
-      given(likeRepository.atomicToggleLike(1L, "THREAD", 1L)).willReturn(1);
-      given(likeRepository.existsByUserIdAndTargetTypeAndTargetIdAndIsActiveTrue(1L,
-          TargetType.THREAD, 1L)).willReturn(true);
-      given(likeRepository.countByTargetTypeAndTargetIdAndIsActiveTrue(TargetType.THREAD, 1L))
-          .willReturn(1L);
+      given(threadLikeRepository.atomicToggleLike(1L, 1L)).willReturn(1);
+      given(threadLikeRepository.existsByUserIdAndThreadIdAndIsActiveTrue(1L, 1L)).willReturn(true);
+      given(threadLikeRepository.countByThreadIdAndIsActiveTrue(1L)).willReturn(1L);
 
       // When
       LikeStatusResponse result = likeService.toggleLike(threadLikeRequest, "test@example.com");
@@ -155,9 +158,9 @@ class LikeServiceTest {
       assertThat(result.getIsLiked()).isTrue();
       assertThat(result.getLikeCount()).isEqualTo(1L);
 
-      then(likeRepository).should(times(1)).atomicToggleLike(1L, "THREAD", 1L);
-      then(likeRepository).should(never()).save(any(Like.class));
-      then(likeRepository).should(never()).delete(any(Like.class));
+      then(threadLikeRepository).should(times(1)).atomicToggleLike(1L, 1L);
+      then(threadLikeRepository).should(never()).save(any(ThreadLike.class));
+      then(threadLikeRepository).should(never()).delete(any(ThreadLike.class));
     }
 
     @Test
@@ -166,11 +169,9 @@ class LikeServiceTest {
       // Given
       given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
       given(logRepository.findById(1L)).willReturn(Optional.of(testLog));
-      given(likeRepository.atomicToggleLike(1L, "LOG", 1L)).willReturn(1);
-      given(likeRepository.existsByUserIdAndTargetTypeAndTargetIdAndIsActiveTrue(1L, TargetType.LOG,
-          1L)).willReturn(true);
-      given(likeRepository.countByTargetTypeAndTargetIdAndIsActiveTrue(TargetType.LOG, 1L))
-          .willReturn(1L);
+      given(logLikeRepository.atomicToggleLike(1L, 1L)).willReturn(1);
+      given(logLikeRepository.existsByUserIdAndLogIdAndIsActiveTrue(1L, 1L)).willReturn(true);
+      given(logLikeRepository.countByLogIdAndIsActiveTrue(1L)).willReturn(1L);
 
       // When
       LikeStatusResponse result = likeService.toggleLike(logLikeRequest, "test@example.com");
@@ -179,9 +180,9 @@ class LikeServiceTest {
       assertThat(result.getIsLiked()).isTrue();
       assertThat(result.getLikeCount()).isEqualTo(1L);
 
-      then(likeRepository).should(times(1)).atomicToggleLike(1L, "LOG", 1L);
-      then(likeRepository).should(never()).save(any(Like.class));
-      then(likeRepository).should(never()).delete(any(Like.class));
+      then(logLikeRepository).should(times(1)).atomicToggleLike(1L, 1L);
+      then(logLikeRepository).should(never()).save(any(LogLike.class));
+      then(logLikeRepository).should(never()).delete(any(LogLike.class));
     }
 
     @Test
@@ -190,11 +191,10 @@ class LikeServiceTest {
       // Given
       given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
       given(threadRepository.findById(1L)).willReturn(Optional.of(testThread));
-      given(likeRepository.atomicToggleLike(1L, "THREAD", 1L)).willReturn(1);
-      given(likeRepository.existsByUserIdAndTargetTypeAndTargetIdAndIsActiveTrue(1L,
-          TargetType.THREAD, 1L)).willReturn(false);
-      given(likeRepository.countByTargetTypeAndTargetIdAndIsActiveTrue(TargetType.THREAD, 1L))
-          .willReturn(0L);
+      given(threadLikeRepository.atomicToggleLike(1L, 1L)).willReturn(1);
+      given(threadLikeRepository.existsByUserIdAndThreadIdAndIsActiveTrue(1L, 1L)).willReturn(
+          false);
+      given(threadLikeRepository.countByThreadIdAndIsActiveTrue(1L)).willReturn(0L);
 
       // When
       LikeStatusResponse result = likeService.toggleLike(threadLikeRequest, "test@example.com");
@@ -203,9 +203,9 @@ class LikeServiceTest {
       assertThat(result.getIsLiked()).isFalse();
       assertThat(result.getLikeCount()).isEqualTo(0L);
 
-      then(likeRepository).should(times(1)).atomicToggleLike(1L, "THREAD", 1L);
-      then(likeRepository).should(never()).delete(any(Like.class));
-      then(likeRepository).should(never()).save(any(Like.class));
+      then(threadLikeRepository).should(times(1)).atomicToggleLike(1L, 1L);
+      then(threadLikeRepository).should(never()).delete(any(ThreadLike.class));
+      then(threadLikeRepository).should(never()).save(any(ThreadLike.class));
     }
 
     @Test
@@ -284,10 +284,8 @@ class LikeServiceTest {
       // Given
       given(threadRepository.findById(1L)).willReturn(Optional.of(testThread));
       given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
-      given(likeRepository.countByTargetTypeAndTargetIdAndIsActiveTrue(TargetType.THREAD, 1L))
-          .willReturn(5L);
-      given(likeRepository.existsByUserIdAndTargetTypeAndTargetIdAndIsActiveTrue(1L,
-          TargetType.THREAD, 1L)).willReturn(true);
+      given(threadLikeRepository.countByThreadIdAndIsActiveTrue(1L)).willReturn(5L);
+      given(threadLikeRepository.existsByUserIdAndThreadIdAndIsActiveTrue(1L, 1L)).willReturn(true);
 
       // When
       LikeStatusResponse result = likeService.getLikeStatus(TargetType.THREAD, 1L,
@@ -305,8 +303,7 @@ class LikeServiceTest {
     void getLikeStatus_WithAnonymousUser_ShouldReturnCorrectStatus() {
       // Given
       given(threadRepository.findById(1L)).willReturn(Optional.of(testThread));
-      given(likeRepository.countByTargetTypeAndTargetIdAndIsActiveTrue(TargetType.THREAD, 1L))
-          .willReturn(3L);
+      given(threadLikeRepository.countByThreadIdAndIsActiveTrue(1L)).willReturn(3L);
 
       // When
       LikeStatusResponse result = likeService.getLikeStatus(TargetType.THREAD, 1L, null);
@@ -339,8 +336,7 @@ class LikeServiceTest {
     @DisplayName("활성 좋아요 개수를 정확히 조회한다")
     void getLikeCount_ShouldReturnCorrectCount() {
       // Given
-      given(likeRepository.countByTargetTypeAndTargetIdAndIsActiveTrue(TargetType.THREAD, 1L))
-          .willReturn(10L);
+      given(threadLikeRepository.countByThreadIdAndIsActiveTrue(1L)).willReturn(10L);
 
       // When
       long result = likeService.getLikeCount(TargetType.THREAD, 1L);
@@ -359,8 +355,7 @@ class LikeServiceTest {
     void isLikedByUser_WithLike_ShouldReturnTrue() {
       // Given
       given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
-      given(likeRepository.existsByUserIdAndTargetTypeAndTargetIdAndIsActiveTrue(1L,
-          TargetType.THREAD, 1L)).willReturn(true);
+      given(threadLikeRepository.existsByUserIdAndThreadIdAndIsActiveTrue(1L, 1L)).willReturn(true);
 
       // When
       boolean result = likeService.isLikedByUser(TargetType.THREAD, 1L, "test@example.com");
@@ -374,8 +369,8 @@ class LikeServiceTest {
     void isLikedByUser_WithoutLike_ShouldReturnFalse() {
       // Given
       given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
-      given(likeRepository.existsByUserIdAndTargetTypeAndTargetIdAndIsActiveTrue(1L,
-          TargetType.THREAD, 1L)).willReturn(false);
+      given(threadLikeRepository.existsByUserIdAndThreadIdAndIsActiveTrue(1L, 1L)).willReturn(
+          false);
 
       // When
       boolean result = likeService.isLikedByUser(TargetType.THREAD, 1L, "test@example.com");
@@ -394,6 +389,76 @@ class LikeServiceTest {
       assertThatThrownBy(() -> likeService.isLikedByUser(TargetType.THREAD, 1L, "test@example.com"))
           .isInstanceOf(UserNotFoundException.class)
           .hasMessage("사용자를 찾을 수 없습니다. Email: test@example.com");
+    }
+  }
+
+  @Nested
+  @DisplayName("사용자 좋아요 비활성화 테스트")
+  class DeactivateLikesByUserIdTest {
+
+    @Test
+    @DisplayName("사용자의 모든 좋아요를 비활성화한다")
+    void deactivateLikesByUserId_ShouldDeactivateAllLikes() {
+      // Given
+      given(threadLikeRepository.deactivateByUserId(1L)).willReturn(3);
+      given(logLikeRepository.deactivateByUserId(1L)).willReturn(2);
+
+      // When
+      int result = likeService.deactivateLikesByUserId(1L);
+
+      // Then
+      assertThat(result).isEqualTo(5);
+      then(threadLikeRepository).should(times(1)).deactivateByUserId(1L);
+      then(logLikeRepository).should(times(1)).deactivateByUserId(1L);
+    }
+
+    @Test
+    @DisplayName("좋아요가 없는 사용자의 경우 0을 반환한다")
+    void deactivateLikesByUserId_WithNoLikes_ShouldReturnZero() {
+      // Given
+      given(threadLikeRepository.deactivateByUserId(1L)).willReturn(0);
+      given(logLikeRepository.deactivateByUserId(1L)).willReturn(0);
+
+      // When
+      int result = likeService.deactivateLikesByUserId(1L);
+
+      // Then
+      assertThat(result).isEqualTo(0);
+    }
+  }
+
+  @Nested
+  @DisplayName("사용자 좋아요 재활성화 테스트")
+  class ReactivateLikesByUserIdTest {
+
+    @Test
+    @DisplayName("사용자의 모든 좋아요를 재활성화한다")
+    void reactivateLikesByUserId_ShouldReactivateAllLikes() {
+      // Given
+      given(threadLikeRepository.reactivateByUserId(1L)).willReturn(3);
+      given(logLikeRepository.reactivateByUserId(1L)).willReturn(2);
+
+      // When
+      int result = likeService.reactivateLikesByUserId(1L);
+
+      // Then
+      assertThat(result).isEqualTo(5);
+      then(threadLikeRepository).should(times(1)).reactivateByUserId(1L);
+      then(logLikeRepository).should(times(1)).reactivateByUserId(1L);
+    }
+
+    @Test
+    @DisplayName("재활성화할 좋아요가 없는 사용자의 경우 0을 반환한다")
+    void reactivateLikesByUserId_WithNoLikes_ShouldReturnZero() {
+      // Given
+      given(threadLikeRepository.reactivateByUserId(1L)).willReturn(0);
+      given(logLikeRepository.reactivateByUserId(1L)).willReturn(0);
+
+      // When
+      int result = likeService.reactivateLikesByUserId(1L);
+
+      // Then
+      assertThat(result).isEqualTo(0);
     }
   }
 }
