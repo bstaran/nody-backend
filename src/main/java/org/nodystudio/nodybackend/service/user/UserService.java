@@ -8,9 +8,9 @@ import org.nodystudio.nodybackend.dto.user.UserDetailResponseDto;
 import org.nodystudio.nodybackend.exception.custom.AccountAlreadyDeactivatedException;
 import org.nodystudio.nodybackend.exception.custom.DuplicateNicknameException;
 import org.nodystudio.nodybackend.exception.custom.UserNotFoundException;
-import org.nodystudio.nodybackend.repository.CommentRepository;
-import org.nodystudio.nodybackend.repository.LikeRepository;
 import org.nodystudio.nodybackend.repository.UserRepository;
+import org.nodystudio.nodybackend.service.comment.CommentService;
+import org.nodystudio.nodybackend.service.like.LikeService;
 import org.nodystudio.nodybackend.service.log.LogService;
 import org.nodystudio.nodybackend.service.thread.ThreadService;
 import org.nodystudio.nodybackend.util.LoggingUtils;
@@ -26,8 +26,8 @@ public class UserService {
   private final UserRepository userRepository;
   private final LogService logService;
   private final ThreadService threadService;
-  private final CommentRepository commentRepository;
-  private final LikeRepository likeRepository;
+  private final CommentService commentService;
+  private final LikeService likeService;
 
   public UserDetailResponseDto getCurrentUser(String userId) {
     User user = findUserById(userId);
@@ -103,13 +103,13 @@ public class UserService {
     log.debug("스레드 비활성화 완료: userId={}, count={}", LoggingUtils.maskUserId(user.getId()),
         deactivatedThreads);
 
-    // 3. Comment 비활성화 (soft delete)
-    int deactivatedComments = commentRepository.deactivateByUserId(user.getId());
+    // 3. 사용자 댓글을 비활성화하여 조회에서 제외
+    int deactivatedComments = commentService.deactivateCommentsByUserId(user.getId());
     log.debug("댓글 비활성화 완료: userId={}, count={}", LoggingUtils.maskUserId(user.getId()),
         deactivatedComments);
 
-    // 4. 좋아요 비활성화 (soft delete)
-    int deactivatedLikes = likeRepository.deactivateByUserId(user.getId());
+    // 4. 사용자 좋아요를 비활성화하여 조회에서 제외
+    int deactivatedLikes = likeService.deactivateLikesByUserId(user.getId());
     log.debug("좋아요 비활성화 완료: userId={}, count={}", LoggingUtils.maskUserId(user.getId()),
         deactivatedLikes);
 
@@ -136,13 +136,13 @@ public class UserService {
     log.debug("스레드 재활성화 완료: userId={}, count={}", LoggingUtils.maskUserId(user.getId()),
         reactivatedThreads);
 
-    // 3. Comment 재활성화
-    int reactivatedComments = commentRepository.reactivateByUserId(user.getId());
+    // 3. 사용자 댓글을 재활성화하여 다시 조회 가능하도록 복원
+    int reactivatedComments = commentService.reactivateCommentsByUserId(user.getId());
     log.debug("댓글 재활성화 완료: userId={}, count={}", LoggingUtils.maskUserId(user.getId()),
         reactivatedComments);
 
-    // 4. 좋아요 데이터 재활성화
-    int reactivatedLikes = likeRepository.reactivateByUserId(user.getId());
+    // 4. 사용자 좋아요를 재활성화하여 다시 조회 가능하도록 복원
+    int reactivatedLikes = likeService.reactivateLikesByUserId(user.getId());
     log.debug("좋아요 재활성화 완료: userId={}, count={}", LoggingUtils.maskUserId(user.getId()),
         reactivatedLikes);
 
