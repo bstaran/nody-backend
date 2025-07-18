@@ -19,7 +19,12 @@ import org.nodystudio.nodybackend.domain.user.User;
 import org.nodystudio.nodybackend.dto.user.UpdateNicknameRequestDto;
 import org.nodystudio.nodybackend.dto.user.UserDetailResponseDto;
 import org.nodystudio.nodybackend.exception.custom.AccountAlreadyDeactivatedException;
+import org.nodystudio.nodybackend.exception.custom.DuplicateNicknameException;
 import org.nodystudio.nodybackend.exception.custom.UserNotFoundException;
+import org.nodystudio.nodybackend.repository.CommentRepository;
+import org.nodystudio.nodybackend.repository.LikeRepository;
+import org.nodystudio.nodybackend.repository.LogRepository;
+import org.nodystudio.nodybackend.repository.ThreadRepository;
 import org.nodystudio.nodybackend.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,6 +35,14 @@ class UserServiceTest {
   private final String TEST_USER_ID_STRING = "1";
   @Mock
   private UserRepository userRepository;
+  @Mock
+  private LogRepository logRepository;
+  @Mock
+  private ThreadRepository threadRepository;
+  @Mock
+  private CommentRepository commentRepository;
+  @Mock
+  private LikeRepository likeRepository;
   @InjectMocks
   private UserService userService;
   private User testUser;
@@ -81,6 +94,8 @@ class UserServiceTest {
     String newNickname = "새로운닉네임";
     UpdateNicknameRequestDto requestDto = new UpdateNicknameRequestDto(newNickname);
     given(userRepository.findByIdAndIsActiveTrue(TEST_USER_ID)).willReturn(Optional.of(testUser));
+    given(userRepository.existsByNicknameAndIdNotAndIsActiveTrue(newNickname,
+        TEST_USER_ID)).willReturn(false);
 
     // when
     UserDetailResponseDto result = userService.updateNickname(TEST_USER_ID_STRING, requestDto);
@@ -89,6 +104,7 @@ class UserServiceTest {
     assertThat(result.getNickname()).isEqualTo(newNickname);
     assertThat(testUser.getNickname()).isEqualTo(newNickname);
     verify(userRepository).findByIdAndIsActiveTrue(TEST_USER_ID);
+    verify(userRepository).existsByNicknameAndIdNotAndIsActiveTrue(newNickname, TEST_USER_ID);
   }
 
   @Test
@@ -102,6 +118,25 @@ class UserServiceTest {
     assertThatThrownBy(() -> userService.updateNickname(TEST_USER_ID_STRING, requestDto))
         .isInstanceOf(UserNotFoundException.class)
         .hasMessageContaining("사용자 ID '1'로 사용자를 찾을 수 없습니다.");
+  }
+
+  @Test
+  @DisplayName("닉네임 변경 - 중복 닉네임")
+  void updateNickname_duplicateNickname() {
+    // given
+    String duplicateNickname = "이미존재하는닉네임";
+    UpdateNicknameRequestDto requestDto = new UpdateNicknameRequestDto(duplicateNickname);
+    given(userRepository.findByIdAndIsActiveTrue(TEST_USER_ID)).willReturn(Optional.of(testUser));
+    given(userRepository.existsByNicknameAndIdNotAndIsActiveTrue(duplicateNickname,
+        TEST_USER_ID)).willReturn(true);
+
+    // when & then
+    assertThatThrownBy(() -> userService.updateNickname(TEST_USER_ID_STRING, requestDto))
+        .isInstanceOf(DuplicateNicknameException.class)
+        .hasMessageContaining("이미 사용 중인 닉네임입니다: " + duplicateNickname);
+
+    verify(userRepository).findByIdAndIsActiveTrue(TEST_USER_ID);
+    verify(userRepository).existsByNicknameAndIdNotAndIsActiveTrue(duplicateNickname, TEST_USER_ID);
   }
 
   @Test
@@ -188,6 +223,10 @@ class UserServiceTest {
   void deactivateAccount_success() {
     // given
     given(userRepository.findById(TEST_USER_ID)).willReturn(Optional.of(testUser));
+    given(logRepository.deactivateByUserId(TEST_USER_ID)).willReturn(5);
+    given(threadRepository.deactivateByUserId(TEST_USER_ID)).willReturn(3);
+    given(commentRepository.deactivateByUserId(TEST_USER_ID)).willReturn(10);
+    given(likeRepository.deactivateByUserId(TEST_USER_ID)).willReturn(7);
 
     // when
     userService.deactivateAccount(TEST_USER_ID_STRING);
@@ -198,6 +237,10 @@ class UserServiceTest {
     assertThat(testUser.getRefreshToken()).isNull();
     assertThat(testUser.getRefreshTokenExpiry()).isNull();
     verify(userRepository).findById(TEST_USER_ID);
+    verify(logRepository).deactivateByUserId(TEST_USER_ID);
+    verify(threadRepository).deactivateByUserId(TEST_USER_ID);
+    verify(commentRepository).deactivateByUserId(TEST_USER_ID);
+    verify(likeRepository).deactivateByUserId(TEST_USER_ID);
   }
 
   @Test
@@ -249,5 +292,39 @@ class UserServiceTest {
     assertThatThrownBy(() -> userService.deactivateAccount(null))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("사용자 ID는 필수입니다.");
+  }
+
+  @Test
+  @DisplayName("사용자 생성 데이터 재활성화 - 성공")
+  void reactivateUserGeneratedData_success() {
+    // given
+    given(logRepository.reactivateByUserId(TEST_USER_ID)).willReturn(5);
+    given(threadRepository.reactivateByUserId(TEST_USER_ID)).willReturn(3);
+    given(commentRepository.reactivateByUserId(TEST_USER_ID)).willReturn(10);
+    given(likeRepository.reactivateByUserId(TEST_USER_ID)).willReturn(7);
+
+    // when
+    userService.reactivateUserGeneratedData(testUser);
+
+    // then
+    verify(logRepository).reactivateByUserId(TEST_USER_ID);
+    verify(threadRepository).reactivateByUserId(TEST_USER_ID);
+    verify(commentRepository).reactivateByUserId(TEST_USER_ID);
+    verify(likeRepository).reactivateByUserId(TEST_USER_ID);
+  }
+
+  @Test
+  @DisplayName("사용자 생성 데이터 재활성화 - 재활성화 도중 오류 발생")
+  void reactivateUserGeneratedData_exceptionDuringReactivation() {
+    // given
+    given(logRepository.reactivateByUserId(TEST_USER_ID)).willThrow(
+        new RuntimeException("Database error"));
+
+    // when & then
+    assertThatThrownBy(() -> userService.reactivateUserGeneratedData(testUser))
+        .isInstanceOf(RuntimeException.class)
+        .hasMessage("Database error");
+
+    verify(logRepository).reactivateByUserId(TEST_USER_ID);
   }
 }

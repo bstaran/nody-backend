@@ -107,13 +107,13 @@ class CustomOAuth2UserServiceTest {
 
     given(userRepository.findByProviderAndSocialIdAndIsActiveTrue(OAuthProvider.GOOGLE,
         "google_12345")).willReturn(
-            Optional.empty());
+        Optional.empty());
     given(userRepository.findByEmailAndDeletedAtAfter(anyString(),
         any(LocalDateTime.class))).willReturn(
-            Optional.empty());
+        Optional.empty());
     given(
         userRepository.findByProviderAndSocialId(OAuthProvider.GOOGLE, "google_12345")).willReturn(
-            Optional.empty());
+        Optional.empty());
     given(userRepository.saveAndFlush(any(User.class))).willAnswer(invocation -> {
       User userToSave = invocation.getArgument(0);
 
