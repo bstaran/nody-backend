@@ -17,6 +17,7 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
@@ -37,7 +38,8 @@ import org.nodystudio.nodybackend.domain.user.User;
     indexes = {@Index(name = "idx_logs_user_id", columnList = "user_id"),
         @Index(name = "idx_logs_location", columnList = "latitude, longitude"),
         @Index(name = "idx_logs_is_public", columnList = "is_public"),
-        @Index(name = "idx_logs_created_at", columnList = "created_at")})
+        @Index(name = "idx_logs_created_at", columnList = "created_at"),
+        @Index(name = "idx_logs_deactivated_at", columnList = "deactivated_at")})
 public class Log extends BaseTimeEntity {
 
   @Id
@@ -82,6 +84,13 @@ public class Log extends BaseTimeEntity {
   @ColumnDefault("0")
   @Builder.Default
   private Long viewCount = 0L;
+
+  /**
+   * 계정 탈퇴 시 로그 비활성화 시점을 기록합니다.
+   * NULL이면 활성 상태, NULL이 아니면 비활성 상태입니다.
+   */
+  @Column(name = "deactivated_at")
+  private LocalDateTime deactivatedAt;
 
   /**
    * 로그 내용을 업데이트합니다.
