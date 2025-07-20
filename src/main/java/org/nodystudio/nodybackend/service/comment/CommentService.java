@@ -213,7 +213,7 @@ public class CommentService {
     log.info("사용자 댓글 조회 요청 - 사용자: {}", userEmail);
 
     User user = findUserByEmail(userEmail);
-    Page<Comment> comments = commentRepository.findByAuthorIdOrderByCreatedAtDesc(user.getId(),
+    Page<Comment> comments = commentRepository.findByAuthorIdAndDeletedAtIsNullOrderByCreatedAtDesc(user.getId(),
         pageable);
 
     return comments.map(CommentResponse::from);
@@ -242,7 +242,7 @@ public class CommentService {
    * @return 활성 댓글 개수
    */
   public long getCommentCount(Long threadId) {
-    return commentRepository.countActiveByThreadId(threadId);
+    return commentRepository.countByThreadIdAndDeletedAtIsNull(threadId);
   }
 
   // === Private Helper Methods ===
@@ -258,7 +258,7 @@ public class CommentService {
   }
 
   private Comment findUserOwnedComment(Long commentId, Long userId) {
-    return commentRepository.findByIdAndAuthorId(commentId, userId)
+    return commentRepository.findByIdAndAuthorIdAndDeletedAtIsNull(commentId, userId)
         .orElseThrow(() -> new ResourceNotFoundException("댓글을 찾을 수 없습니다. (ID: " + commentId + ")"));
   }
 
