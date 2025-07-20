@@ -22,6 +22,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.nodystudio.nodybackend.domain.enums.OAuthProvider;
 import org.nodystudio.nodybackend.domain.user.RoleType;
 import org.nodystudio.nodybackend.domain.user.User;
+import org.nodystudio.nodybackend.repository.CommentRepository;
+import org.nodystudio.nodybackend.repository.LikeRepository;
+import org.nodystudio.nodybackend.repository.LogRepository;
+import org.nodystudio.nodybackend.repository.ThreadRepository;
 import org.nodystudio.nodybackend.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,6 +34,18 @@ class UserCleanupBatchServiceTest {
 
   @Mock
   private UserRepository userRepository;
+  
+  @Mock
+  private CommentRepository commentRepository;
+  
+  @Mock
+  private ThreadRepository threadRepository;
+  
+  @Mock
+  private LogRepository logRepository;
+  
+  @Mock
+  private LikeRepository likeRepository;
 
   @InjectMocks
   private UserCleanupBatchService userCleanupBatchService;
@@ -78,12 +94,20 @@ class UserCleanupBatchServiceTest {
     List<User> expiredUsers = Arrays.asList(expiredUser1, expiredUser2);
     given(userRepository.findByIsActiveFalseAndDeletedAtBefore(any(LocalDateTime.class)))
         .willReturn(expiredUsers);
+    given(commentRepository.deleteDeactivatedByUserId(any(Long.class))).willReturn(2);
+    given(threadRepository.deleteDeactivatedByUserId(any(Long.class))).willReturn(1);
+    given(logRepository.deleteDeactivatedByUserId(any(Long.class))).willReturn(3);
+    given(likeRepository.deleteByUserId(any(Long.class))).willReturn(5);
 
     // when
     userCleanupBatchService.deleteExpiredDeactivatedUsers();
 
     // then
     verify(userRepository).findByIsActiveFalseAndDeletedAtBefore(any(LocalDateTime.class));
+    verify(commentRepository, times(2)).deleteDeactivatedByUserId(any(Long.class));
+    verify(threadRepository, times(2)).deleteDeactivatedByUserId(any(Long.class));
+    verify(logRepository, times(2)).deleteDeactivatedByUserId(any(Long.class));
+    verify(likeRepository, times(2)).deleteByUserId(any(Long.class));
     verify(userRepository, times(2)).delete(any(User.class));
   }
 
@@ -109,6 +133,10 @@ class UserCleanupBatchServiceTest {
     List<User> expiredUsers = Arrays.asList(expiredUser1, expiredUser2);
     given(userRepository.findByIsActiveFalseAndDeletedAtBefore(any(LocalDateTime.class)))
         .willReturn(expiredUsers);
+    given(commentRepository.deleteDeactivatedByUserId(any(Long.class))).willReturn(2);
+    given(threadRepository.deleteDeactivatedByUserId(any(Long.class))).willReturn(1);
+    given(logRepository.deleteDeactivatedByUserId(any(Long.class))).willReturn(3);
+    given(likeRepository.deleteByUserId(any(Long.class))).willReturn(5);
 
     // 첫 번째 사용자 삭제 시 예외 발생
     doThrow(new RuntimeException("삭제 중 오류"))
@@ -119,6 +147,10 @@ class UserCleanupBatchServiceTest {
 
     // then
     verify(userRepository).findByIsActiveFalseAndDeletedAtBefore(any(LocalDateTime.class));
+    verify(commentRepository, times(2)).deleteDeactivatedByUserId(any(Long.class));
+    verify(threadRepository, times(2)).deleteDeactivatedByUserId(any(Long.class));
+    verify(logRepository, times(2)).deleteDeactivatedByUserId(any(Long.class));
+    verify(likeRepository, times(2)).deleteByUserId(any(Long.class));
     verify(userRepository, times(2)).delete(any(User.class)); // 두 사용자 모두 삭제 시도
   }
 
@@ -129,6 +161,10 @@ class UserCleanupBatchServiceTest {
     List<User> expiredUsers = Arrays.asList(expiredUser1, expiredUser2);
     given(userRepository.findByIsActiveFalseAndDeletedAtBefore(any(LocalDateTime.class)))
         .willReturn(expiredUsers);
+    given(commentRepository.deleteDeactivatedByUserId(any(Long.class))).willReturn(2);
+    given(threadRepository.deleteDeactivatedByUserId(any(Long.class))).willReturn(1);
+    given(logRepository.deleteDeactivatedByUserId(any(Long.class))).willReturn(3);
+    given(likeRepository.deleteByUserId(any(Long.class))).willReturn(5);
 
     // when
     int deletedCount = userCleanupBatchService.manualCleanupExpiredUsers();
@@ -136,6 +172,10 @@ class UserCleanupBatchServiceTest {
     // then
     assertThat(deletedCount).isEqualTo(2);
     verify(userRepository).findByIsActiveFalseAndDeletedAtBefore(any(LocalDateTime.class));
+    verify(commentRepository, times(2)).deleteDeactivatedByUserId(any(Long.class));
+    verify(threadRepository, times(2)).deleteDeactivatedByUserId(any(Long.class));
+    verify(logRepository, times(2)).deleteDeactivatedByUserId(any(Long.class));
+    verify(likeRepository, times(2)).deleteByUserId(any(Long.class));
     verify(userRepository, times(2)).delete(any(User.class));
   }
 

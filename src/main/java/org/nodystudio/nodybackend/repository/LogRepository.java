@@ -7,15 +7,18 @@ import org.nodystudio.nodybackend.domain.log.Log;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * - findByLocationNear: 특정 좌표 반경 내 로그 조회 (Haversine 공식) - findByUserIdOrderByCreatedAtDesc: 사용자별 로그
  * 조회 - @Query 어노테이션으로 네이티브 쿼리 작성
  */
 @Repository
+@Transactional(readOnly = true)
 public interface LogRepository extends JpaRepository<Log, Long> {
 
   /**
@@ -184,5 +187,17 @@ public interface LogRepository extends JpaRepository<Log, Long> {
    */
   @Query("SELECT l FROM Log l WHERE l.user.id = :userId AND l.deactivatedAt IS NOT NULL")
   List<Log> findDeactivatedLogsByUserId(@Param("userId") Long userId);
+
+  /**
+   * 비활성화된 사용자 로그를 완전히 삭제합니다 (물리적 삭제).
+   * 탈퇴 후 30일이 지난 사용자의 로그를 데이터베이스에서 완전히 제거합니다.
+   *
+   * @param userId 사용자 ID
+   * @return 삭제된 로그 수
+   */
+  @Transactional
+  @Modifying(clearAutomatically = true, flushAutomatically = true)
+  @Query(value = "DELETE FROM logs WHERE user_id = :userId AND deactivated_at IS NOT NULL", nativeQuery = true)
+  int deleteDeactivatedByUserId(@Param("userId") Long userId);
 
 }

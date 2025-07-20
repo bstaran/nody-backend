@@ -10,11 +10,13 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 좋아요 데이터 접근을 위한 Repository
  */
 @Repository
+@Transactional(readOnly = true)
 public interface LikeRepository extends JpaRepository<Like, Long> {
 
   /**
@@ -39,7 +41,8 @@ public interface LikeRepository extends JpaRepository<Like, Long> {
    * @param targetId   대상 ID
    * @return 영향받은 행 수 (항상 1)
    */
-  @Modifying
+  @Transactional
+  @Modifying(clearAutomatically = true, flushAutomatically = true)
   @Query(value = """
       INSERT INTO likes (user_id, target_type, target_id, is_active, created_at, updated_at)
       VALUES (:userId, :targetType, :targetId, 1, NOW(), NOW())
@@ -103,13 +106,15 @@ public interface LikeRepository extends JpaRepository<Like, Long> {
    * @param targetType 대상 타입
    * @param targetId   대상 ID
    */
+  @Transactional
   void deleteByUserIdAndTargetTypeAndTargetId(Long userId, TargetType targetType, Long targetId);
 
   /**
    * 사용자별 좋아요를 비활성화합니다 (계정 탈퇴 시).
    * 물리적 삭제 대신 isActive = false로 설정합니다.
    */
-  @Modifying
+  @Transactional
+  @Modifying(clearAutomatically = true, flushAutomatically = true)
   @Query("UPDATE Like l SET l.isActive = false WHERE l.user.id = :userId AND l.isActive = true")
   int deactivateByUserId(@Param("userId") Long userId);
 
@@ -117,7 +122,20 @@ public interface LikeRepository extends JpaRepository<Like, Long> {
    * 사용자별 좋아요를 재활성화합니다 (계정 복구 시).
    * 비활성화된 좋아요를 다시 활성화합니다.
    */
-  @Modifying
+  @Transactional
+  @Modifying(clearAutomatically = true, flushAutomatically = true)
   @Query("UPDATE Like l SET l.isActive = true WHERE l.user.id = :userId AND l.isActive = false")
   int reactivateByUserId(@Param("userId") Long userId);
+
+  /**
+   * 사용자의 모든 좋아요를 완전히 삭제합니다 (물리적 삭제).
+   * 탈퇴 후 30일이 지난 사용자의 좋아요를 데이터베이스에서 완전히 제거합니다.
+   *
+   * @param userId 사용자 ID
+   * @return 삭제된 좋아요 수
+   */
+  @Transactional
+  @Modifying(clearAutomatically = true, flushAutomatically = true)
+  @Query("DELETE FROM Like l WHERE l.user.id = :userId")
+  int deleteByUserId(@Param("userId") Long userId);
 }

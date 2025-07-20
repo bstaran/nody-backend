@@ -81,6 +81,7 @@ public class UserService {
 
     // 2. 계정 비활성화
     user.deactivateAccount();
+    userRepository.save(user);
 
     log.info("사용자 계정 탈퇴 완료: userId={}", LoggingUtils.maskUserId(userId));
   }
