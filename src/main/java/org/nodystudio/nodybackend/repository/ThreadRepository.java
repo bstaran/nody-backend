@@ -10,8 +10,10 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
+@Transactional(readOnly = true)
 public interface ThreadRepository extends JpaRepository<Thread, Long> {
 
   /**
@@ -168,20 +170,21 @@ public interface ThreadRepository extends JpaRepository<Thread, Long> {
 
   /**
    * 특정 로그에 연결된 스레드 개수를 조회합니다 (활성화된 스레드만).
+   * Derived Query Method를 활용합니다.
    */
-  @Query("SELECT COUNT(t) FROM Thread t WHERE t.log.id = :logId AND t.deactivatedAt IS NULL")
-  long countByLogId(@Param("logId") Long logId);
+  long countByLogIdAndDeactivatedAtIsNull(Long logId);
 
   /**
    * 특정 사용자가 작성한 스레드 개수를 조회합니다 (활성화된 스레드만).
+   * Derived Query Method를 활용합니다.
    */
-  @Query("SELECT COUNT(t) FROM Thread t WHERE t.user.id = :userId AND t.deactivatedAt IS NULL")
-  long countByUserId(@Param("userId") Long userId);
+  long countByUserIdAndDeactivatedAtIsNull(Long userId);
 
   /**
    * 스레드의 조회수를 원자적으로 증가시킵니다. 동시성 이슈를 해결하기 위해 데이터베이스 레벨에서 원자적 증가를 수행합니다.
    */
-  @Modifying
+  @Transactional
+  @Modifying(clearAutomatically = true, flushAutomatically = true)
   @Query("UPDATE Thread t SET t.viewCount = t.viewCount + 1 WHERE t.id = :threadId")
   int incrementViewCount(@Param("threadId") Long threadId);
 
@@ -196,5 +199,18 @@ public interface ThreadRepository extends JpaRepository<Thread, Long> {
    */
   @Query("SELECT t FROM Thread t WHERE t.user.id = :userId AND t.deactivatedAt IS NOT NULL")
   List<Thread> findDeactivatedThreadsByUserId(@Param("userId") Long userId);
+
+  /**
+   * 비활성화된 사용자 스레드를 완전히 삭제합니다 (물리적 삭제).
+   * 탈퇴 후 30일이 지난 사용자의 스레드를 데이터베이스에서 완전히 제거합니다.
+   * CASCADE 설정에 의해 관련된 댓글, 좋아요 등도 함께 삭제됩니다.
+   *
+   * @param userId 사용자 ID
+   * @return 삭제된 스레드 수
+   */
+  @Transactional
+  @Modifying(clearAutomatically = true, flushAutomatically = true)
+  @Query(value = "DELETE FROM threads WHERE user_id = :userId AND deactivated_at IS NOT NULL", nativeQuery = true)
+  int deleteDeactivatedByUserId(@Param("userId") Long userId);
 
 }
