@@ -329,7 +329,7 @@ class CommentRepositoryTest {
       Pageable pageable = PageRequest.of(0, 10);
 
       // when
-      Page<Comment> userComments = commentRepository.findByAuthorIdOrderByCreatedAtDesc(
+      Page<Comment> userComments = commentRepository.findByAuthorIdAndDeletedAtIsNullOrderByCreatedAtDesc(
           testUser1.getId(), pageable);
 
       // then
@@ -397,9 +397,9 @@ class CommentRepositoryTest {
       entityManager.clear();
 
       // when
-      Optional<Comment> foundComment = commentRepository.findByIdAndAuthorId(savedComment.getId(),
+      Optional<Comment> foundComment = commentRepository.findByIdAndAuthorIdAndDeletedAtIsNull(savedComment.getId(),
           testUser1.getId());
-      Optional<Comment> notFoundComment = commentRepository.findByIdAndAuthorId(
+      Optional<Comment> notFoundComment = commentRepository.findByIdAndAuthorIdAndDeletedAtIsNull(
           savedComment.getId(), testUser2.getId());
 
       // then
@@ -442,7 +442,7 @@ class CommentRepositoryTest {
       entityManager.clear();
 
       // when
-      long activeCount = commentRepository.countActiveByThreadId(testThread1.getId());
+      long activeCount = commentRepository.countByThreadIdAndDeletedAtIsNull(testThread1.getId());
 
       // then
       assertThat(activeCount).isEqualTo(3); // 삭제된 댓글 제외
@@ -518,7 +518,7 @@ class CommentRepositoryTest {
       entityManager.clear();
 
       // when
-      long user1ActiveCount = commentRepository.countActiveByAuthorId(testUser1.getId());
+      long user1ActiveCount = commentRepository.countByAuthorIdAndDeletedAtIsNull(testUser1.getId());
 
       // then
       assertThat(user1ActiveCount).isEqualTo(2); // user1의 활성 댓글만
@@ -639,6 +639,90 @@ class CommentRepositoryTest {
       // @Where 어노테이션으로 인해 삭제된 댓글은 일반 조회에서 제외됨
       Optional<Comment> foundComment = commentRepository.findById(savedComment.getId());
       assertThat(foundComment).isEmpty(); // @Where 절로 인해 조회되지 않음
+    }
+  }
+
+  @Nested
+  @DisplayName("사용자 댓글 완전 삭제 테스트")
+  class DeleteDeactivatedByUserIdTest {
+
+    @Test
+    @DisplayName("비활성화된 사용자 댓글을 완전히 삭제한다")
+    void deleteDeactivatedByUserId_Success() {
+      // given
+      // 활성 댓글
+      Comment activeComment = Comment.builder()
+          .content("활성 댓글")
+          .author(testUser1)
+          .thread(testThread1)
+          .build();
+      commentRepository.save(activeComment);
+
+      // 비활성화된 댓글
+      Comment deactivatedComment1 = Comment.builder()
+          .content("비활성화된 댓글 1")
+          .author(testUser1)
+          .thread(testThread1)
+          .deletedAt(LocalDateTime.now().minusDays(1))
+          .build();
+      commentRepository.save(deactivatedComment1);
+
+      Comment deactivatedComment2 = Comment.builder()
+          .content("비활성화된 댓글 2")
+          .author(testUser1)
+          .thread(testThread2)
+          .deletedAt(LocalDateTime.now().minusDays(2))
+          .build();
+      commentRepository.save(deactivatedComment2);
+
+      // 다른 사용자의 비활성화된 댓글 (삭제되지 않아야 함)
+      Comment otherUserDeactivatedComment = Comment.builder()
+          .content("다른 사용자 비활성화된 댓글")
+          .author(testUser2)
+          .thread(testThread1)
+          .deletedAt(LocalDateTime.now().minusDays(1))
+          .build();
+      commentRepository.save(otherUserDeactivatedComment);
+
+      entityManager.flush();
+      entityManager.clear();
+
+      // when
+      int deletedCount = commentRepository.deleteDeactivatedByUserId(testUser1.getId());
+      entityManager.flush();
+      entityManager.clear();
+
+      // then
+      assertThat(deletedCount).isEqualTo(2); // testUser1의 비활성화된 댓글 2개 삭제
+
+      // 활성 댓글은 여전히 존재
+      Optional<Comment> foundActiveComment = commentRepository.findById(activeComment.getId());
+      assertThat(foundActiveComment).isPresent();
+
+      // 다른 사용자의 비활성화된 댓글은 여전히 존재
+      Optional<Comment> foundOtherUserComment = commentRepository.findById(otherUserDeactivatedComment.getId());
+      assertThat(foundOtherUserComment).isEmpty(); // @Where 절로 인해 조회되지 않지만 데이터는 존재
+    }
+
+    @Test
+    @DisplayName("비활성화된 댓글이 없는 경우 0을 반환한다")
+    void deleteDeactivatedByUserId_NoDeactivatedComments_ReturnsZero() {
+      // given
+      Comment activeComment = Comment.builder()
+          .content("활성 댓글")
+          .author(testUser1)
+          .thread(testThread1)
+          .build();
+      commentRepository.save(activeComment);
+
+      entityManager.flush();
+      entityManager.clear();
+
+      // when
+      int deletedCount = commentRepository.deleteDeactivatedByUserId(testUser1.getId());
+
+      // then
+      assertThat(deletedCount).isEqualTo(0); // 삭제된 댓글 없음
     }
   }
 }

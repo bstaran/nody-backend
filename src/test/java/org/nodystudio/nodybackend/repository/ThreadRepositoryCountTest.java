@@ -74,7 +74,7 @@ class ThreadRepositoryCountTest {
   @DisplayName("특정 로그의 스레드 개수 조회 - 전체 스레드 개수")
   void countByLogId_WhenLogIdExists_ShouldReturnTotalThreadCount() {
     // when
-    long count = threadRepository.countByLogId(testData.logs.get(0).getId());
+    long count = threadRepository.countByLogIdAndDeactivatedAtIsNull(testData.logs.get(0).getId());
 
     // then
     assertThat(count).isEqualTo(2); // log1에 연결된 스레드 2개 (공개 1개 + 비공개 1개)
@@ -84,7 +84,7 @@ class ThreadRepositoryCountTest {
   @DisplayName("특정 사용자의 스레드 개수 조회 - 사용자 작성 스레드 개수")
   void countByUserId_WhenUserIdExists_ShouldReturnUserThreadCount() {
     // when
-    long count = threadRepository.countByUserId(testData.users.get(0).getId());
+    long count = threadRepository.countByUserIdAndDeactivatedAtIsNull(testData.users.get(0).getId());
 
     // then
     assertThat(count).isEqualTo(2); // user1이 작성한 스레드 2개
@@ -94,7 +94,7 @@ class ThreadRepositoryCountTest {
   @DisplayName("존재하지 않는 로그의 스레드 개수 조회 - 0 반환")
   void countByLogId_WhenLogIdDoesNotExist_ShouldReturnZero() {
     // when
-    long count = threadRepository.countByLogId(Long.MAX_VALUE);
+    long count = threadRepository.countByLogIdAndDeactivatedAtIsNull(Long.MAX_VALUE);
 
     // then
     assertThat(count).isZero();
@@ -104,7 +104,7 @@ class ThreadRepositoryCountTest {
   @DisplayName("존재하지 않는 사용자의 스레드 개수 조회 - 0 반환")
   void countByUserId_WhenUserIdDoesNotExist_ShouldReturnZero() {
     // when
-    long count = threadRepository.countByUserId(Long.MAX_VALUE);
+    long count = threadRepository.countByUserIdAndDeactivatedAtIsNull(Long.MAX_VALUE);
 
     // then
     assertThat(count).isZero();

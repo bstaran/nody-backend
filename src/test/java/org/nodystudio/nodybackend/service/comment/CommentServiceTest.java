@@ -796,7 +796,7 @@ class CommentServiceTest {
           .build();
 
       given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
-      given(commentRepository.findByIdAndAuthorId(commentId, mockUser.getId()))
+      given(commentRepository.findByIdAndAuthorIdAndDeletedAtIsNull(commentId, mockUser.getId()))
           .willReturn(Optional.of(mockComment));
 
       // when
@@ -820,7 +820,7 @@ class CommentServiceTest {
       User mockUser = createMockUser(1L, userEmail, "testuser");
 
       given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
-      given(commentRepository.findByIdAndAuthorId(commentId, mockUser.getId()))
+      given(commentRepository.findByIdAndAuthorIdAndDeletedAtIsNull(commentId, mockUser.getId()))
           .willReturn(Optional.empty());
 
       // when & then
@@ -850,7 +850,7 @@ class CommentServiceTest {
           .build();
 
       given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
-      given(commentRepository.findByIdAndAuthorId(commentId, mockUser.getId()))
+      given(commentRepository.findByIdAndAuthorIdAndDeletedAtIsNull(commentId, mockUser.getId()))
           .willReturn(Optional.of(deletedComment));
 
       // when & then
@@ -884,7 +884,7 @@ class CommentServiceTest {
       existingComment.addMentionedUser(johnUser);
 
       given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
-      given(commentRepository.findByIdAndAuthorId(commentId, mockUser.getId()))
+      given(commentRepository.findByIdAndAuthorIdAndDeletedAtIsNull(commentId, mockUser.getId()))
           .willReturn(Optional.of(existingComment));
       given(userRepository.findByNicknameAndIsActiveTrue("alice")).willReturn(
           Optional.of(aliceUser));
@@ -926,7 +926,7 @@ class CommentServiceTest {
       existingComment.addMentionedUser(johnUser);
 
       given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
-      given(commentRepository.findByIdAndAuthorId(commentId, mockUser.getId()))
+      given(commentRepository.findByIdAndAuthorIdAndDeletedAtIsNull(commentId, mockUser.getId()))
           .willReturn(Optional.of(existingComment));
       given(userRepository.findByNicknameAndIsActiveTrue("john")).willReturn(Optional.of(johnUser));
 
@@ -960,7 +960,7 @@ class CommentServiceTest {
       existingComment.addMentionedUser(johnUser);
 
       given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
-      given(commentRepository.findByIdAndAuthorId(commentId, mockUser.getId()))
+      given(commentRepository.findByIdAndAuthorIdAndDeletedAtIsNull(commentId, mockUser.getId()))
           .willReturn(Optional.of(existingComment));
 
       // when
@@ -987,7 +987,7 @@ class CommentServiceTest {
       Comment mockComment = createMockComment(commentId, "삭제할 댓글", mockUser, mockThread);
 
       given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
-      given(commentRepository.findByIdAndAuthorId(commentId, mockUser.getId()))
+      given(commentRepository.findByIdAndAuthorIdAndDeletedAtIsNull(commentId, mockUser.getId()))
           .willReturn(Optional.of(mockComment));
       willDoNothing().given(commentRepository).delete(mockComment);
 
@@ -1008,7 +1008,7 @@ class CommentServiceTest {
       User mockUser = createMockUser(1L, userEmail, "testuser");
 
       given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
-      given(commentRepository.findByIdAndAuthorId(commentId, mockUser.getId()))
+      given(commentRepository.findByIdAndAuthorIdAndDeletedAtIsNull(commentId, mockUser.getId()))
           .willReturn(Optional.empty());
 
       // when & then
@@ -1035,7 +1035,7 @@ class CommentServiceTest {
           .build();
 
       given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
-      given(commentRepository.findByIdAndAuthorId(commentId, mockUser.getId()))
+      given(commentRepository.findByIdAndAuthorIdAndDeletedAtIsNull(commentId, mockUser.getId()))
           .willReturn(Optional.of(deletedComment));
 
       // when & then
@@ -1062,7 +1062,7 @@ class CommentServiceTest {
       Page<Comment> commentPage = new PageImpl<>(List.of(mockComment), pageable, 1);
 
       given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
-      given(commentRepository.findByAuthorIdOrderByCreatedAtDesc(mockUser.getId(), pageable))
+      given(commentRepository.findByAuthorIdAndDeletedAtIsNullOrderByCreatedAtDesc(mockUser.getId(), pageable))
           .willReturn(commentPage);
 
       // when
@@ -1117,7 +1117,7 @@ class CommentServiceTest {
       Long threadId = 1L;
       long expectedCount = 5L;
 
-      given(commentRepository.countActiveByThreadId(threadId)).willReturn(expectedCount);
+      given(commentRepository.countByThreadIdAndDeletedAtIsNull(threadId)).willReturn(expectedCount);
 
       // when
       long result = commentService.getCommentCount(threadId);
