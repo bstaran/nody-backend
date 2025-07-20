@@ -5,6 +5,10 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.nodystudio.nodybackend.domain.user.User;
+import org.nodystudio.nodybackend.repository.CommentRepository;
+import org.nodystudio.nodybackend.repository.LikeRepository;
+import org.nodystudio.nodybackend.repository.LogRepository;
+import org.nodystudio.nodybackend.repository.ThreadRepository;
 import org.nodystudio.nodybackend.repository.UserRepository;
 import org.nodystudio.nodybackend.util.LoggingUtils;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -22,6 +26,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserCleanupBatchService {
 
   private final UserRepository userRepository;
+  private final CommentRepository commentRepository;
+  private final ThreadRepository threadRepository;
+  private final LogRepository logRepository;
+  private final LikeRepository likeRepository;
 
   /**
    * 탈퇴 후 30일이 지난 사용자 계정을 완전 삭제합니다.
@@ -75,8 +83,8 @@ public class UserCleanupBatchService {
   /**
    * 탈퇴 후 30일이 지난 사용자와 관련된 모든 데이터를 완전히 삭제합니다. Soft Delete로 비활성화된 데이터들을 물리적으로 완전 삭제합니다.
    * <p>
-   * 삭제 순서: 1. Comment (댓글) - 비활성화된 댓글들 삭제 2. Thread (쓰레드) 및 관련 이미지, 좋아요 - 비활성화된 쓰레드들 삭제 3. Log (로그)
-   * 및 관련 좋아요 - 비활성화된 로그들 삭제 4. User (사용자) - 탈퇴한 사용자 계정 삭제
+   * 삭제 순서: 1. Comment (댓글) - 비활성화된 댓글들 삭제 2. Thread (쓰레드) - 비활성화된 쓰레드들 삭제 (CASCADE로 관련 댓글, 좋아요도 함께 삭제) 
+   * 3. Log (로그) - 비활성화된 로그들 삭제 4. Like (좋아요) - 사용자의 모든 좋아요 삭제 5. User (사용자) - 탈퇴한 사용자 계정 삭제
    *
    * @param user 완전 삭제할 사용자 (탈퇴 후 30일 경과)
    */
@@ -85,24 +93,27 @@ public class UserCleanupBatchService {
     Long userId = user.getId();
 
     // 1. 사용자가 작성한 비활성화된 댓글들 완전 삭제
-    // TODO: Comment 엔티티 구현 후 추가
-    // commentRepository.deleteDeactivatedByUserId(userId);
+    int deletedComments = commentRepository.deleteDeactivatedByUserId(userId);
+    log.info("사용자 댓글 완전 삭제 완료: userId={}, count={}", LoggingUtils.maskUserId(userId), deletedComments);
 
     // 2. 사용자가 작성한 비활성화된 Thread 관련 데이터 완전 삭제
-    // TODO: Thread, ThreadImage, ThreadLike 엔티티 구현 후 추가
-    // threadLikeRepository.deleteByUserId(userId); // 좋아요는 탈퇴 시 이미 삭제됨
-    // threadImageRepository.deleteByThreadUserId(userId);
-    // threadRepository.deleteDeactivatedByUserId(userId);
+    // Thread 삭제 시 CASCADE 설정에 의해 관련 댓글, 좋아요도 함께 삭제됨
+    int deletedThreads = threadRepository.deleteDeactivatedByUserId(userId);
+    log.info("사용자 스레드 완전 삭제 완료: userId={}, count={}", LoggingUtils.maskUserId(userId), deletedThreads);
 
     // 3. 사용자가 작성한 비활성화된 Log 관련 데이터 완전 삭제
-    // TODO: Log, LogLike 엔티티 구현 후 추가
-    // logLikeRepository.deleteByUserId(userId); // 좋아요는 탈퇴 시 이미 삭제됨
-    // logRepository.deleteDeactivatedByUserId(userId);
+    int deletedLogs = logRepository.deleteDeactivatedByUserId(userId);
+    log.info("사용자 로그 완전 삭제 완료: userId={}, count={}", LoggingUtils.maskUserId(userId), deletedLogs);
 
-    // 4. 탈퇴한 사용자 계정 완전 삭제
+    // 4. 사용자의 모든 좋아요 데이터 완전 삭제
+    int deletedLikes = likeRepository.deleteByUserId(userId);
+    log.info("사용자 좋아요 완전 삭제 완료: userId={}, count={}", LoggingUtils.maskUserId(userId), deletedLikes);
+
+    // 5. 탈퇴한 사용자 계정 완전 삭제
     userRepository.delete(user);
 
-    log.info("탈퇴 후 30일 경과 사용자 관련 모든 데이터 완전 삭제 완료: userId={}", LoggingUtils.maskUserId(userId));
+    log.info("탈퇴 후 30일 경과 사용자 관련 모든 데이터 완전 삭제 완료: userId={}, comments={}, threads={}, logs={}, likes={}", 
+        LoggingUtils.maskUserId(userId), deletedComments, deletedThreads, deletedLogs, deletedLikes);
   }
 
   /**
