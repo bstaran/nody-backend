@@ -153,6 +153,66 @@ class UserServiceTest {
   }
 
   @Test
+  @DisplayName("닉네임 변경 - XSS 공격 방어 (스크립트 태그)")
+  void updateNickname_xssDefense_scriptTag() {
+    // given
+    String maliciousNickname = "<script>alert('xss')</script>악성닉네임";
+    String expectedSanitizedNickname = "악성닉네임"; // HTML 태그 제거됨
+    UpdateNicknameRequestDto requestDto = new UpdateNicknameRequestDto(maliciousNickname);
+    given(userRepository.findByIdAndIsActiveTrue(TEST_USER_ID)).willReturn(Optional.of(testUser));
+    given(userRepository.existsByNicknameAndIdNotAndIsActiveTrue(expectedSanitizedNickname,
+        TEST_USER_ID)).willReturn(false);
+
+    // when
+    UserDetailResponseDto result = userService.updateNickname(TEST_USER_ID_STRING, requestDto);
+
+    // then
+    assertThat(result.getNickname()).isEqualTo(expectedSanitizedNickname);
+    assertThat(testUser.getNickname()).isEqualTo(expectedSanitizedNickname);
+    verify(userRepository).existsByNicknameAndIdNotAndIsActiveTrue(expectedSanitizedNickname, TEST_USER_ID);
+  }
+
+  @Test
+  @DisplayName("닉네임 변경 - XSS 공격 방어 (이미지 태그)")
+  void updateNickname_xssDefense_imgTag() {
+    // given
+    String maliciousNickname = "<img src=x onerror=alert(1)>악성닉네임";
+    String expectedSanitizedNickname = "악성닉네임"; // HTML 태그 제거됨
+    UpdateNicknameRequestDto requestDto = new UpdateNicknameRequestDto(maliciousNickname);
+    given(userRepository.findByIdAndIsActiveTrue(TEST_USER_ID)).willReturn(Optional.of(testUser));
+    given(userRepository.existsByNicknameAndIdNotAndIsActiveTrue(expectedSanitizedNickname,
+        TEST_USER_ID)).willReturn(false);
+
+    // when
+    UserDetailResponseDto result = userService.updateNickname(TEST_USER_ID_STRING, requestDto);
+
+    // then
+    assertThat(result.getNickname()).isEqualTo(expectedSanitizedNickname);
+    assertThat(testUser.getNickname()).isEqualTo(expectedSanitizedNickname);
+    verify(userRepository).existsByNicknameAndIdNotAndIsActiveTrue(expectedSanitizedNickname, TEST_USER_ID);
+  }
+
+  @Test
+  @DisplayName("닉네임 변경 - XSS 공격 방어 (다양한 HTML 태그)")
+  void updateNickname_xssDefense_variousHtmlTags() {
+    // given
+    String maliciousNickname = "<div><b>테스트</b><span>닉네임</span></div>";
+    String expectedSanitizedNickname = "테스트닉네임"; // 모든 HTML 태그 제거됨
+    UpdateNicknameRequestDto requestDto = new UpdateNicknameRequestDto(maliciousNickname);
+    given(userRepository.findByIdAndIsActiveTrue(TEST_USER_ID)).willReturn(Optional.of(testUser));
+    given(userRepository.existsByNicknameAndIdNotAndIsActiveTrue(expectedSanitizedNickname,
+        TEST_USER_ID)).willReturn(false);
+
+    // when
+    UserDetailResponseDto result = userService.updateNickname(TEST_USER_ID_STRING, requestDto);
+
+    // then
+    assertThat(result.getNickname()).isEqualTo(expectedSanitizedNickname);
+    assertThat(testUser.getNickname()).isEqualTo(expectedSanitizedNickname);
+    verify(userRepository).existsByNicknameAndIdNotAndIsActiveTrue(expectedSanitizedNickname, TEST_USER_ID);
+  }
+
+  @Test
   @DisplayName("사용자 조회 - null userId")
   void getCurrentUser_nullUserId() {
     // when & then
