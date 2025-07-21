@@ -13,6 +13,7 @@ import org.nodystudio.nodybackend.service.comment.CommentService;
 import org.nodystudio.nodybackend.service.like.LikeService;
 import org.nodystudio.nodybackend.service.log.LogService;
 import org.nodystudio.nodybackend.service.thread.ThreadService;
+import org.nodystudio.nodybackend.util.HtmlSanitizerUtil;
 import org.nodystudio.nodybackend.util.LoggingUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,20 +39,25 @@ public class UserService {
   public UserDetailResponseDto updateNickname(String userId, UpdateNicknameRequestDto requestDto) {
     User user = findUserById(userId);
 
+    // XSS 공격 방지를 위한 HTML sanitization (모든 HTML 태그 제거)
+    String sanitizedNickname = HtmlSanitizerUtil.sanitizeTextOnly(requestDto.getNickname());
+    
     log.info("사용자 닉네임 변경: userId={}", LoggingUtils.maskUserId(userId));
     log.debug("닉네임 변경 상세: 기존닉네임={}, 새닉네임={}",
         LoggingUtils.maskNickname(user.getNickname()),
-        LoggingUtils.maskNickname(requestDto.getNickname()));
+        LoggingUtils.maskNickname(sanitizedNickname));
 
     // 닉네임 중복 검증 (본인 제외)
-    if (userRepository.existsByNicknameAndIdNotAndIsActiveTrue(requestDto.getNickname(),
+    if (userRepository.existsByNicknameAndIdNotAndIsActiveTrue(sanitizedNickname,
         user.getId())) {
       log.warn("닉네임 중복 시도: userId={}, nickname={}",
-          LoggingUtils.maskUserId(userId), LoggingUtils.maskNickname(requestDto.getNickname()));
-      throw new DuplicateNicknameException("이미 사용 중인 닉네임입니다: " + requestDto.getNickname());
+          LoggingUtils.maskUserId(userId), LoggingUtils.maskNickname(sanitizedNickname));
+      throw new DuplicateNicknameException("이미 사용 중인 닉네임입니다: " + sanitizedNickname);
     }
 
-    user.updateNickname(requestDto.getNickname());
+    user.updateNickname(sanitizedNickname);
+    
+    log.info("닉네임 변경 완료 - userId: {}, HTML sanitization 적용됨", LoggingUtils.maskUserId(userId));
 
     return UserDetailResponseDto.fromEntity(user);
   }

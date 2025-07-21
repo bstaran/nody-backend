@@ -14,6 +14,7 @@ import org.nodystudio.nodybackend.dto.log.LogUpdateRequest;
 import org.nodystudio.nodybackend.exception.custom.UserNotFoundException;
 import org.nodystudio.nodybackend.repository.LogRepository;
 import org.nodystudio.nodybackend.repository.UserRepository;
+import org.nodystudio.nodybackend.util.HtmlSanitizerUtil;
 import org.nodystudio.nodybackend.util.LocationUtils;
 import org.nodystudio.nodybackend.util.LoggingUtils;
 import org.springframework.data.domain.Page;
@@ -64,11 +65,16 @@ public class LogService {
       throw new IllegalArgumentException("로그 내용은 필수입니다.");
     }
 
+    // XSS 공격 방지를 위한 HTML sanitization
+    String sanitizedContent = request.getContent() != null 
+        ? HtmlSanitizerUtil.sanitize(request.getContent()) 
+        : null;
+
     LocationUtils.validateCoordinates(request.getLatitude(), request.getLongitude());
 
     Log logEntity = Log.builder()
         .user(user)
-        .content(request.getContent())
+        .content(sanitizedContent)
         .latitude(request.getLatitude())
         .longitude(request.getLongitude())
         .address(request.getAddress())
@@ -77,7 +83,7 @@ public class LogService {
         .build();
 
     Log savedLog = logRepository.save(logEntity);
-    log.info("로그 생성 완료 - ID: {}", savedLog.getId());
+    log.info("로그 생성 완료 - ID: {}, HTML sanitization 적용됨", savedLog.getId());
 
     return LogResponse.from(savedLog);
   }
@@ -335,7 +341,10 @@ public class LogService {
       if (request.getContent().trim().isEmpty()) {
         throw new IllegalArgumentException("로그 내용은 빈 문자열일 수 없습니다.");
       }
-      logEntity.updateContent(request.getContent());
+      // XSS 공격 방지를 위한 HTML sanitization
+      String sanitizedContent = HtmlSanitizerUtil.sanitize(request.getContent());
+      logEntity.updateContent(sanitizedContent);
+      log.debug("로그 내용 업데이트 - ID: {}, HTML sanitization 적용됨", logEntity.getId());
     }
 
     if (request.getLatitude() != null || request.getLongitude() != null

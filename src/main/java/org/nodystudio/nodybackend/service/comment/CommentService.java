@@ -25,6 +25,7 @@ import org.nodystudio.nodybackend.exception.custom.UserNotFoundException;
 import org.nodystudio.nodybackend.repository.CommentRepository;
 import org.nodystudio.nodybackend.repository.ThreadRepository;
 import org.nodystudio.nodybackend.repository.UserRepository;
+import org.nodystudio.nodybackend.util.HtmlSanitizerUtil;
 import org.nodystudio.nodybackend.util.LoggingUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -80,13 +81,17 @@ public class CommentService {
       parent = validateAndGetParentComment(request.getParentId(), threadId);
     }
 
-    // 멘션된 사용자 파싱
+    // XSS 공격 방지를 위한 HTML sanitization
+    String sanitizedContent = HtmlSanitizerUtil.sanitizeCommentContent(request.getContent());
+    
+    // 멘션된 사용자 파싱 (원본 내용 기준)
+    // Sanitizer가 멘션을 포함한 HTML을 제거할 수 있으므로, 반드시 원본 내용에서 멘션을 파싱해야 합니다.
     Set<User> mentionedUsers = parseMentionedUsers(request.getContent());
 
     Comment comment = Comment.builder()
         .thread(thread)
         .author(author)
-        .content(request.getContent().trim())
+        .content(sanitizedContent)
         .parent(parent)
         .build();
 
@@ -102,7 +107,7 @@ public class CommentService {
       publishMentionEvent(savedComment, mentionedUsers);
     }
 
-    log.info("댓글 생성 완료 - ID: {}", savedComment.getId());
+    log.info("댓글 생성 완료 - ID: {}, HTML sanitization 적용됨", savedComment.getId());
 
     return CommentResponse.from(savedComment);
   }
@@ -155,10 +160,15 @@ public class CommentService {
       throw new BadRequestException("삭제된 댓글은 수정할 수 없습니다.");
     }
 
+    // XSS 공격 방지를 위한 HTML sanitization
+    String sanitizedContent = HtmlSanitizerUtil.sanitizeCommentContent(request.getContent());
+    
+    // 멘션된 사용자 파싱 (원본 내용 기준)
+    // Sanitizer가 멘션을 포함한 HTML을 제거할 수 있으므로, 반드시 원본 내용에서 멘션을 파싱해야 합니다.
     Set<User> newMentionedUsers = parseMentionedUsers(request.getContent());
     List<User> previousMentions = new ArrayList<>(comment.getMentionedUsers());
 
-    comment.updateContent(request.getContent());
+    comment.updateContent(sanitizedContent);
     comment.setMentionedUsers(new ArrayList<>(newMentionedUsers));
 
     // 새로 추가된 멘션에 대해서만 알림 발행
@@ -172,7 +182,7 @@ public class CommentService {
           commentId, addedMentions.size());
     }
 
-    log.info("댓글 수정 완료 - ID: {}", commentId);
+    log.info("댓글 수정 완료 - ID: {}, HTML sanitization 적용됨", commentId);
     return CommentResponse.from(comment);
   }
 
