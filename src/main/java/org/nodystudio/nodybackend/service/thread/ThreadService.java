@@ -16,6 +16,7 @@ import org.nodystudio.nodybackend.exception.custom.UserNotFoundException;
 import org.nodystudio.nodybackend.repository.LogRepository;
 import org.nodystudio.nodybackend.repository.ThreadRepository;
 import org.nodystudio.nodybackend.repository.UserRepository;
+import org.nodystudio.nodybackend.util.HtmlSanitizerUtil;
 import org.nodystudio.nodybackend.util.LoggingUtils;
 import org.nodystudio.nodybackend.util.PageableUtils;
 import org.springframework.data.domain.Page;
@@ -64,15 +65,20 @@ public class ThreadService {
       linkedLog = validateAndGetLinkedLog(request.getLogId(), user);
     }
 
+    // XSS 공격 방지를 위한 HTML sanitization
+    String sanitizedContent = request.getContent() != null 
+        ? HtmlSanitizerUtil.sanitize(request.getContent().trim()) 
+        : null;
+
     Thread thread = Thread.builder()
         .user(user)
         .log(linkedLog)
-        .content(request.getContent() != null ? request.getContent().trim() : null)
+        .content(sanitizedContent)
         .isPublic(request.getIsPublic() != null ? request.getIsPublic() : true)
         .build();
 
     Thread savedThread = threadRepository.save(thread);
-    log.info("스레드 생성 완료 - ID: {}, 로그 연결: {}",
+    log.info("스레드 생성 완료 - ID: {}, 로그 연결: {}, HTML sanitization 적용됨",
         savedThread.getId(), savedThread.isLinkedToLog());
 
     return ThreadResponse.from(savedThread);
@@ -266,7 +272,10 @@ public class ThreadService {
 
   private void updateThreadFields(Thread thread, ThreadUpdateRequest request, User user) {
     if (request.getContent() != null) {
-      thread.updateContent(request.getContent());
+      // XSS 공격 방지를 위한 HTML sanitization
+      String sanitizedContent = HtmlSanitizerUtil.sanitize(request.getContent());
+      thread.updateContent(sanitizedContent);
+      log.debug("스레드 내용 업데이트 - ID: {}, HTML sanitization 적용됨", thread.getId());
     }
 
     if (request.getIsPublic() != null) {

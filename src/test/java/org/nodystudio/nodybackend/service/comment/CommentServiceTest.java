@@ -1126,4 +1126,213 @@ class CommentServiceTest {
       assertThat(result).isEqualTo(expectedCount);
     }
   }
+
+  @Nested
+  @DisplayName("XSS 공격 방어 (Security)")
+  class XssProtection {
+
+    @Test
+    @DisplayName("댓글 생성 시 XSS 스크립트 태그를 제거한다")
+    void createComment_WithXssScript_ShouldSanitizeContent() {
+      // given
+      Long threadId = 1L;
+      String userEmail = "testuser@example.com";
+      String maliciousContent = "안녕하세요 <script>alert('XSS');</script> 좋은 글이네요!";
+      String expectedSanitizedContent = "안녕하세요  좋은 글이네요!";
+
+      CommentCreateRequest request = CommentCreateRequest.builder()
+          .content(maliciousContent)
+          .parentId(null)
+          .build();
+
+      User mockUser = createMockUser(1L, userEmail, "testuser");
+      Thread mockThread = createMockThread(threadId, "테스트 스레드");
+      Comment mockComment = createMockComment(1L, expectedSanitizedContent, mockUser, mockThread);
+
+      given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
+      given(threadRepository.findById(threadId)).willReturn(Optional.of(mockThread));
+      given(commentRepository.save(any(Comment.class))).willReturn(mockComment);
+
+      // when
+      CommentResponse result = commentService.createComment(threadId, request, userEmail);
+
+      // then
+      ArgumentCaptor<Comment> commentCaptor = ArgumentCaptor.forClass(Comment.class);
+      then(commentRepository).should().save(commentCaptor.capture());
+      
+      Comment savedComment = commentCaptor.getValue();
+      assertThat(savedComment.getContent()).isEqualTo(expectedSanitizedContent);
+      assertThat(savedComment.getContent()).doesNotContain("<script>");
+      assertThat(savedComment.getContent()).doesNotContain("alert");
+    }
+
+    @Test
+    @DisplayName("댓글 생성 시 악성 이미지 태그를 제거한다")
+    void createComment_WithMaliciousImgTag_ShouldSanitizeContent() {
+      // given
+      Long threadId = 1L;
+      String userEmail = "testuser@example.com";
+      String maliciousContent = "댓글입니다 <img src=x onerror=alert('XSS')> 계속 텍스트";
+      String expectedSanitizedContent = "댓글입니다  계속 텍스트";
+
+      CommentCreateRequest request = CommentCreateRequest.builder()
+          .content(maliciousContent)
+          .parentId(null)
+          .build();
+
+      User mockUser = createMockUser(1L, userEmail, "testuser");
+      Thread mockThread = createMockThread(threadId, "테스트 스레드");
+      Comment mockComment = createMockComment(1L, expectedSanitizedContent, mockUser, mockThread);
+
+      given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
+      given(threadRepository.findById(threadId)).willReturn(Optional.of(mockThread));
+      given(commentRepository.save(any(Comment.class))).willReturn(mockComment);
+
+      // when
+      CommentResponse result = commentService.createComment(threadId, request, userEmail);
+
+      // then
+      ArgumentCaptor<Comment> commentCaptor = ArgumentCaptor.forClass(Comment.class);
+      then(commentRepository).should().save(commentCaptor.capture());
+      
+      Comment savedComment = commentCaptor.getValue();
+      assertThat(savedComment.getContent()).isEqualTo(expectedSanitizedContent);
+      assertThat(savedComment.getContent()).doesNotContain("<img");
+      assertThat(savedComment.getContent()).doesNotContain("onerror");
+    }
+
+    @Test
+    @DisplayName("댓글 수정 시 XSS 스크립트 태그를 제거한다")
+    void updateComment_WithXssScript_ShouldSanitizeContent() {
+      // given
+      Long commentId = 1L;
+      String userEmail = "testuser@example.com";
+      String maliciousContent = "수정된 내용 <script>document.cookie</script> 입니다";
+      String expectedSanitizedContent = "수정된 내용  입니다";
+
+      CommentUpdateRequest request = CommentUpdateRequest.builder()
+          .content(maliciousContent)
+          .build();
+
+      User mockUser = createMockUser(1L, userEmail, "testuser");
+      Thread mockThread = createMockThread(1L, "테스트 스레드");
+      Comment mockComment = createMockComment(commentId, "원본 내용", mockUser, mockThread);
+
+      given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
+      given(commentRepository.findByIdAndAuthorIdAndDeletedAtIsNull(commentId, mockUser.getId()))
+          .willReturn(Optional.of(mockComment));
+
+      // when
+      CommentResponse result = commentService.updateComment(commentId, request, userEmail);
+
+      // then
+      assertThat(mockComment.getContent()).isEqualTo(expectedSanitizedContent);
+      assertThat(mockComment.getContent()).doesNotContain("<script>");
+      assertThat(mockComment.getContent()).doesNotContain("document.cookie");
+    }
+
+    @Test
+    @DisplayName("안전한 HTML 포맷팅 태그는 유지한다")
+    void createComment_WithSafeFormattingTags_ShouldKeepTags() {
+      // given
+      Long threadId = 1L;
+      String userEmail = "testuser@example.com";
+      String safeContent = "이것은 <b>굵은 글씨</b>이고 <i>기울임</i>입니다.";
+
+      CommentCreateRequest request = CommentCreateRequest.builder()
+          .content(safeContent)
+          .parentId(null)
+          .build();
+
+      User mockUser = createMockUser(1L, userEmail, "testuser");
+      Thread mockThread = createMockThread(threadId, "테스트 스레드");
+      Comment mockComment = createMockComment(1L, safeContent, mockUser, mockThread);
+
+      given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
+      given(threadRepository.findById(threadId)).willReturn(Optional.of(mockThread));
+      given(commentRepository.save(any(Comment.class))).willReturn(mockComment);
+
+      // when
+      CommentResponse result = commentService.createComment(threadId, request, userEmail);
+
+      // then
+      ArgumentCaptor<Comment> commentCaptor = ArgumentCaptor.forClass(Comment.class);
+      then(commentRepository).should().save(commentCaptor.capture());
+      
+      Comment savedComment = commentCaptor.getValue();
+      assertThat(savedComment.getContent()).isEqualTo(safeContent);
+      assertThat(savedComment.getContent()).contains("<b>굵은 글씨</b>");
+      assertThat(savedComment.getContent()).contains("<i>기울임</i>");
+    }
+
+    @Test
+    @DisplayName("안전한 링크는 유지한다")
+    void createComment_WithSafeLink_ShouldKeepLink() {
+      // given
+      Long threadId = 1L;
+      String userEmail = "testuser@example.com";
+      String originalContent = "참고 링크: <a href=\"https://example.com\">example.com</a>";
+      String expectedSanitizedContent = "참고 링크: <a href=\"https://example.com\" rel=\"nofollow\">example.com</a>";
+
+      CommentCreateRequest request = CommentCreateRequest.builder()
+          .content(originalContent)
+          .parentId(null)
+          .build();
+
+      User mockUser = createMockUser(1L, userEmail, "testuser");
+      Thread mockThread = createMockThread(threadId, "테스트 스레드");
+      Comment mockComment = createMockComment(1L, expectedSanitizedContent, mockUser, mockThread);
+
+      given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
+      given(threadRepository.findById(threadId)).willReturn(Optional.of(mockThread));
+      given(commentRepository.save(any(Comment.class))).willReturn(mockComment);
+
+      // when
+      CommentResponse result = commentService.createComment(threadId, request, userEmail);
+
+      // then
+      ArgumentCaptor<Comment> commentCaptor = ArgumentCaptor.forClass(Comment.class);
+      then(commentRepository).should().save(commentCaptor.capture());
+      
+      Comment savedComment = commentCaptor.getValue();
+      assertThat(savedComment.getContent()).isEqualTo(expectedSanitizedContent);
+      assertThat(savedComment.getContent()).contains("href=\"https://example.com\"");
+      assertThat(savedComment.getContent()).contains("rel=\"nofollow\"");
+    }
+
+    @Test
+    @DisplayName("javascript: 프로토콜 링크는 제거한다")
+    void createComment_WithJavascriptLink_ShouldRemoveLink() {
+      // given
+      Long threadId = 1L;
+      String userEmail = "testuser@example.com";
+      String maliciousContent = "클릭: <a href=\"javascript:alert('XSS')\">여기</a>";
+      String expectedSanitizedContent = "클릭: 여기";
+
+      CommentCreateRequest request = CommentCreateRequest.builder()
+          .content(maliciousContent)
+          .parentId(null)
+          .build();
+
+      User mockUser = createMockUser(1L, userEmail, "testuser");
+      Thread mockThread = createMockThread(threadId, "테스트 스레드");
+      Comment mockComment = createMockComment(1L, expectedSanitizedContent, mockUser, mockThread);
+
+      given(userRepository.findByEmailAndIsActiveTrue(userEmail)).willReturn(Optional.of(mockUser));
+      given(threadRepository.findById(threadId)).willReturn(Optional.of(mockThread));
+      given(commentRepository.save(any(Comment.class))).willReturn(mockComment);
+
+      // when
+      CommentResponse result = commentService.createComment(threadId, request, userEmail);
+
+      // then
+      ArgumentCaptor<Comment> commentCaptor = ArgumentCaptor.forClass(Comment.class);
+      then(commentRepository).should().save(commentCaptor.capture());
+      
+      Comment savedComment = commentCaptor.getValue();
+      assertThat(savedComment.getContent()).isEqualTo(expectedSanitizedContent);
+      assertThat(savedComment.getContent()).doesNotContain("javascript:");
+      assertThat(savedComment.getContent()).doesNotContain("alert");
+    }
+  }
 }

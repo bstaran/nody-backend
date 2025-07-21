@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -632,5 +633,297 @@ class ThreadServiceTest {
 
     verify(threadRepository).findByIdAndUserId(1L, 1L);
     verify(logRepository).findById(2L);
+  }
+
+  @Nested
+  @DisplayName("XSS 공격 방어 (Security)")
+  class XssProtectionTest {
+
+    @Test
+    @DisplayName("스레드 생성 시 악성 스크립트 태그를 제거한다")
+    void createThread_WithScriptTag_ShouldRemoveScript() {
+      // Given
+      String maliciousContent = "안녕하세요 <script>alert('XSS');</script> 좋은 스레드입니다!";
+      String expectedSanitizedContent = "안녕하세요  좋은 스레드입니다!";
+      
+      ThreadCreateRequest request = ThreadCreateRequest.builder()
+          .content(maliciousContent)
+          .isPublic(true)
+          .build();
+
+      given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
+      given(threadRepository.save(any(Thread.class))).willAnswer(invocation -> {
+        Thread savedThread = invocation.getArgument(0);
+        return Thread.builder()
+            .id(1L)
+            .user(savedThread.getUser())
+            .log(savedThread.getLog())
+            .content(savedThread.getContent())
+            .isPublic(savedThread.getIsPublic())
+            .viewCount(savedThread.getViewCount())
+            .build();
+      });
+
+      // When
+      ThreadResponse response = threadService.createThread(request, "test@example.com");
+
+      // Then
+      assertThat(response.getContent()).isEqualTo(expectedSanitizedContent);
+      assertThat(response.getContent()).doesNotContain("<script>");
+      assertThat(response.getContent()).doesNotContain("alert");
+
+      ArgumentCaptor<Thread> threadCaptor = ArgumentCaptor.forClass(Thread.class);
+      verify(threadRepository).save(threadCaptor.capture());
+      Thread capturedThread = threadCaptor.getValue();
+      assertThat(capturedThread.getContent()).isEqualTo(expectedSanitizedContent);
+    }
+
+    @Test
+    @DisplayName("스레드 생성 시 악성 이미지 태그를 제거한다")
+    void createThread_WithMaliciousImgTag_ShouldRemoveImgTag() {
+      // Given
+      String maliciousContent = "스레드입니다 <img src=x onerror=alert('XSS')> 계속 텍스트";
+      String expectedSanitizedContent = "스레드입니다  계속 텍스트";
+      
+      ThreadCreateRequest request = ThreadCreateRequest.builder()
+          .content(maliciousContent)
+          .isPublic(true)
+          .build();
+
+      given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
+      given(threadRepository.save(any(Thread.class))).willAnswer(invocation -> {
+        Thread savedThread = invocation.getArgument(0);
+        return Thread.builder()
+            .id(1L)
+            .user(savedThread.getUser())
+            .content(savedThread.getContent())
+            .isPublic(savedThread.getIsPublic())
+            .viewCount(0L)
+            .build();
+      });
+
+      // When
+      ThreadResponse response = threadService.createThread(request, "test@example.com");
+
+      // Then
+      assertThat(response.getContent()).isEqualTo(expectedSanitizedContent);
+      assertThat(response.getContent()).doesNotContain("<img");
+      assertThat(response.getContent()).doesNotContain("onerror");
+    }
+
+    @Test
+    @DisplayName("스레드 생성 시 iframe 태그를 제거한다")
+    void createThread_WithIframeTag_ShouldRemoveIframe() {
+      // Given
+      String maliciousContent = "내용 <iframe src='javascript:alert(1)'></iframe> 더 내용";
+      String expectedSanitizedContent = "내용  더 내용";
+      
+      ThreadCreateRequest request = ThreadCreateRequest.builder()
+          .content(maliciousContent)
+          .isPublic(true)
+          .build();
+
+      given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
+      given(threadRepository.save(any(Thread.class))).willAnswer(invocation -> {
+        Thread savedThread = invocation.getArgument(0);
+        return Thread.builder()
+            .id(1L)
+            .user(savedThread.getUser())
+            .content(savedThread.getContent())
+            .isPublic(savedThread.getIsPublic())
+            .viewCount(0L)
+            .build();
+      });
+
+      // When
+      ThreadResponse response = threadService.createThread(request, "test@example.com");
+
+      // Then
+      assertThat(response.getContent()).isEqualTo(expectedSanitizedContent);
+      assertThat(response.getContent()).doesNotContain("<iframe");
+      assertThat(response.getContent()).doesNotContain("javascript:");
+    }
+
+    @Test
+    @DisplayName("스레드 생성 시 기본 포맷팅 태그는 허용한다")
+    void createThread_WithFormattingTags_ShouldKeepFormatting() {
+      // Given
+      String formattedContent = "이것은 <b>굵은 글씨</b>이고 <i>기울임</i>입니다. <br>줄바꿈도 됩니다.";
+      String expectedContent = "이것은 <b>굵은 글씨</b>이고 <i>기울임</i>입니다. <br />줄바꿈도 됩니다.";
+      
+      ThreadCreateRequest request = ThreadCreateRequest.builder()
+          .content(formattedContent)
+          .isPublic(true)
+          .build();
+
+      given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
+      given(threadRepository.save(any(Thread.class))).willAnswer(invocation -> {
+        Thread savedThread = invocation.getArgument(0);
+        return Thread.builder()
+            .id(1L)
+            .user(savedThread.getUser())
+            .content(savedThread.getContent())
+            .isPublic(savedThread.getIsPublic())
+            .viewCount(0L)
+            .build();
+      });
+
+      // When
+      ThreadResponse response = threadService.createThread(request, "test@example.com");
+
+      // Then
+      assertThat(response.getContent()).isEqualTo(expectedContent);
+      assertThat(response.getContent()).contains("<b>굵은 글씨</b>");
+      assertThat(response.getContent()).contains("<i>기울임</i>");
+    }
+
+    @Test
+    @DisplayName("스레드 생성 시 안전한 링크는 허용한다")
+    void createThread_WithSafeLink_ShouldKeepLink() {
+      // Given
+      String linkContent = "참고 링크: <a href=\"https://example.com\">example.com</a>";
+      String expectedContent = "참고 링크: <a href=\"https://example.com\" rel=\"nofollow\">example.com</a>";
+      
+      ThreadCreateRequest request = ThreadCreateRequest.builder()
+          .content(linkContent)
+          .isPublic(true)
+          .build();
+
+      given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
+      given(threadRepository.save(any(Thread.class))).willAnswer(invocation -> {
+        Thread savedThread = invocation.getArgument(0);
+        return Thread.builder()
+            .id(1L)
+            .user(savedThread.getUser())
+            .content(savedThread.getContent())
+            .isPublic(savedThread.getIsPublic())
+            .viewCount(0L)
+            .build();
+      });
+
+      // When
+      ThreadResponse response = threadService.createThread(request, "test@example.com");
+
+      // Then
+      assertThat(response.getContent()).isEqualTo(expectedContent);
+      assertThat(response.getContent()).contains("href=\"https://example.com\"");
+      assertThat(response.getContent()).contains("rel=\"nofollow\"");
+    }
+
+    @Test
+    @DisplayName("스레드 생성 시 javascript: 프로토콜 링크를 제거한다")
+    void createThread_WithJavascriptLink_ShouldRemoveLink() {
+      // Given
+      String maliciousLink = "클릭: <a href=\"javascript:alert('XSS')\">여기</a>";
+      String expectedSanitizedContent = "클릭: 여기";
+      
+      ThreadCreateRequest request = ThreadCreateRequest.builder()
+          .content(maliciousLink)
+          .isPublic(true)
+          .build();
+
+      given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
+      given(threadRepository.save(any(Thread.class))).willAnswer(invocation -> {
+        Thread savedThread = invocation.getArgument(0);
+        return Thread.builder()
+            .id(1L)
+            .user(savedThread.getUser())
+            .content(savedThread.getContent())
+            .isPublic(savedThread.getIsPublic())
+            .viewCount(0L)
+            .build();
+      });
+
+      // When
+      ThreadResponse response = threadService.createThread(request, "test@example.com");
+
+      // Then
+      assertThat(response.getContent()).isEqualTo(expectedSanitizedContent);
+      assertThat(response.getContent()).doesNotContain("javascript:");
+      assertThat(response.getContent()).doesNotContain("alert");
+    }
+
+    @Test
+    @DisplayName("스레드 수정 시 악성 스크립트 태그를 제거한다")
+    void updateThread_WithScriptTag_ShouldRemoveScript() {
+      // Given
+      String maliciousContent = "수정된 내용 <script>document.cookie</script> 입니다";
+      String expectedSanitizedContent = "수정된 내용  입니다";
+      
+      ThreadUpdateRequest request = ThreadUpdateRequest.builder()
+          .content(maliciousContent)
+          .build();
+
+      given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
+      given(threadRepository.findByIdAndUserId(1L, 1L)).willReturn(Optional.of(testThread));
+
+      // When
+      ThreadResponse response = threadService.updateThread(1L, request, "test@example.com");
+
+      // Then
+      assertThat(testThread.getContent()).isEqualTo(expectedSanitizedContent);
+      assertThat(testThread.getContent()).doesNotContain("<script>");
+      assertThat(testThread.getContent()).doesNotContain("document.cookie");
+    }
+
+    @Test
+    @DisplayName("스레드 생성 시 앞뒤 공백 제거 후 sanitization 적용")
+    void createThread_WithWhitespaceAndHtml_ShouldTrimAndSanitize() {
+      // Given
+      String contentWithWhitespace = "   <b>안전한 내용</b> <script>alert('악성')</script>   ";
+      // HTML Sanitizer는 스크립트 제거 후 뒤쪽 공백 하나를 남길 수 있음
+      String expectedContent = "<b>안전한 내용</b> ";
+      
+      ThreadCreateRequest request = ThreadCreateRequest.builder()
+          .content(contentWithWhitespace)
+          .isPublic(true)
+          .build();
+
+      given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
+      given(threadRepository.save(any(Thread.class))).willAnswer(invocation -> {
+        Thread savedThread = invocation.getArgument(0);
+        return Thread.builder()
+            .id(1L)
+            .user(savedThread.getUser())
+            .content(savedThread.getContent())
+            .isPublic(savedThread.getIsPublic())
+            .viewCount(0L)
+            .build();
+      });
+
+      // When
+      ThreadResponse response = threadService.createThread(request, "test@example.com");
+
+      // Then
+      assertThat(response.getContent()).isEqualTo(expectedContent);
+      assertThat(response.getContent()).doesNotContain("<script>");
+      assertThat(response.getContent()).contains("<b>안전한 내용</b>");
+      assertThat(response.getContent()).doesNotStartWith(" ");
+    }
+
+    @Test
+    @DisplayName("스레드 수정 시 trim 없이 sanitization만 적용")
+    void updateThread_WithWhitespaceAndHtml_ShouldSanitizeWithoutTrim() {
+      // Given
+      String contentWithWhitespace = "   <b>안전한 내용</b> <script>alert('악성')</script>   ";
+      
+      ThreadUpdateRequest request = ThreadUpdateRequest.builder()
+          .content(contentWithWhitespace)
+          .build();
+
+      given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(testUser));
+      given(threadRepository.findByIdAndUserId(1L, 1L)).willReturn(Optional.of(testThread));
+
+      // When
+      threadService.updateThread(1L, request, "test@example.com");
+
+      // Then
+      // HTML Sanitizer는 스크립트를 제거하고 공백을 정리함 (trim 없이도)
+      assertThat(testThread.getContent()).doesNotContain("<script>");
+      assertThat(testThread.getContent()).contains("<b>안전한 내용</b>");
+      // HTML Sanitizer 자체가 앞뒤 공백을 정리하므로 updateThread에서도 공백이 제거됨
+      assertThat(testThread.getContent()).doesNotStartWith("   ");
+      assertThat(testThread.getContent()).doesNotEndWith("   ");
+    }
   }
 }
