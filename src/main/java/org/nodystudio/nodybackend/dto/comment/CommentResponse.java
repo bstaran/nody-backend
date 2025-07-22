@@ -1,5 +1,6 @@
 package org.nodystudio.nodybackend.dto.comment;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,6 +23,7 @@ public class CommentResponse {
   private LocalDateTime updatedAt;
   private Long parentId;
   @Builder.Default
+  @JsonManagedReference
   private List<CommentResponse> children = new ArrayList<>();
   private Boolean isDeleted;
 
