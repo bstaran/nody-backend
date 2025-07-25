@@ -8,6 +8,7 @@ import org.nodystudio.nodybackend.domain.enums.SortDirection;
 import org.nodystudio.nodybackend.domain.enums.ThreadSortField;
 import org.nodystudio.nodybackend.domain.enums.ThreadType;
 import org.nodystudio.nodybackend.dto.ApiResponse;
+import org.nodystudio.nodybackend.dto.code.SuccessCode;
 import org.nodystudio.nodybackend.dto.thread.ThreadCreateRequest;
 import org.nodystudio.nodybackend.dto.thread.ThreadResponse;
 import org.nodystudio.nodybackend.dto.thread.ThreadSearchRequest;
@@ -87,7 +88,7 @@ public class ThreadController implements ThreadApiDocs {
     ThreadResponse response = threadService.createThread(request, userDetails.getEmail());
 
     return ResponseEntity.status(HttpStatus.CREATED)
-        .body(ApiResponse.success("스레드가 성공적으로 생성되었습니다.", response));
+        .body(ApiResponse.success(SuccessCode.THREAD_CREATED, response));
   }
 
   /**
@@ -105,7 +106,7 @@ public class ThreadController implements ThreadApiDocs {
     ThreadResponse response = threadService.getThread(
         id, userDetails != null ? userDetails.getEmail() : null);
 
-    return ResponseEntity.ok(ApiResponse.success("스레드 조회가 완료되었습니다.", response));
+    return ResponseEntity.ok(ApiResponse.success(SuccessCode.THREAD_RETRIEVED, response));
   }
 
   /**
@@ -127,7 +128,7 @@ public class ThreadController implements ThreadApiDocs {
     Page<ThreadResponse> response = threadService.searchThreads(searchRequest,
         userDetails != null ? userDetails.getEmail() : null);
 
-    return ResponseEntity.ok(ApiResponse.success("스레드 목록 조회가 완료되었습니다.", response));
+    return ResponseEntity.ok(ApiResponse.success(SuccessCode.THREAD_LIST_RETRIEVED, response));
   }
 
   /**
@@ -144,7 +145,7 @@ public class ThreadController implements ThreadApiDocs {
 
     ThreadResponse response = threadService.updateThread(id, request, userDetails.getEmail());
 
-    return ResponseEntity.ok(ApiResponse.success("스레드가 성공적으로 수정되었습니다.", response));
+    return ResponseEntity.ok(ApiResponse.success(SuccessCode.THREAD_UPDATED, response));
   }
 
   /**
@@ -160,7 +161,7 @@ public class ThreadController implements ThreadApiDocs {
 
     threadService.deleteThread(id, userDetails.getEmail());
 
-    return ResponseEntity.ok(ApiResponse.success("스레드가 성공적으로 삭제되었습니다.", null));
+    return ResponseEntity.ok(ApiResponse.success(SuccessCode.THREAD_DELETED, null));
   }
 
 
@@ -183,7 +184,7 @@ public class ThreadController implements ThreadApiDocs {
     Page<ThreadResponse> response = threadService.searchThreads(searchRequest,
         userDetails != null ? userDetails.getEmail() : null);
 
-    return ResponseEntity.ok(ApiResponse.success("독립 스레드 목록 조회가 완료되었습니다.", response));
+    return ResponseEntity.ok(ApiResponse.success(SuccessCode.INDEPENDENT_THREAD_LIST_RETRIEVED, response));
   }
 
   /**
@@ -205,6 +206,6 @@ public class ThreadController implements ThreadApiDocs {
     Page<ThreadResponse> response = threadService.searchThreads(searchRequest,
         userDetails != null ? userDetails.getEmail() : null);
 
-    return ResponseEntity.ok(ApiResponse.success("로그 연결 스레드 목록 조회가 완료되었습니다.", response));
+    return ResponseEntity.ok(ApiResponse.success(SuccessCode.LINKED_THREAD_LIST_RETRIEVED, response));
   }
 }
