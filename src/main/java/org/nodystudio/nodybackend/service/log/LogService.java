@@ -140,7 +140,7 @@ public class LogService {
     // 위치 기반 검색 시 Native Query의 ORDER BY를 사용하므로 Pageable에서 정렬 제외
     Pageable pageable = createPageable(searchRequest, searchRequest.isLocationSearch());
 
-    Page<Log> logs = searchLogs(searchRequest, viewer, pageable, searchRequest.isLocationSearch());
+    Page<Log> logs = executeLogSearch(searchRequest, viewer, pageable, searchRequest.isLocationSearch());
 
     logs.getContent().forEach(log -> {
       log.getMediaUrls().size();
@@ -332,7 +332,7 @@ public class LogService {
    * @param isLocationSearch 위치 기반 검색 여부 플래그
    * @return 검색 조건에 맞는 페이징 처리된 로그 목록
    */
-  private Page<Log> searchLogs(LogSearchRequest searchRequest, User viewer, Pageable pageable,
+  private Page<Log> executeLogSearch(LogSearchRequest searchRequest, User viewer, Pageable pageable,
       boolean isLocationSearch) {
 
     if (isLocationSearch) {
